@@ -1,14 +1,14 @@
 #include "M_Camera.hpp"
-int Camera::FramePost::FramePostNet(int startCode)
+int CameraCOM::FramePost::FramePostNet(int startCode)
 {
     cv::Mat CatchTMP;
-    cv::VideoCapture VideoCatch;
+    cv::VideoCapture VideoCatch(startCode);
     Base::Socket PostBind;
     Base::Socket SockSub;
     int imRows, imCols, imSize, imTrueSize, imType;
     unsigned char *imData;
 
-    VideoCatch.open(startCode);
+    // VideoCatch.open(startCode);
     if (!VideoCatch.isOpened())
     {
         std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -19,12 +19,13 @@ int Camera::FramePost::FramePostNet(int startCode)
         VideoCatch >> CatchTMP;
         Base::TransTools::MatToByte(CatchTMP, imData, imRows, imCols, imSize, imTrueSize, imType);
         int imInfo[5] = {imRows, imCols, imSize, imTrueSize, imType};
-        PostBind.SocketServer(SockSub, 1919, 2);
-        if (SockSub.Send((unsigned char *)imInfo, 100))
+        PostBind.SocketServer(SockSub, 10086, 2);
+        if (SockSub.Send(imInfo, 100)) //step 1
         {
-            unsigned char *data;
-            SockSub.Recv(data, 100);
-            if (data == (unsigned char *)400)
+            int *data;
+            std::cout << "\033[35m[CameraStatus] camera info check ......";
+            SockSub.Recv(data, 100); //step 2
+            if (data[1] == 400)
             {
                 std::cout << "\033[35m[CameraStatus] camera info comfirm \033[0m\n";
                 std::cout << "\033[35m[CameraStatus] camera start to post\033[0m\n";
@@ -32,7 +33,7 @@ int Camera::FramePost::FramePostNet(int startCode)
                 {
                     VideoCatch >> CatchTMP;
                     Base::TransTools::MatToByte(CatchTMP, imData, imRows, imCols, imSize, imTrueSize, imType);
-                    SockSub.Send(imData, imTrueSize);
+                    SockSub.Send(imData, imTrueSize); //step 3
                 }
             }
             else
