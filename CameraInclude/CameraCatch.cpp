@@ -24,7 +24,7 @@ int Camera::FramePost::FramePostNet(int startCode)
         {
             unsigned char *data;
             SockSub.Recv(data, 100);
-            if ((int)data == 400)
+            if (data == (unsigned char *)400)
             {
                 std::cout << "\033[35m[CameraStatus] camera info comfirm \033[0m\n";
                 std::cout << "\033[35m[CameraStatus] camera start to post\033[0m\n";

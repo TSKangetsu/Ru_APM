@@ -14,10 +14,14 @@ add_subdirectory(CameraInclude)
 #Tools
 add_subdirectory(ToolsInclude)
 
+#APM_Client
+add_subdirectory(APM_Client)
+
 #main-include
-add_executable(imviewer main.cpp)
+add_executable(RuAPM_Cli main.cpp)
 #
 #target_link
-target_link_libraries( imviewer ${OpenCV_LIBS})
-target_link_libraries( imviewer CameraControl)
-target_link_libraries( imviewer Tools)
+target_link_libraries( RuAPM_Cli ${OpenCV_LIBS})
+target_link_libraries( RuAPM_Cli CameraControl)
+target_link_libraries( RuAPM_Cli Tools)
+target_link_libraries( RuAPM_Cli APM_Client)
