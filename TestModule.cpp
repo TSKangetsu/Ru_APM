@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "SRC/CameraInclude/M_Camera.hpp"
-#include "SRC/ToolsInclude/M_Tools.hpp"
+#include "./SRC/CameraInclude/M_Camera.hpp"
+#include "./SRC/ToolsInclude/M_Tools.hpp"
+#include "./SRC/APM_Client/LinuxClient.hpp"
 #include <opencv2/opencv.hpp>
 using namespace Base;
 
@@ -26,5 +27,15 @@ int main(int argc, char *argv[])
             data_comfirm = 3000;
             break;
         }
+    }
+    if (data_comfirm == 1000)
+    {
+        CameraCOM::FramePost ins;
+        ins.FramePostNet(0);
+    }
+    else if (data_comfirm == 2000)
+    {
+        APMClient::GUIClient ins;
+        ins.RecvShow("127.0.0.1", 18800, 10086);
     }
 }

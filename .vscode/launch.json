@@ -5,25 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "RuAPM_Cli",
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
-            "args": [
-                "-t"
-            ],
+            "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "gdb",
             "setupCommands": [
                 {
-                    "description": "none",
-                    "text": "none",
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ]
+            ],
         }
     ]
 }
