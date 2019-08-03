@@ -39,6 +39,8 @@ bool Base::Socket::Bind(const int port)
     int bind_return = bind(m_sock, (struct sockaddr *)&m_addr, sizeof(m_addr));
     if (bind_return == -1)
     {
+        std::cout << "\033[31m[SocketInfo]Socket Bind error!!!!!!!!!!!!!!!!!!\033[0m\n";
+        close(m_sock);
         return false;
     }
     std::cout << "\033[32m[SocketInfo]Socket is working at ";
@@ -103,46 +105,6 @@ bool Base::Socket::Connect(std::string host, const int port)
     {
         std::cout << "\033[31m[SocketInfo]Remote Server could not connect\033[0m\n";
         return false;
-    }
-}
-
-bool Base::Socket::Send(unsigned char *data, int sendSize)
-{
-    int status = send(m_sock, data, sendSize, 0);
-    if (status == -1)
-    {
-        std::cout << "\033[31m[SocketInfo]Send data failed ! status code -1\033[0m\n";
-        return false;
-    }
-    else
-    {
-        std::cout << "\033[32m[SocketInfo]data has been send\033[0m\n";
-        return true;
-    }
-}
-
-bool Base::Socket::Recv(unsigned char *&data, int recvSize)
-{
-    unsigned char buffer[recvSize + 1];
-    memset(buffer, 0, recvSize + 1);
-    int status = recv(m_sock, buffer, recvSize, MSG_WAITALL);
-    if (status == -1)
-    {
-        std::cout << "\033[31m[SocketInfo]Recving failed ! or recvSize error? status code is -1\033[0m\n";
-        return false;
-    }
-    else if (status == 0)
-    {
-        std::cout << "\033[31m[SocketInfo]Recving failed ! or recvSize error?status code is 0\033[0m\n";
-        return false;
-    }
-    else
-    {
-        data = buffer;
-        std::cout << "\033[32m[SocketInfo]data recving! status code is ";
-        std::cout << status;
-        std::cout << "\033[0m\n";
-        return true;
     }
 }
 
