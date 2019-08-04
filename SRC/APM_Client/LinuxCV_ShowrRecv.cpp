@@ -5,25 +5,17 @@ void APMClient::GUIClient::RecvShow(std::string ipaddress, int localport, int re
     Base::Socket sock;
     cv::Mat imMat;
     unsigned char *imData;
-    int imRows, imCols, imSize, imTrueSize, imType;
+    //-------- imInfo[0] is imRows [1]imCols [2]imSize [3]imTrueSize [4]imType--------//
     int *imInfo;
     sock.SocketClient(ipaddress, localport, remoteport);
     sock.Recv(imInfo, 100);
-    //
-    imRows = imInfo[0];
-    imCols = imInfo[1];
-    imSize = imInfo[2];
-    imTrueSize = imInfo[3];
-    imType = imInfo[4];
-    //
-    int *comfirmFlag = new int[2];
-    comfirmFlag[1] = 1;
-    sleep(5);
-    sock.Send(comfirmFlag, 10);
     while (true)
     {
-        sock.Recv(imData, imTrueSize);
-        imMat = Base::TransTools::ByteToMat(imData, imRows, imCols, imType);
+        sock.Recv(imData, imInfo[3]);
+        imMat = Base::TransTools::ByteToMat(imData, imInfo[0], imInfo[1], imInfo[4]);
+
         cv::imshow("test", imMat);
+        if (cv::waitKey(10) == 'q')
+            break;
     }
 }
