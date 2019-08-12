@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <unistd.h>
-#include "./SRC/CameraInclude/M_Camera.hpp"
-#include "./SRC/ToolsInclude/M_Tools.hpp"
-#include "./SRC/APM_Client/LinuxClient.hpp"
+#include "CameraInclude/M_Camera.hpp"
+#include "ToolsInclude/M_Tools.hpp"
+#include "APM_Client/LinuxClient.hpp"
+#include "RaspberrySensors/M_Sensors.hpp"
 #include <opencv2/opencv.hpp>
+
 using namespace Base;
 
 int main(int argc, char *argv[])
@@ -37,5 +39,9 @@ int main(int argc, char *argv[])
     {
         APMClient::GUIClient ins;
         ins.RecvShow("127.0.0.1", 18800, 10086);
+    }
+    else if (data_comfirm == 3000)
+    {
+        sensors::lightTest ins;
     }
 }

@@ -17,11 +17,15 @@ add_subdirectory(SRC/ToolsInclude)
 #APM_Client
 add_subdirectory(SRC/APM_Client)
 
+#RaspberrySensors
+add_subdirectory(SRC/RaspberrySensors)
+
 #main-include
-add_executable(RuAPM_Cli TestModule.cpp)
+add_executable(RuAPM_Cli SRC/TestModule.cpp)
 #
 #target_link
 target_link_libraries( RuAPM_Cli ${OpenCV_LIBS})
 target_link_libraries( RuAPM_Cli CameraControl)
 target_link_libraries( RuAPM_Cli Tools)
 target_link_libraries( RuAPM_Cli APM_Client)
+target_link_libraries( RuAPM_Cli RaspberrySensors)
