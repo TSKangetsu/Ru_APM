@@ -9,6 +9,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 namespace I2CSensors
 {
@@ -18,6 +19,6 @@ public:
     SeLight(int I2C_ADDR);
 
 private:
-    const int DEVICEADDR = 0;
+    int DEVICEADDR;
 };
-} // namespace Sensors
+} // namespace I2CSensors

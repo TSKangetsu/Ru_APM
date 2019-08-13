@@ -6,8 +6,6 @@
 #include "RaspberrySensors/M_Sensors.hpp"
 #include <opencv2/opencv.hpp>
 
-using namespace Base;
-
 int main(int argc, char *argv[])
 {
     int argvs;
@@ -42,6 +40,5 @@ int main(int argc, char *argv[])
     }
     else if (data_comfirm == 3000)
     {
-        sensors::lightTest ins;
     }
 }
