@@ -9,7 +9,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <iostream>
-#include <nlohmann/json.hpp>
+#include "../_thirdparty/json/single_include/nlohmann/json.hpp"
 
 namespace I2CSensors
 {

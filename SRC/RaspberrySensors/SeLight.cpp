@@ -3,6 +3,7 @@
 I2CSensors::SeLight::SeLight(int I2CADDR)
 {
     DEVICEADDR = I2CADDR;
+    nlohmann::json ins;
 }
 
 // I2CSensors::SeLight::SeLight(int I2C_ADDR)

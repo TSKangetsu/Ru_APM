@@ -5,6 +5,7 @@
 #include "APM_Client/LinuxClient.hpp"
 #include "RaspberrySensors/M_Sensors.hpp"
 #include <opencv2/opencv.hpp>
+#include "_thirdparty/json/single_include/nlohmann/json.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -40,5 +41,6 @@ int main(int argc, char *argv[])
     }
     else if (data_comfirm == 3000)
     {
+        nlohmann::json test = {{"foo", "bar"}};
     }
 }
