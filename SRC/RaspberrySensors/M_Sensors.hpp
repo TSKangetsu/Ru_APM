@@ -8,13 +8,16 @@
 #include <sys/types.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#define I2C_ADDR 0x23
+#include <iostream>
 
-namespace sensors
+namespace I2CSensors
 {
-    class lightTest
-    {
-        public:
-        lightTest();
-    };
-}
+class SeLight
+{
+public:
+    SeLight(int I2C_ADDR);
+
+private:
+    const int DEVICEADDR = 0;
+};
+} // namespace Sensors

@@ -4,9 +4,11 @@ cmake_minimum_required(VERSION 2.8)
 # SET(CMAKE_CXX_COMPILER "/usr/bin/g++")
 project(Ru_APM)
 
-#Opencv--
+#Opencv----4.1.0
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
+
+#json
 
 #CameraControl--
 add_subdirectory(SRC/CameraInclude)
