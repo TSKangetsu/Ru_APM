@@ -1,6 +1,6 @@
 #include "M_Sensors.hpp"
 
-I2CSensors::SeLight::SeLight(int I2CADDR)
+Sensors::SeLight::SeLight(int I2CADDR)
 {
     DEVICEADDR = I2CADDR;
     nlohmann::json ins;

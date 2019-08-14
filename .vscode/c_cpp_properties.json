@@ -4,10 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/ARM_INC/opencv/include/opencv4"
+                "/usr/local/include/opencv4"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/clang"
+            "compilerPath": "/usr/bin/clang++"
         }
     ],
     "version": 4
