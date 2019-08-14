@@ -1,24 +1,36 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <string.h>
+#include <string>
 #include <sys/ioctl.h>
 #include <iostream>
+#include <fstream>
 #include "../_thirdparty/json/single_include/nlohmann/json.hpp"
 
-namespace I2CSensors
+namespace Sensors
 {
+class SensorsInfo
+{
+public:
+  SensorsInfo();
+
+private:
+  std::string filename;
+  int ConfigureCheck();
+  bool CreateConfigure();
+  std::string *ReadConfigure();
+};
+
 class SeLight
 {
 public:
-    SeLight(int I2C_ADDR);
+  SeLight(int I2C_ADDR);
 
 private:
-    int DEVICEADDR;
+  int DEVICEADDR;
 };
-} // namespace I2CSensors
+} // namespace Sensors
