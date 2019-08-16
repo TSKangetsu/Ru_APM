@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 2.8)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(JSON_Install OFF CACHE INTERNAL "")
+SET(OpenCV_DIR /LIB/opencv/lib/cmake/opencv4/)
 SET(CMAKE_C_COMPILER "/usr/bin/gcc")
 SET(CMAKE_CXX_COMPILER "/usr/bin/g++")
 project(Ru_APM)
