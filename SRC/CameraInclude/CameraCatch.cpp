@@ -38,3 +38,31 @@ int CameraCOM::FramePost::FramePostNet(int startCode)
         return 0;
     }
 }
+
+int CameraCOM::FramePost::CameraCheck(int startCode)
+{
+    cv::Mat CatchTMP;
+    cv::VideoCapture VideoCatch(startCode);
+    VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, 300);
+    VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
+    VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
+
+    CameraCOM::CnnCaculate ins("./TestData/frozen_inference_graph.pb", "./TestData/graph.pbtxt", 0);
+    if (!VideoCatch.isOpened())
+    {
+        std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
+        return -1;
+    }
+    else
+    {
+        sleep(2);
+        while (true)
+        {
+            VideoCatch >> CatchTMP;
+            cv::Mat inss = ins.MatCnn(CatchTMP, 100, 100);
+            imshow("test", inss);
+            if (cv::waitKey(1) == 'q')
+                break;
+        }
+    }
+}
