@@ -6,7 +6,7 @@
 #include "RaspberrySensors/M_Sensors.hpp"
 #include <opencv2/opencv.hpp>
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	int argvs;
 	int data_comfirm;
@@ -31,7 +31,8 @@ int main(int argc, char* argv[])
 	if (data_comfirm == 1000)
 	{
 		CameraCOM::FramePost ins;
-		ins.FramePostNet(0);
+		// ins.FramePostNet(0);
+		ins.CameraCheck(0);
 	}
 	else if (data_comfirm == 2000)
 	{
@@ -40,7 +41,12 @@ int main(int argc, char* argv[])
 	}
 	else if (data_comfirm == 3000)
 	{
-		Sensors::SensorsInfo ins("./sensors.json");
-		return 0;
+		cv::Mat tmpMat = Base::Matcom::ImageGet("./TestData/QJ.jpg");
+		cv::imshow("ins", tmpMat);
+		cv::waitKey();
+		CameraCOM::CnnCaculate ins("./TestData/frozen_inference_graph.pb", "./TestData/graph.pbtxt", 0);
+		cv::Mat inss = ins.MatCnn(tmpMat, 100, 100);
+		cv::imshow("ins", inss);
+		cv::waitKey();
 	}
 }

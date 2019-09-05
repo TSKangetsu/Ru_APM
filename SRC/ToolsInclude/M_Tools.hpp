@@ -28,8 +28,8 @@ public:
 class Matcom
 {
 public:
-    int ConvertSaveImg(std::string imName, cv::Mat imageData);
-    cv::Mat ImageGet(std::string imdataName);
+    static int ConvertSaveImg(std::string imName, cv::Mat imageData);
+    static cv::Mat ImageGet(std::string imdataName);
 };
 
 class Socket
