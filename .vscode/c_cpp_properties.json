@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/local/include/opencv4"
+                "/LIB/opencv4.0v/include/opencv4"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

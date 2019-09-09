@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "-v"
+                "-m"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
