@@ -1,6 +1,12 @@
 #include "M_Tools.hpp"
 
-unsigned char *Base::TransTools::MatToByte(cv::Mat imFrame, unsigned char *&imData, int &imRows, int &imCols, int &imSize, int &imTrueSize, int &imType)
+unsigned char *Base::TransTools::MatToByte(cv::Mat imFrame,
+                                           unsigned char *&imData,
+                                           int &imRows,
+                                           int &imCols,
+                                           int &imSize,
+                                           int &imTrueSize,
+                                           int &imType)
 {
     imRows = imFrame.rows;
     imCols = imFrame.cols;
@@ -13,7 +19,10 @@ unsigned char *Base::TransTools::MatToByte(cv::Mat imFrame, unsigned char *&imDa
 }
 
 //If you need to get img info , please run  Base::ansTools::MatToByte()
-cv::Mat Base::TransTools::ByteToMat(unsigned char *imByte, int imRows, int imCols, int imType)
+cv::Mat Base::TransTools::ByteToMat(unsigned char *imByte,
+                                    int imRows,
+                                    int imCols,
+                                    int imType)
 {
     cv::Mat imData = cv::Mat(imRows, imCols, imType, imByte);
     return imData;

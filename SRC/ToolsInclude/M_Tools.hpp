@@ -19,8 +19,19 @@ namespace Base
 class TransTools
 {
 public:
-    static unsigned char *MatToByte(cv::Mat imFrame, unsigned char *&imData, int &imRows, int &imCols, int &imSize, int &imTrueSize, int &imType);
-    static cv::Mat ByteToMat(unsigned char *imByte, int imRows, int imCols, int imType);
+    static unsigned char *MatToByte(cv::Mat imFrame,
+                                    unsigned char *&imData,
+                                    int &imRows,
+                                    int &imCols,
+                                    int &imSize,
+                                    int &imTrueSize,
+                                    int &imType);
+
+    static cv::Mat ByteToMat(unsigned char *imByte,
+                             int imRows,
+                             int imCols,
+                             int imType);
+
     static unsigned char *StringToByte(std::string strData);
     static std::string ByteToString(unsigned char *byteData);
 };

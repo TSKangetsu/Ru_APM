@@ -11,7 +11,7 @@
             "program": "${workspaceRoot}/build/RuAPM_Cli",
             // "program": "${command:cmake.launchTargetPath}",
             "args": [
-                "-t"
+                "-m"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

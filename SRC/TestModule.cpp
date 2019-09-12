@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
 	else if (data_comfirm == 3000)
 	{
 		cv::Mat tmpMat = Base::Matcom::ImageGet("./Data/QJ.jpg");
-		CameraCOM::CnnCaculate ins("./Data/vino-banketFP16/frozen_inference_graph.xml", "./Data/vino-banketFP16/frozen_inference_graph.bin", 1, 0.4, cv::dnn::DNN_BACKEND_INFERENCE_ENGINE, cv::dnn::DNN_TARGET_MYRIAD);
-		cv::Mat inss = ins.MatCnn(tmpMat, 300, 300);
+		CameraCOM::CnnCaculate ins("./Data/vino-banketFP32/frozen_inference_graph.xml", "./Data/vino-banketFP32/frozen_inference_graph.bin", 1, cv::dnn::DNN_BACKEND_INFERENCE_ENGINE, cv::dnn::DNN_TARGET_CPU);
+		cv::Mat inss = ins.MatCnn(tmpMat, 300, 300, 0.4);
 		cv::imshow("ins", inss);
 		cv::waitKey();
 	}

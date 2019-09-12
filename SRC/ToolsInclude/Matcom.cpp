@@ -23,7 +23,7 @@ cv::Mat Base::Matcom::ImageGet(std::string imdataName)
     cv::Mat Image;
     try
     {
-        std::cout << "\033[35m[MatCom]get image from disk success\033[m35\n";
+        std::cout << "\033[35m[MatCom]get image from disk success\033[0m\n";
         Image = cv::imread(imdataName, 1);
     }
     catch (const std::exception &e)
