@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/LIB/opencv4.0v/include/opencv4"
+                "/opt/intel/openvino/opencv/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
