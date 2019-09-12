@@ -12,7 +12,7 @@ int Base::Matcom::ConvertSaveImg(std::string imName, cv::Mat imageData)
     catch (const std::exception &e)
     {
         std::cout << "\033[31m[MatCom]convert save Image failed : ";
-        std::cerr << e.what() << '\033[0m\n';
+        std::cout << e.what() << "\033[0m\n";
         return -1;
     }
 }
@@ -29,7 +29,7 @@ cv::Mat Base::Matcom::ImageGet(std::string imdataName)
     catch (const std::exception &e)
     {
         std::cout << "\033[31m[MatCom]get image from disk failed : ";
-        std::cerr << e.what() << '\033[31m\n';
+        std::cout << e.what() << "\033[31m\n";
     }
     return Image;
 }

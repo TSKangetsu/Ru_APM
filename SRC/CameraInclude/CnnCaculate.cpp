@@ -11,6 +11,7 @@ CameraCOM::CnnCaculate::CnnCaculate(std::string args1, std::string args2, int mo
     case 1:
         NetInside = cv::dnn::readNetFromModelOptimizer(args1, args2);
         std::cout << "\033[032m[DnnModule]NET custom for openvino comfirm\033[0m\n";
+        break;
     case 2:
         NetInside = cv::dnn::readNetFromTensorflow(args1, args2);
         std::cout << "\033[032m[DnnModule]NET tensorflow comfirm\033[0m\n";
