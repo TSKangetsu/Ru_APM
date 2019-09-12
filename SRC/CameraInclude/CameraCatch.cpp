@@ -47,7 +47,7 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
     VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
-    CameraCOM::CnnCaculate ins("./TestData/frozen_inference_graph.pb", "./TestData/graph.pbtxt", 0);
+    CameraCOM::CnnCaculate ins("./Data/vino-banketFP32/frozen_inference_graph.xml", "./Data/vino-banketFP32/frozen_inference_graph.bin", 0, 0.4, cv::dnn::DNN_BACKEND_INFERENCE_ENGINE, cv::dnn::DNN_TARGET_CPU);
     if (!VideoCatch.isOpened())
     {
         std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -59,7 +59,7 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
         while (true)
         {
             VideoCatch >> CatchTMP;
-            cv::Mat inss = ins.MatCnn(CatchTMP, 100, 100);
+            cv::Mat inss = ins.MatCnn(CatchTMP, 300, 300);
             imshow("test", inss);
             if (cv::waitKey(1) == 'q')
                 break;

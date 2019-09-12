@@ -22,19 +22,12 @@ public:
 class CnnCaculate
 {
 public:
-	CnnCaculate(std::string pbFile, std::string pbtxtFile, int modelType, int PreferableBackend = 0, int PreferableTarget = 0, float confidence = 0.6, std::string config = "");
+	CnnCaculate(std::string pbFile, std::string pbtxtFile, int modelType, float confidence = 0.5, int PreferableBackend = cv::dnn::DNN_BACKEND_DEFAULT, int PreferableTarget = cv::dnn::DNN_TARGET_CPU);
 	cv::Mat MatCnn(cv::Mat inputFrame, int widSize, int heiSize);
 
 private:
 	cv::dnn::Net NetInside;
-	cv::Mat blobImage;
-	std::vector<std::string> deOut_names;
 	float confidence_threshold;
-	cv::Mat tmpGrayMat;
-
-	cv::Mat itmpMat;
-	cv::Mat resultsMat;
-	std::vector<cv::Mat> deOut;
 
 	size_t objIndex;
 	float tl_x;

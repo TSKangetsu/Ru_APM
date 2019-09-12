@@ -1,42 +1,39 @@
 #include "M_Camera.hpp"
 
-CameraCOM::CnnCaculate::CnnCaculate(std::string pbFile, std::string pbtxtFile, int modelType, int PreferableBackend, int PreferableTarget, float confidence, std::string config)
+CameraCOM::CnnCaculate::CnnCaculate(std::string args1, std::string args2, int modelType, float confidence, int PreferableBackend, int PreferableTarget)
 {
     switch (modelType)
     {
     case 0:
-        NetInside = cv::dnn::readNetFromTensorflow(pbFile, pbtxtFile);
-        std::cout << "\033[032m[DnnModule]NET tensorflow comfirm\033[0m\n";
+        NetInside = cv::dnn::readNet(args1, args2);
+        std::cout << "\033[032m[DnnModule]NET custom comfirm\033[0m\n";
         break;
     case 1:
-        NetInside = cv::dnn::readNetFromCaffe(pbFile, pbtxtFile);
-        std::cout << "\033[032m[DnnModule]NET Caffe comfirm\033[0m\n";
-        break;
+        NetInside = cv::dnn::readNetFromModelOptimizer(args1, args2);
+        std::cout << "\033[032m[DnnModule]NET custom for openvino comfirm\033[0m\n";
     case 2:
-        NetInside = cv::dnn::readNetFromDarknet(pbFile, pbtxtFile);
-        std::cout << "\033[032m[DnnModule]NET Darknet comfirm\033[0m\n";
+        NetInside = cv::dnn::readNetFromTensorflow(args1, args2);
+        std::cout << "\033[032m[DnnModule]NET tensorflow comfirm\033[0m\n";
         break;
     case 3:
-        NetInside = cv::dnn::readNet(pbFile, config, pbtxtFile);
-        std::cout << "\033[032m[DnnModule]NET custom comfirm\033[0m\n";
+        NetInside = cv::dnn::readNetFromCaffe(args1, args2);
+        std::cout << "\033[032m[DnnModule]NET Caffe comfirm\033[0m\n";
+        break;
+    case 4:
+        NetInside = cv::dnn::readNetFromDarknet(args1, args2);
+        std::cout << "\033[032m[DnnModule]NET Darknet comfirm\033[0m\n";
         break;
     }
     NetInside.setPreferableBackend(PreferableBackend);
     NetInside.setPreferableTarget(PreferableTarget);
-    deOut_names.push_back("detection_out_final");
-    deOut_names.push_back("detection_masks");
     confidence_threshold = confidence;
-    cv::setNumThreads(12);
 }
 
 cv::Mat CameraCOM::CnnCaculate::MatCnn(cv::Mat inputFrame, int widSize, int heiSize)
 {
-    blobImage = cv::dnn::blobFromImage(inputFrame, 1.0, cv::Size(widSize, heiSize), cv::Scalar(0, 0, 0), true, false);
+    cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame, 1.0, cv::Size(widSize, heiSize), cv::Scalar(100, 100, 100), true, false);
     NetInside.setInput(blobImage);
-    cv::Mat out = NetInside.forward();
-    blobImage = cv::dnn::blobFromImage(inputFrame, 1.0, cv::Size(widSize, heiSize), cv::Scalar(0, 0, 0), true, false);
-    NetInside.setInput(blobImage);
-    NetInside.forward(deOut, deOut_names);
+    cv::Mat outRaw = NetInside.forward();
 
     std::vector<double> layersTimings;
     double tick_freq = cv::getTickFrequency();
@@ -44,8 +41,7 @@ cv::Mat CameraCOM::CnnCaculate::MatCnn(cv::Mat inputFrame, int widSize, int heiS
     cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
                 cv::Point(20, 20), 0, 0.5, cv::Scalar(0, 0, 255));
 
-    itmpMat = deOut[0];
-    resultsMat = Base::TransTools::ByteToMat(itmpMat.ptr<u_char>(), itmpMat.size[2], itmpMat.size[3], CV_32F);
+    cv::Mat resultsMat = Base::TransTools::ByteToMat(outRaw.ptr<u_char>(), outRaw.size[2], outRaw.size[3], CV_32F);
     for (int i = 0; i < resultsMat.rows; i++)
     {
         float confidence = resultsMat.at<float>(i, 2);
