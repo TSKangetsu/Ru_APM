@@ -1,5 +1,5 @@
-#ifndef CameraM
-#define CameraM
+#ifndef CameraM_H
+#define CameraM_H
 #endif
 #pragma once
 #include "../ToolsInclude/M_Tools.hpp"
@@ -22,8 +22,9 @@ public:
 class CnnCaculate
 {
 public:
-	CnnCaculate(std::string pbFile,
-				std::string pbtxtFile,
+	//For X86 Device
+	CnnCaculate(std::string args1,
+				std::string args2,
 				int modelType,
 				int Backend = cv::dnn::DNN_BACKEND_DEFAULT,
 				int Target = cv::dnn::DNN_TARGET_CPU);
@@ -33,13 +34,12 @@ public:
 				   int heiSize,
 				   float confidence_threshold);
 
+	//For Raspberry Intel NCS
+	CnnCaculate(){};
+	void MatCnnRaspi(int widSize, int heiSize);
+
 private:
 	cv::dnn::Net NetInside;
 	float confidence_threshold;
-	size_t objIndex;
-	float tl_x;
-	float tl_y;
-	float br_x;
-	float br_y;
 };
 } // namespace CameraCOM

@@ -1,3 +1,3 @@
-aux_source_directory(. LIBNETWORK)
+aux_source_directory(. LIBTOOLS)
 
-add_library(Tools ${LIBNETWORK})
+add_library(Tools ${LIBTOOLS})
