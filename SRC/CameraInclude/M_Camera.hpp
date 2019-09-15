@@ -17,11 +17,11 @@ public:
 	~FramePost(){};
 };
 
-class CnnCaculate
+class DnnModule
 {
 public:
 	//For X86 Device
-	CnnCaculate(std::string args1,
+	DnnModule(std::string args1,
 				std::string args2,
 				int modelType,
 				int Backend = cv::dnn::DNN_BACKEND_DEFAULT,
@@ -32,22 +32,30 @@ public:
 				   int heiSize,
 				   float confidence_threshold);
 
-	//For Raspberry Intel NCS
-	CnnCaculate();
-	void MatCnnRaspi(int widSize, int heiSize);
+	void DnnModule_Test() {};
+	void MatCnn_Test() {};
 
 private:
-	cv::dnn::Net NetInside;
-	float confidence_threshold;
-};
-
-class DnnModule
-{
 	struct Cv_Config
 	{
 		int Camera_Buff;
 		int Camera_Width;
 		int Camera_Height;
-	};
-}
+
+		int Blob_Scalar[3];
+		int Blob_Size[2];
+
+		float confidence_threshold;
+
+		int Preferable_Backend;
+		int Preferable_Target;
+
+		std::string File_args1;
+		std::string File_args2;
+
+	}CV_Config;
+
+	cv::dnn::Net NetInside;
+	float confidence_threshold;
+};
 } // namespace CameraCOM

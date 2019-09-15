@@ -45,6 +45,11 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, 300);
     VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
     VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
+	CameraCOM::DnnModule ins("/home/pi/TestData/frozen_inference_graph.xml", 
+		"/home/pi/TestData/frozen_inference_graph.bin", 
+		1, 
+		0, 
+		cv::dnn::DNN_TARGET_MYRIAD);
 
     if (!VideoCatch.isOpened())
     {
@@ -57,6 +62,7 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
         while (true)
         {
             VideoCatch >> CatchTMP;
+			ins.MatCnn(CatchTMP, 300, 300, 0.4);
             imshow("test", CatchTMP);
             if (cv::waitKey(1) == 'q')
                 break;

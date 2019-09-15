@@ -19,9 +19,9 @@ private:
 	nlohmann::json cvExample = R"(
 		{
 			"CameraConfig":{
-				"Camera_FrameBuff": "1",
-				"Camera_Height": "300",
-				"Camera_Width": "300"
+				"Camera_FrameBuff": 1,
+				"Camera_Height": 300,
+				"Camera_Width": 300
 			},
 			"DnnConfig":{
 				"Blob_Scalar":[
@@ -34,14 +34,12 @@ private:
 					300
 				], 
 				"Confidence": 0.4,
-				"Dnn_Model": "OpenVINO",
-				"OpenCV_Bankend":{
-					"ModelDir": "none",
-					"Protxt": "none"
-				},
-				"OpenVINO_Bankend":{
-					"BinDir": "none",
-					"XmlDir": "none"
+				"Dnn_Model": 1,
+				"PreferableBackend": 0,
+				"PreferableTarget": 0,
+				"ModelDir":{
+					"args1": "none",
+					"args2": "none"
 				}
 			}
 		}
