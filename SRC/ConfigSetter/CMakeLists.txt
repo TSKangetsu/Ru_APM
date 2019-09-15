@@ -1,3 +1,5 @@
-aux_source_directory(. LIBCONFIG)
+aux_source_directory(. LIB_CONFIG)
 
-add_library(ConfigSetter ${LIBCONFIG})
+add_library(ConfigSetter ${LIB_CONFIG})
+
+target_link_libraries(ConfigSetter Tools)

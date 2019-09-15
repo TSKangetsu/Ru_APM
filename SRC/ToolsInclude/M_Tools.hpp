@@ -1,8 +1,4 @@
-#ifndef TOOLS_H
-#define TOOLS_H
-#endif
 #pragma once
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -37,18 +33,18 @@ public:
 	static std::string ByteToString(unsigned char *byteData);
 };
 
-class TextSetter
-{
-public:
-	static bool CreateConfig(std::string fileName, std::string configDump);
-	static bool ReadConfig(std::string fileName, std::string &configDump);
-};
-
 class Matcom
 {
 public:
 	static int ConvertSaveImg(std::string imName, cv::Mat imageData);
 	static cv::Mat ImageGet(std::string imdataName);
+};
+
+class ConfigSetter
+{
+public:
+	static bool CreateConfig(std::string fileName, std::string data);
+	static bool ReadConfig(std::string fileName, std::string &data);
 };
 
 class Socket

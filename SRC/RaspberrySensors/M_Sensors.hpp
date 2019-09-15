@@ -1,8 +1,5 @@
-#ifndef SENSORS_H
-#define SENSORS_H
-#endif
 #pragma once
-
+#include "../ToolsInclude/M_Tools.hpp"
 #include <stdio.h>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>

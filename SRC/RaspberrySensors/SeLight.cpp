@@ -14,7 +14,6 @@ Sensors::SeLight::SeLight(int I2CADDR)
 //     int i2c_light_dump = open("/dev/i2c-1", O_RDWR);
 //     if (i2c_light_dump >= 0)
 //     {
-
 //         if (ioctl(i2c_light_dump, I2C_SLAVE, I2C_ADDR) >= 0)
 //         {
 //         }
@@ -27,7 +26,6 @@ Sensors::SeLight::SeLight(int I2CADDR)
 //     {
 //         std::cout << "\033[31m[I2CSensors] Failed to open the i2cdump (Selight)\033[0m\n";
 //     }
-
 //     val = 0x01;
 //     if (write(i2c_light_dump, &val, 1) < 0)
 //     {

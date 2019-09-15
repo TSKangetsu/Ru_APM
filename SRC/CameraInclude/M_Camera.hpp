@@ -1,9 +1,7 @@
-#ifndef CameraM_H
-#define CameraM_H
-#endif
 #pragma once
 #include "../ToolsInclude/M_Tools.hpp"
 #include <string>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -35,11 +33,21 @@ public:
 				   float confidence_threshold);
 
 	//For Raspberry Intel NCS
-	CnnCaculate(){};
+	CnnCaculate();
 	void MatCnnRaspi(int widSize, int heiSize);
 
 private:
 	cv::dnn::Net NetInside;
 	float confidence_threshold;
 };
+
+class DnnModule
+{
+	struct Cv_Config
+	{
+		int Camera_Buff;
+		int Camera_Width;
+		int Camera_Height;
+	};
+}
 } // namespace CameraCOM

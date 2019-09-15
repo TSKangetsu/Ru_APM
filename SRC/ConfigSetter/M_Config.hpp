@@ -1,31 +1,64 @@
-#ifndef CONFIG_H
-#define CONFIG_H
-#endif
 #pragma once
-
-#include <iostream>
-#include "../ToolsInclude/M_Tools.hpp"
 #include "../_thirdparty/json/single_include/nlohmann/json.hpp"
+#include "../ToolsInclude/M_Tools.hpp"
+#include <fcntl.h>
+#include <unistd.h>
+#include <fstream>
+#include <iostream>
 
 namespace JsonConfig
 {
 class CVConfig
 {
+public:
+	CVConfig(std::string filename);
+
 private:
-	nlohmann::json CVexample;
+	std::string dataTmp;
+	const std::string cvConfigName = "./CVConfig.json";
+	nlohmann::json cvExample = R"(
+		{
+			"CameraConfig":{
+				"Camera_FrameBuff": "1",
+				"Camera_Height": "300",
+				"Camera_Width": "300"
+			},
+			"DnnConfig":{
+				"Blob_Scalar":[
+					100,
+					100,
+					100
+				],
+				"Blob_Size":[
+					300,
+					300
+				], 
+				"Confidence": 0.4,
+				"Dnn_Model": "OpenVINO",
+				"OpenCV_Bankend":{
+					"ModelDir": "none",
+					"Protxt": "none"
+				},
+				"OpenVINO_Bankend":{
+					"BinDir": "none",
+					"XmlDir": "none"
+				}
+			}
+		}
+		)"_json;
 };
 
 class SensorsInfo
 {
 public:
-	SensorsInfo(std::string filename, std::string &configDump);
-	~SensorsInfo();
+	SensorsInfo(std::string filename);
 
 private:
-	nlohmann::json example = R"(
+	std::string dataTmp;
+	const std::string sensorsConfigName = "./Sensors.json";
+	nlohmann::json sensorsExample = R"(
 		{
-			"SensorConfigure":
-			[
+			"SensorConfigure":[
 				{
 					"Device": "BH1750VI",
 					"DeviceKinds": "LIGHTSENSORS",

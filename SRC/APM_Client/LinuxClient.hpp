@@ -1,10 +1,7 @@
-#ifndef LinuxCLient_H
-#define LinuxCLient_H
-#endif
 #pragma once
-
 #include <opencv2/opencv.hpp>
 #include "../ToolsInclude/M_Tools.hpp"
+
 namespace APMClient
 {
 class GUIClient

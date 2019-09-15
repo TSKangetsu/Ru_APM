@@ -8,8 +8,8 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/RuAPM_Cli",
-            // "program": "${command:cmake.launchTargetPath}",
+            // "program": "${workspaceRoot}/build/RuAPM_Cli",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "-m"
             ],

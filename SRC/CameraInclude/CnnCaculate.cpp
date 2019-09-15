@@ -118,7 +118,7 @@ void CameraCOM::CnnCaculate::MatCnnRaspi(int widSize, int heiSize)
 		cap >> tmpMat;
 		cv::Mat blob = cv::dnn::blobFromImage(tmpMat, 1.0, cv::Size(300, 300), cv::Scalar(100, 100, 100), true, false);
 		net.setInput(blob);
-		cv::Mat detection = net.forward();
+		cv::Mat outRaw = net.forward();
 
 		std::vector<double> layersTimings;
 		double tick_freq = cv::getTickFrequency();
@@ -126,7 +126,10 @@ void CameraCOM::CnnCaculate::MatCnnRaspi(int widSize, int heiSize)
 		cv::putText(tmpMat, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
 					cv::Point(20, 20), 0, 0.5, cv::Scalar(0, 0, 255));
 
-		cv::Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+		cv::Mat detectionMat = Base::TransTools::ByteToMat(outRaw.ptr<u_char>(),
+														   outRaw.size[2],
+														   outRaw.size[3],
+														   CV_32F);
 		float confidence_threshold = 0.4;
 		for (int i = 0; i < detectionMat.rows; i++)
 		{
