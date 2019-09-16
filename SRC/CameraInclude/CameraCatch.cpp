@@ -45,12 +45,8 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, 300);
     VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
     VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
-	CameraCOM::DnnModule ins("/home/pi/TestData/frozen_inference_graph.xml", 
-		"/home/pi/TestData/frozen_inference_graph.bin", 
-		1, 
-		0, 
-		cv::dnn::DNN_TARGET_MYRIAD);
 
+	CameraCOM::DnnModule ins;
     if (!VideoCatch.isOpened())
     {
         std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -58,12 +54,10 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     }
     else
     {
-        sleep(2);
         while (true)
         {
             VideoCatch >> CatchTMP;
-			ins.MatCnn(CatchTMP, 300, 300, 0.4);
-            imshow("test", CatchTMP);
+            imshow("test", ins.MatDnnDeal(CatchTMP));
             if (cv::waitKey(1) == 'q')
                 break;
         }
