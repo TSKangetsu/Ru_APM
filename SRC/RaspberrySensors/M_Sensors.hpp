@@ -1,4 +1,7 @@
 #pragma once
+#ifndef MSENSORS_H
+#define MSENSORS_H
+#endif
 #include "../ToolsInclude/M_Tools.hpp"
 #include <stdio.h>
 #include <fcntl.h>
@@ -11,7 +14,6 @@
 #include <sys/ioctl.h>
 #include <iostream>
 #include <fstream>
-#include "../_thirdparty/json/single_include/nlohmann/json.hpp"
 
 namespace Sensors
 {

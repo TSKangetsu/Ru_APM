@@ -1,4 +1,7 @@
 #pragma once
+#ifndef MTOOLS_H
+#define MTOOLS_H
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
