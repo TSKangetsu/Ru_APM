@@ -1,13 +1,13 @@
 #include "M_Config.hpp"
 
-JsonConfig::CVConfig::CVConfig(std::string fileName)
+JsonConfig::CVConfig::CVConfig()
 {
-    if (access(fileName.c_str(), F_OK) != -1)
+    if (access(cvConfigName.c_str(), F_OK) != -1)
     {
-        if (access(fileName.c_str(), R_OK) != -1)
+        if (access(cvConfigName.c_str(), R_OK) != -1)
         {
             std::cout << "\033[33m[SensorsConfig] config file found , reading ........\033[0m\n";
-            Base::ConfigSetter::CreateConfig(cvConfigName, cvExample.dump(4));
+			Base::ConfigSetter::ReadConfig(cvConfigName, dataTmp);
         }
         else
         {
@@ -17,6 +17,6 @@ JsonConfig::CVConfig::CVConfig(std::string fileName)
     else
     {
         std::cout << "\033[33m[SensorsConfig] config file no found , will create a example\033[0m\n";
-        Base::ConfigSetter::ReadConfig(cvConfigName, dataTmp);
+		Base::ConfigSetter::CreateConfig(cvConfigName, cvExample.dump(4));
     }
 }

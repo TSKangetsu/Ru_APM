@@ -1,4 +1,7 @@
 #pragma once
+#ifndef MCONFIG_H
+#define MCONFIG_H
+#endif
 #include "../_thirdparty/json/single_include/nlohmann/json.hpp"
 #include "../ToolsInclude/M_Tools.hpp"
 #include <fcntl.h>
@@ -11,10 +14,10 @@ namespace JsonConfig
 class CVConfig
 {
 public:
-	CVConfig(std::string filename);
+	CVConfig();
+	std::string dataTmp;
 
 private:
-	std::string dataTmp;
 	const std::string cvConfigName = "./CVConfig.json";
 	nlohmann::json cvExample = R"(
 		{
@@ -36,7 +39,7 @@ private:
 				"Confidence": 0.4,
 				"Dnn_Model": 1,
 				"PreferableBackend": 0,
-				"PreferableTarget": 0,
+				"PreferableTarget": 3,
 				"ModelDir":{
 					"args1": "none",
 					"args2": "none"
