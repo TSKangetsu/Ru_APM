@@ -2,5 +2,7 @@
 今もいい天気
 <br/>It just a Linux APM project ,but nothing done
 
-#depence c++ lib
-opencv4.1.0    i2c-dev    nlohmann/json(https://github.com/nlohmann/json)
+# depence on:
+<br/>opencv4.1.0<br/>    
+<br/>i2c-dev<br/>    
+<br/>nlohmann/json(https://github.com/nlohmann/json)<br/>
