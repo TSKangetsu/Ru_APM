@@ -8,7 +8,7 @@ CameraCOM::DnnModule::DnnModule()
 	//
 	CV_Config.Camera_Buff = data["CameraConfig"]["Camera_FrameBuff"].get<int>();
 	CV_Config.Camera_Height = data["CameraConfig"]["Camera_Height"].get<int>();
-	CV_Config.Camera_Height = data["CameraConfig"]["Camera_Width"].get<int>();
+	CV_Config.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
 
 	auto scalarTmp = data["DnnConfig"]["Blob_Scalar"].get<std::vector<short>>();
 	CV_Config.Blob_Scalar[0] = scalarTmp[0];
