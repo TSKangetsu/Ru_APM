@@ -10,47 +10,97 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <thread>
 
 namespace CameraCOM
 {
-class FramePost
-{
-public:
-	FramePost(){};
-	int FramePostNet(int startCode);
-	int CameraCheck(int startCode);
-	~FramePost(){};
-};
-
-class DnnModule
-{
-public:
-
-	DnnModule();
-	cv::Mat MatDnnDeal(cv::Mat inputFrame);
-private:
-	void DnnModuleSet();
-	cv::dnn::Net NetInside;
-
-	struct CV_Config
+	class FramePost
 	{
-		int Camera_Buff;
-		int Camera_Width;
-		int Camera_Height;
+	public:
+		FramePost() {};
+		int FramePostNet(int startCode);
+		int CameraCheck(int startCode);
+		~FramePost() {};
+	};
 
-		int Model_Type;
+	class DnnModule
+	{
+	public:
 
-		int Blob_Scalar[3];
-		int Blob_Size[2];
+		DnnModule();
+		cv::Mat MatDnnDeal(cv::Mat inputFrame);
+		void AsyncMatDnnDeal();
+	private:
+		void DnnModuleSet();
+		cv::dnn::Net NetInside;
 
-		float confidence_threshold;
+		struct CV_Config
+		{
+			int Camera_Buff;
+			int Camera_Width;
+			int Camera_Height;
 
-		int Preferable_Backend;
-		int Preferable_Target;
+			int Model_Type;
 
-		std::string File_args1;
-		std::string File_args2;
+			int Blob_Scalar[3];
+			int Blob_Size[2];
 
-	}CV_Config;
-};
+			float confidence_threshold;
+
+			int Preferable_Backend;
+			int Preferable_Target;
+
+			std::string File_args1;
+			std::string File_args2;
+
+		}CV_Config;
+	};
+
+	template<typename T>
+	class FrameBuffer : public std::queue<T>
+	{
+	public:
+		unsigned int frameCount;
+		FrameBuffer() : frameCount(0) {};
+
+		void pushFrame(const T& FrameBuffering)
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+
+			std::queue<T>::push(FrameBuffering);
+			frameCount += 1;
+			if (frameCount == 1)
+			{
+				timeDec.reset();
+				timeDec.start();
+			}
+		}
+
+		T getFrame()
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			T lastestFrame = this->front();
+			this->pop();
+			return lastestFrame;
+		}
+
+		float getDecFPS()
+		{
+			timeDec.stop();
+			double fps = frameCount / timeDec.getTimeSec();
+			timeDec.start();
+			return static_cast<float>(fps);
+		}
+
+		void clearBuffer()
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			while (!this->empty())
+				this->pop();
+		}
+
+	private:
+		cv::TickMeter timeDec;
+		std::mutex mutex;
+	};
 } // namespace CameraCOM
