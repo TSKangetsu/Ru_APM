@@ -28,17 +28,8 @@ int main(int argc, char *argv[])
 		break;
 		case 'm':
 		{
-			CameraCOM::FramePost ins;
-			ins.CameraCheck(0);
-			//cv::Mat ins = Base::Matcom::ImageGet("/home/pi/TestData/QJ.jpg");
-			//CameraCOM::CnnCaculate cnn("/home/pi/TestData/frozen_inference_graph.xml", 
-			//	"/home/pi/TestData/frozen_inference_graph.bin", 
-			//	1, 
-			//	0, 
-			//	cv::dnn::DNN_TARGET_MYRIAD);
-			//cv::Mat tmp = cnn.MatCnn(ins, 300, 300, 0.4);
-			//cv::imshow("ins",tmp);
-			//cv::waitKey();
+			CameraCOM::DnnModule ins;
+			ins.AsyncMatDnnDeal();
 		}
 		break;
 		}
