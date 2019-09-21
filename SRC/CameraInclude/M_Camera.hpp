@@ -20,20 +20,26 @@ namespace CameraCOM
 #ifdef linux
 		FramePost() {};
 		int FramePostNet(int startCode);
-#endif
 		int CameraCheck(int startCode);
 		~FramePost() {};
+#endif
 	};
 
-#ifdef Debuging
-	class DeMothion
+	class MatDeBlur
 	{
-		void calcPSF(cv::Mat& outframe, cv::Size filterSize, int R);
-		void fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame);
-		void filter2DFreq(const cv::Mat& inputImg, cv::Mat& outputImg, const cv::Mat& H);
-		void calcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr);
+	public:
+		void FrameOFFDEBlur();
+	private:
+		//this is a OFF deblur function
+		void CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R);
+		//this is a motion deblur function
+		void CalcPSF(cv::Mat& outputframe, cv::Size filterSize, int len, double theta);
+		void Fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame);
+		void Filter2DFreq(const cv::Mat& inputFrame, cv::Mat& outputImg, const cv::Mat& H);
+		void CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr);
+		//here are motiondeblur function last
+		void Edgetaper(const cv::Mat& inputFrame, cv::Mat& outputframe, double gamma = 5.0, double beta = 0.2);
 	};
-#endif
 
 	class DnnModule
 	{
