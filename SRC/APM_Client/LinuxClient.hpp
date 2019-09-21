@@ -10,6 +10,8 @@ namespace APMClient
 class GUIClient
 {
 public:
+#ifdef linux
     void RecvShow(std::string ipaddress, int localport, int remoteport);
+#endif
 };
 } // namespace APMClient

@@ -17,19 +17,31 @@ namespace CameraCOM
 	class FramePost
 	{
 	public:
+#ifdef linux
 		FramePost() {};
 		int FramePostNet(int startCode);
+#endif
 		int CameraCheck(int startCode);
 		~FramePost() {};
 	};
 
+#ifdef Debuging
+	class DeMothion
+	{
+		void calcPSF(cv::Mat& outframe, cv::Size filterSize, int R);
+		void fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame);
+		void filter2DFreq(const cv::Mat& inputImg, cv::Mat& outputImg, const cv::Mat& H);
+		void calcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr);
+	};
+#endif
+
 	class DnnModule
 	{
 	public:
-
 		DnnModule();
 		cv::Mat MatDnnDeal(cv::Mat inputFrame);
 		void AsyncMatDnnDeal();
+
 	private:
 		void DnnModuleSet();
 		cv::dnn::Net NetInside;
@@ -53,10 +65,10 @@ namespace CameraCOM
 			std::string File_args1;
 			std::string File_args2;
 
-		}CV_Config;
+		} CV_Config;
 	};
 
-	template<typename T>
+	template <typename T>
 	class FrameBuffer : public std::queue<T>
 	{
 	public:

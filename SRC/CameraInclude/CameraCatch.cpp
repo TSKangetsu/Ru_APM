@@ -1,4 +1,6 @@
 #include "M_Camera.hpp"
+
+#ifdef linux
 int CameraCOM::FramePost::FramePostNet(int startCode)
 {
     cv::Mat CatchTMP;
@@ -46,7 +48,7 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
     VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
-	CameraCOM::DnnModule ins;
+    CameraCOM::DnnModule ins;
     if (!VideoCatch.isOpened())
     {
         std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -63,3 +65,4 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
         }
     }
 }
+#endif

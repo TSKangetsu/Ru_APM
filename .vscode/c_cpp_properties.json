@@ -1,17 +1,22 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/opt/intel/openvino/opencv/include"
+                "C:\\Program Files (x86)\\IntelSWTools\\openvino_2019.2.275\\opencv\\include"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.18362.0",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.22.27905/bin/Hostx64/x64/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "intelliSenseMode": "clang-x64",
-            "compileCommands": "/mnt/c/Users/x4030/OneDrive/Documents/Project Code TSKangetsu/CPP.Ru/Ru_APM/build/compile_commands.json"
+            "intelliSenseMode": "msvc-x64",
+            "compileCommands": "C:/USERS/X4030/ONEDRIVE/DOCUMENTS/PROJECT CODE TSKANGETSU/CPP.RU/RU_APM/BUILD/COMPILE_COMMANDS.JSON"
         }
     ],
     "version": 4

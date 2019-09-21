@@ -4,8 +4,8 @@ CameraCOM::DnnModule::DnnModule()
 {
 	JsonConfig::CVConfig Config;
 	nlohmann::json data;
+	//parse will error on windows mvsc , it just a intellisense problem , not need to do something
 	data = nlohmann::json::parse(Config.dataTmp);
-	//
 	CV_Config.Camera_Buff = data["CameraConfig"]["Camera_FrameBuff"].get<int>();
 	CV_Config.Camera_Height = data["CameraConfig"]["Camera_Height"].get<int>();
 	CV_Config.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
@@ -57,7 +57,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 			break;
 		}
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cout << "\033[031m[DnnModule]Load net model or protxt failed , info : ";
 		std::cerr << e.what();
@@ -71,7 +71,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 		NetInside.setPreferableTarget(CV_Config.Preferable_Target);
 		std::cout << "success!\033[0m\n";
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cout << "\033[31m[DnnModule]Are you using raspbian with VPU?";
 		std::cerr << e.what();
@@ -82,10 +82,10 @@ void CameraCOM::DnnModule::DnnModuleSet()
 cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 {
 	cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame,
-		1.0,
-		cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
-		cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
-		true, false);
+											   1.0,
+											   cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
+											   cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
+											   true, false);
 
 	NetInside.setInput(blobImage);
 	cv::Mat outRaw = NetInside.forward();
@@ -94,12 +94,12 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 	double tick_freq = cv::getTickFrequency();
 	double time_ms = NetInside.getPerfProfile(layersTimings) / tick_freq * 1000;
 	cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-		cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
+				cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
 
-	cv::Mat resultsMat = Base::TransTools::ByteToMat(outRaw.ptr<u_char>(),
-		outRaw.size[2],
-		outRaw.size[3],
-		CV_32F);
+	cv::Mat resultsMat = Base::TransTools::ByteToMat(outRaw.ptr<unsigned char>(),
+													 outRaw.size[2],
+													 outRaw.size[3],
+													 CV_32F);
 
 	for (int i = 0; i < resultsMat.rows; i++)
 	{
@@ -115,10 +115,10 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 			cv::Rect object_box((int)tl_x, (int)tl_y, (int)(br_x - tl_x), (int)(br_y - tl_y));
 			cv::rectangle(inputFrame, object_box, cv::Scalar(255, 0, 255), 1, 8, 0);
 			putText(inputFrame,
-				cv::format(" confidence %.2f", confidence),
-				cv::Point(tl_x - 10, tl_y - 5),
-				cv::FONT_HERSHEY_SIMPLEX, 0.7,
-				cv::Scalar(255, 0, 0), 2, 8);
+					cv::format(" confidence %.2f", confidence),
+					cv::Point(tl_x - 10, tl_y - 5),
+					cv::FONT_HERSHEY_SIMPLEX, 0.7,
+					cv::Scalar(255, 0, 0), 2, 8);
 		}
 	}
 	return inputFrame;
@@ -127,10 +127,11 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 //testbed_function
 void CameraCOM::DnnModule::AsyncMatDnnDeal()
 {
-	cv::VideoCapture cap(0);
-	cap.set(cv::CAP_PROP_FRAME_WIDTH, 300);
-	cap.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
+	cv::VideoCapture cap(1);
+	cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+	cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 	cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+	cap.set(cv::CAP_PROP_FRAME_COUNT, 60);
 	FrameBuffer<cv::Mat> camBuffer;
 	cv::Mat capFrameTmp;
 	bool prograssing = true;
@@ -147,8 +148,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				break;
 			}
 		}
-
-		});
+	});
 
 	FrameBuffer<cv::Mat> forwardBuffer;
 	FrameBuffer<cv::Mat> campreBuffer;
@@ -172,10 +172,10 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 			if (!frameTmp.empty())
 			{
 				cv::Mat blobImage = cv::dnn::blobFromImage(frameTmp,
-					1.0,
-					cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
-					cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
-					true, false);
+														   1.0,
+														   cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
+														   cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
+														   true, false);
 				NetInside.setInput(blobImage);
 				campreBuffer.push(frameTmp);
 				asyncForwardingBuffer.push(NetInside.forwardAsync());
@@ -190,8 +190,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				forwardBuffer.push(outRaw);
 			}
 		}
-
-		});
+	});
 
 	while (true)
 	{
@@ -202,10 +201,10 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 		else
 		{
 			cv::Mat showTmp = forwardBuffer.getFrame();
-			cv::Mat resultsMat = Base::TransTools::ByteToMat(showTmp.ptr<u_char>(),
-				showTmp.size[2],
-				showTmp.size[3],
-				CV_32F);
+			cv::Mat resultsMat = Base::TransTools::ByteToMat(showTmp.ptr<unsigned char>(),
+															 showTmp.size[2],
+															 showTmp.size[3],
+															 CV_32F);
 			cv::Mat inputFrame = campreBuffer.getFrame();
 
 			for (int i = 0; i < resultsMat.rows; i++)
@@ -222,10 +221,10 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 					cv::Rect object_box((int)tl_x, (int)tl_y, (int)(br_x - tl_x), (int)(br_y - tl_y));
 					cv::rectangle(inputFrame, object_box, cv::Scalar(255, 0, 255), 1, 8, 0);
 					putText(inputFrame,
-						cv::format(" confidence %.2f", confidence),
-						cv::Point(tl_x - 10, tl_y - 5),
-						cv::FONT_HERSHEY_SIMPLEX, 0.7,
-						cv::Scalar(255, 0, 0), 2, 8);
+							cv::format(" confidence %.2f", confidence),
+							cv::Point(tl_x - 10, tl_y - 5),
+							cv::FONT_HERSHEY_SIMPLEX, 0.7,
+							cv::Scalar(255, 0, 0), 2, 8);
 
 					std::string label = cv::format("Camera: %.2f FPS", camBuffer.getDecFPS());
 					cv::putText(inputFrame, label, cv::Point(0, 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));

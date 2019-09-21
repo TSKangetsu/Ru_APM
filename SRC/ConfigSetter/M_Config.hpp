@@ -5,9 +5,17 @@
 #include "../_thirdparty/json/single_include/nlohmann/json.hpp"
 #include "../ToolsInclude/M_Tools.hpp"
 #include <fcntl.h>
-#include <unistd.h>
 #include <fstream>
 #include <iostream>
+
+#ifdef linux
+#include <unistd.h>
+#endif
+
+#ifdef windows
+#include <io.h>
+#include <process.h>
+#endif
 
 namespace JsonConfig
 {

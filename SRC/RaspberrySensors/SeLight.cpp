@@ -1,5 +1,5 @@
 #include "M_Sensors.hpp"
-
+#ifdef linux
 Sensors::SeLight::SeLight(int I2CADDR)
 {
     //DEVICEADDR = I2CADDR;
@@ -50,3 +50,5 @@ Sensors::SeLight::SeLight(int I2CADDR)
 //         usleep(100000);
 //     }
 // }
+ 
+#endif

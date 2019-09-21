@@ -2,9 +2,9 @@
 
 JsonConfig::SensorsInfo::SensorsInfo(std::string fileName)
 {
-	if (access(fileName.c_str(), F_OK) != -1)
+	if (_access(fileName.c_str(), _A_NORMAL) != -1)
 	{
-		if (access(fileName.c_str(), R_OK) != -1)
+		if (_access(fileName.c_str(), _A_NORMAL) != -1)
 		{
 			std::cout << "\033[33m[SensorsConfig] config file found , reading ........\033[0m\n";
 			Base::ConfigSetter::CreateConfig(sensorsConfigName, sensorsExample.dump(4));
