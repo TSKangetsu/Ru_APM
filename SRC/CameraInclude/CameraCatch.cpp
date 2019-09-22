@@ -39,6 +39,7 @@ int CameraCOM::FramePost::FramePostNet(int startCode)
         return 0;
     }
 }
+#endif
 
 int CameraCOM::FramePost::CameraCheck(int startCode)
 {
@@ -48,7 +49,8 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
     VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, 300);
     VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, 1);
 
-    CameraCOM::DnnModule ins;
+    //CameraCOM::DnnModule ins;
+	CameraCOM::MatDeBlur insa;
     if (!VideoCatch.isOpened())
     {
         std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -59,10 +61,10 @@ int CameraCOM::FramePost::CameraCheck(int startCode)
         while (true)
         {
             VideoCatch >> CatchTMP;
-            imshow("test", ins.MatDnnDeal(CatchTMP));
+            imshow("test", insa.FrameOFFDEBlur(CatchTMP));
+			//cv::imshow("ins" , CatchTMP);
             if (cv::waitKey(1) == 'q')
                 break;
         }
     }
 }
-#endif

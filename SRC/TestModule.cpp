@@ -17,28 +17,14 @@
 
 int main(int argc, char *argv[])
 {
-	CameraCOM::DnnModule ins;
-	ins.AsyncMatDnnDeal();
-	//const int sax = 100;
-	// std::thread server([&]() {
-	//char *data = new char[50];
-	//Base::Socket socketTMP;
-	//Base::Socket somc;
-	//socketTMP.Create();
-	//socketTMP.Bind(10087);
-	//socketTMP.Listen(10);
-	//socketTMP.Accept(somc);
-	// });
-	//somc.Recv<char>(data, sax);
-	//Sleep(1000);
-	//std::cout << "client start";
-	//std::thread client([&]() {
-	//	Base::Socket socketTmp;
-	//	socketTmp.Create();
-	//	socketTmp.Bind(10086);
-	//	socketTmp.Connect("127.0.0.1", 10087);
-	//});
-
-	// server.join();
-	//client.join();
+	//CameraCOM::FramePost ins;
+	//ins.CameraCheck(0);
+	//cv::Mat ins = Base::Matcom::ImageGet("C:\\Users\\x4030\\OneDrive\\Documents\\Project Code TSKangetsu\\CPP.Ru\\Ru_APM\\Data\\QJ.jpg");
+	cv::Mat ins = cv::imread("C:\\Users\\x4030\\OneDrive\\Documents\\Project Code TSKangetsu\\CPP.Ru\\Ru_APM\\Data\\QJ.jpg", cv::IMREAD_GRAYSCALE);
+	cv::imshow("insa", ins);
+	cv::waitKey();
+	CameraCOM::MatDeBlur insa;
+	cv::Mat ia = insa.FrameOFFDEBlur(ins);
+	imshow("uins", ia);
+	cv::waitKey();
 }

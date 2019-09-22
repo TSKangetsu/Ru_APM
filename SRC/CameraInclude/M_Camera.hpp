@@ -19,16 +19,19 @@ namespace CameraCOM
 	public:
 #ifdef linux
 		FramePost() {};
-		int FramePostNet(int startCode);
-		int CameraCheck(int startCode);
 		~FramePost() {};
+		int FramePostNet(int startCode);
 #endif
+		int CameraCheck(int startCode);
+
+
 	};
 
 	class MatDeBlur
 	{
 	public:
-		void FrameOFFDEBlur();
+		cv::Mat FrameMotionDEBlur(cv::Mat inputFrame);
+		cv::Mat FrameOFFDEBlur(cv::Mat inputFrame);
 	private:
 		//this is a OFF deblur function
 		void CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R);
@@ -39,6 +42,15 @@ namespace CameraCOM
 		void CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr);
 		//here are motiondeblur function last
 		void Edgetaper(const cv::Mat& inputFrame, cv::Mat& outputframe, double gamma = 5.0, double beta = 0.2);
+
+		struct DeBlur_Config
+		{
+			int OFF_Radiu = 1;
+			int OFF_SNR = 1000;
+			int MODE_LEN = 0;
+			int MODE_THETA = 0;
+			int MODE_SNR = 200;
+		}DeBlur_Config;
 	};
 
 	class DnnModule

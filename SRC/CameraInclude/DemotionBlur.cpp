@@ -1,8 +1,31 @@
 #include "M_Camera.hpp"
 
-void CameraCOM::MatDeBlur::FrameOFFDEBlur()
+cv::Mat CameraCOM::MatDeBlur::FrameMotionDEBlur(cv::Mat inputFrame)
 {
+	cv::Mat outputFrame;
+	cv::Rect roi = cv::Rect(0, 0, inputFrame.cols & -2, inputFrame.rows & -2);
+	cv::Mat Hw, h;
+	CalcPSF(h, roi.size(), DeBlur_Config.MODE_LEN, DeBlur_Config.MODE_THETA);
+	CalcWnrFilter(h, Hw, 1.0 / double(DeBlur_Config.MODE_THETA));
+	inputFrame.convertTo(inputFrame, CV_32F);
+	Edgetaper(inputFrame, inputFrame);
+	Filter2DFreq(inputFrame(roi), outputFrame, Hw);
+	outputFrame.convertTo(outputFrame, CV_8U);
+	cv::normalize(outputFrame, outputFrame, 0, 255, cv::NORM_MINMAX);
+	return outputFrame;
+}
 
+cv::Mat CameraCOM::MatDeBlur::FrameOFFDEBlur(cv::Mat inputFrame)
+{
+	cv::Mat outputFrame;
+	cv::Rect roi = cv::Rect(0, 0, inputFrame.cols & -2, inputFrame.rows & -2);
+	cv::Mat hw ,h;
+	CalcPSF(h, roi.size(), DeBlur_Config.OFF_Radiu);
+	CalcWnrFilter(h, hw, 1.0 / double(5200));
+	Filter2DFreq(inputFrame(roi), outputFrame , hw);
+	outputFrame.convertTo(outputFrame, CV_8U);
+	cv::normalize(outputFrame, inputFrame, 0, 255, cv::NORM_MINMAX);
+	return outputFrame;
 }
 
 //this is a OFF deblur
