@@ -14,19 +14,6 @@
 
 namespace CameraCOM
 {
-	class FramePost
-	{
-	public:
-#ifdef linux
-		FramePost() {};
-		~FramePost() {};
-		int FramePostNet(int startCode);
-#endif
-		int CameraCheck(int startCode);
-
-
-	};
-
 	class MatDeBlur
 	{
 	public:
@@ -84,6 +71,38 @@ namespace CameraCOM
 			std::string File_args2;
 
 		} CV_Config;
+	};
+
+	class FramePost
+	{
+	public:
+#ifdef linux
+		FramePost() {};
+		~FramePost() {};
+		int FramePostNet(int startCode);
+#endif
+		template<class _Tp>
+		int CameraCheck(_Tp startFlag)
+		{
+			cv::Mat CatchTMP;
+			cv::VideoCapture VideoCatch(startFlag);
+			CameraCOM::DnnModule ModuleSet;
+			if (!VideoCatch.isOpened())
+			{
+				std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
+				return -1;
+			}
+			else
+			{
+				while (true)
+				{
+					VideoCatch >> CatchTMP;
+					cv::imshow("test", ModuleSet.MatDnnDeal(CatchTMP));
+					if (cv::waitKey(1) == 'q')
+						break;
+				}
+			}
+		}
 	};
 
 	template <typename T>

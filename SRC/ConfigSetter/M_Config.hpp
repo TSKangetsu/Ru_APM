@@ -60,7 +60,7 @@ private:
 class SensorsInfo
 {
 public:
-	SensorsInfo(std::string filename);
+	SensorsInfo();
 
 private:
 	std::string dataTmp;

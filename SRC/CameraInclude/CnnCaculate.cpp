@@ -127,11 +127,7 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 //testbed_function
 void CameraCOM::DnnModule::AsyncMatDnnDeal()
 {
-	cv::VideoCapture cap(1);
-	cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
-	cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-	cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
-	cap.set(cv::CAP_PROP_FRAME_COUNT, 60);
+	cv::VideoCapture cap(0);
 	FrameBuffer<cv::Mat> camBuffer;
 	cv::Mat capFrameTmp;
 	bool prograssing = true;

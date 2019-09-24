@@ -17,14 +17,4 @@
 
 int main(int argc, char *argv[])
 {
-	//CameraCOM::FramePost ins;
-	//ins.CameraCheck(0);
-	//cv::Mat ins = Base::Matcom::ImageGet("C:\\Users\\x4030\\OneDrive\\Documents\\Project Code TSKangetsu\\CPP.Ru\\Ru_APM\\Data\\QJ.jpg");
-	cv::Mat ins = cv::imread("C:\\Users\\x4030\\OneDrive\\Documents\\Project Code TSKangetsu\\CPP.Ru\\Ru_APM\\Data\\QJ.jpg", cv::IMREAD_GRAYSCALE);
-	cv::imshow("insa", ins);
-	cv::waitKey();
-	CameraCOM::MatDeBlur insa;
-	cv::Mat ia = insa.FrameOFFDEBlur(ins);
-	imshow("uins", ia);
-	cv::waitKey();
 }
