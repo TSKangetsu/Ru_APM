@@ -44,7 +44,10 @@ namespace CameraCOM
 	{
 	public:
 		DnnModule();
+
 		cv::Mat MatDnnDeal(cv::Mat inputFrame);
+		int MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int *&objectIndex);
+
 		void AsyncMatDnnDeal();
 
 	private:
@@ -70,6 +73,7 @@ namespace CameraCOM
 			std::string File_args1;
 			std::string File_args2;
 
+			bool Enable_FPS_Detect = true;
 		} CV_Config;
 	};
 

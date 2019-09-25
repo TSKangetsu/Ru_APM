@@ -57,7 +57,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 			break;
 		}
 	}
-	catch (const std::exception &e)
+	catch (const std::exception& e)
 	{
 		std::cout << "\033[031m[DnnModule]Load net model or protxt failed , info : ";
 		std::cerr << e.what();
@@ -71,7 +71,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 		NetInside.setPreferableTarget(CV_Config.Preferable_Target);
 		std::cout << "success!\033[0m\n";
 	}
-	catch (const std::exception &e)
+	catch (const std::exception& e)
 	{
 		std::cout << "\033[31m[DnnModule]Are you using raspbian with VPU?";
 		std::cerr << e.what();
@@ -79,27 +79,67 @@ void CameraCOM::DnnModule::DnnModuleSet()
 	}
 }
 
-cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
+
+int CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int*& objectIndex)
 {
 	cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame,
-											   1.0,
-											   cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
-											   cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
-											   true, false);
+		1.0,
+		cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
+		cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
+		true, false);
 
 	NetInside.setInput(blobImage);
 	cv::Mat outRaw = NetInside.forward();
 
-	std::vector<double> layersTimings;
-	double tick_freq = cv::getTickFrequency();
-	double time_ms = NetInside.getPerfProfile(layersTimings) / tick_freq * 1000;
-	cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-				cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
+	if (CV_Config.Enable_FPS_Detect)
+	{
+		std::vector<double> layersTimings;
+		double tick_freq = cv::getTickFrequency();
+		double time_ms = NetInside.getPerfProfile(layersTimings) / tick_freq * 1000;
+		cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+			cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
+	}
 
 	cv::Mat resultsMat = Base::TransTools::ByteToMat(outRaw.ptr<unsigned char>(),
-													 outRaw.size[2],
-													 outRaw.size[3],
-													 CV_32F);
+		outRaw.size[2],
+		outRaw.size[3],
+		CV_32F);
+
+	for (int i = 0; i < resultsMat.rows; i++)
+	{
+		float confidence = resultsMat.at<float>(i, 2);
+		if (confidence > CV_Config.confidence_threshold)
+		{
+		}
+	}
+}
+
+
+
+cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
+{
+	cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame,
+		1.0,
+		cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
+		cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
+		true, false);
+
+	NetInside.setInput(blobImage);
+	cv::Mat outRaw = NetInside.forward();
+
+	if (CV_Config.Enable_FPS_Detect)
+	{
+		std::vector<double> layersTimings;
+		double tick_freq = cv::getTickFrequency();
+		double time_ms = NetInside.getPerfProfile(layersTimings) / tick_freq * 1000;
+		cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+			cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
+	}
+
+	cv::Mat resultsMat = Base::TransTools::ByteToMat(outRaw.ptr<unsigned char>(),
+		outRaw.size[2],
+		outRaw.size[3],
+		CV_32F);
 
 	for (int i = 0; i < resultsMat.rows; i++)
 	{
@@ -115,10 +155,15 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 			cv::Rect object_box((int)tl_x, (int)tl_y, (int)(br_x - tl_x), (int)(br_y - tl_y));
 			cv::rectangle(inputFrame, object_box, cv::Scalar(255, 0, 255), 1, 8, 0);
 			putText(inputFrame,
-					cv::format(" confidence %.2f", confidence),
-					cv::Point(tl_x - 10, tl_y - 5),
-					cv::FONT_HERSHEY_SIMPLEX, 0.7,
-					cv::Scalar(255, 0, 0), 2, 8);
+				cv::format(" confidence %.2f", confidence),
+				cv::Point(tl_x - 10, tl_y - 5),
+				cv::FONT_HERSHEY_SIMPLEX, 0.7,
+				cv::Scalar(255, 0, 0), 2, 8);
+			putText(inputFrame,
+				cv::format(" Index %.2f", objIndex),
+				cv::Point(tl_x - 10, tl_y - 25),
+				cv::FONT_HERSHEY_SIMPLEX, 0.7,
+				cv::Scalar(255, 0, 0), 2, 8);
 		}
 	}
 	return inputFrame;
@@ -144,7 +189,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				break;
 			}
 		}
-	});
+		});
 
 	FrameBuffer<cv::Mat> forwardBuffer;
 	FrameBuffer<cv::Mat> campreBuffer;
@@ -168,10 +213,10 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 			if (!frameTmp.empty())
 			{
 				cv::Mat blobImage = cv::dnn::blobFromImage(frameTmp,
-														   1.0,
-														   cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
-														   cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
-														   true, false);
+					1.0,
+					cv::Size(CV_Config.Blob_Size[0], CV_Config.Blob_Size[1]),
+					cv::Scalar(CV_Config.Blob_Scalar[0], CV_Config.Blob_Scalar[1], CV_Config.Blob_Scalar[2]),
+					true, false);
 				NetInside.setInput(blobImage);
 				campreBuffer.push(frameTmp);
 				asyncForwardingBuffer.push(NetInside.forwardAsync());
@@ -186,7 +231,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				forwardBuffer.push(outRaw);
 			}
 		}
-	});
+		});
 
 	while (true)
 	{
@@ -198,9 +243,9 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 		{
 			cv::Mat showTmp = forwardBuffer.getFrame();
 			cv::Mat resultsMat = Base::TransTools::ByteToMat(showTmp.ptr<unsigned char>(),
-															 showTmp.size[2],
-															 showTmp.size[3],
-															 CV_32F);
+				showTmp.size[2],
+				showTmp.size[3],
+				CV_32F);
 			cv::Mat inputFrame = campreBuffer.getFrame();
 
 			for (int i = 0; i < resultsMat.rows; i++)
@@ -217,10 +262,10 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 					cv::Rect object_box((int)tl_x, (int)tl_y, (int)(br_x - tl_x), (int)(br_y - tl_y));
 					cv::rectangle(inputFrame, object_box, cv::Scalar(255, 0, 255), 1, 8, 0);
 					putText(inputFrame,
-							cv::format(" confidence %.2f", confidence),
-							cv::Point(tl_x - 10, tl_y - 5),
-							cv::FONT_HERSHEY_SIMPLEX, 0.7,
-							cv::Scalar(255, 0, 0), 2, 8);
+						cv::format(" confidence %.2f", confidence),
+						cv::Point(tl_x - 10, tl_y - 5),
+						cv::FONT_HERSHEY_SIMPLEX, 0.7,
+						cv::Scalar(255, 0, 0), 2, 8);
 
 					std::string label = cv::format("Camera: %.2f FPS", camBuffer.getDecFPS());
 					cv::putText(inputFrame, label, cv::Point(0, 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
