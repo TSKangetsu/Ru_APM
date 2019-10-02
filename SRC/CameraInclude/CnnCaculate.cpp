@@ -112,6 +112,7 @@ int CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int*&
 		{
 		}
 	}
+	return 0;
 }
 
 

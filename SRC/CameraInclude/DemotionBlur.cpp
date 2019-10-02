@@ -1,6 +1,6 @@
 #include "M_Camera.hpp"
 
-cv::Mat CameraCOM::MatDeBlur::FrameMotionDEBlur(cv::Mat inputFrame)
+cv::Mat CameraCOM::MatDeal::FrameMotionDEBlur(cv::Mat inputFrame)
 {
 	cv::Mat outputFrame;
 	cv::Rect roi = cv::Rect(0, 0, inputFrame.cols & -2, inputFrame.rows & -2);
@@ -15,7 +15,7 @@ cv::Mat CameraCOM::MatDeBlur::FrameMotionDEBlur(cv::Mat inputFrame)
 	return outputFrame;
 }
 
-cv::Mat CameraCOM::MatDeBlur::FrameOFFDEBlur(cv::Mat inputFrame)
+cv::Mat CameraCOM::MatDeal::FrameOFFDEBlur(cv::Mat inputFrame)
 {
 	cv::Mat outputFrame;
 	cv::Rect roi = cv::Rect(0, 0, inputFrame.cols & -2, inputFrame.rows & -2);
@@ -29,7 +29,7 @@ cv::Mat CameraCOM::MatDeBlur::FrameOFFDEBlur(cv::Mat inputFrame)
 }
 
 //this is a OFF deblur
-void CameraCOM::MatDeBlur::CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R)
+void CameraCOM::MatDeal::CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R)
 {
 	cv::Mat h(filterSize, CV_32F, cv::Scalar(0));
 	cv::Point point(filterSize.width / 2, filterSize.height / 2);
@@ -39,7 +39,7 @@ void CameraCOM::MatDeBlur::CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R
 }
 
 //this is a motion deblur
-void CameraCOM::MatDeBlur::CalcPSF(cv::Mat& outputframe, cv::Size filterSize, int len, double theta)
+void CameraCOM::MatDeal::CalcPSF(cv::Mat& outputframe, cv::Size filterSize, int len, double theta)
 {
 	cv::Mat h(filterSize, CV_32F, cv::Scalar(0));
 	cv::Point point(filterSize.width / 2, filterSize.height / 2);
@@ -48,7 +48,7 @@ void CameraCOM::MatDeBlur::CalcPSF(cv::Mat& outputframe, cv::Size filterSize, in
 	outputframe = h / summa[0];
 }
 
-void CameraCOM::MatDeBlur::Fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame)
+void CameraCOM::MatDeal::Fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame)
 {
 	outputFrame = inputFrame.clone();
 	int cx = outputFrame.cols / 2;
@@ -66,7 +66,7 @@ void CameraCOM::MatDeBlur::Fftshift(const cv::Mat& inputFrame, cv::Mat& outputFr
 	tmp.copyTo(q2);
 }
 
-void CameraCOM::MatDeBlur::Filter2DFreq(const cv::Mat& inputFrame, cv::Mat& outputFrame, const cv::Mat& H)
+void CameraCOM::MatDeal::Filter2DFreq(const cv::Mat& inputFrame, cv::Mat& outputFrame, const cv::Mat& H)
 {
 	cv::Mat planes[2] = { cv::Mat_<float>(inputFrame.clone()), cv::Mat::zeros(inputFrame.size(), CV_32F) };
 	cv::Mat complexI;
@@ -82,7 +82,7 @@ void CameraCOM::MatDeBlur::Filter2DFreq(const cv::Mat& inputFrame, cv::Mat& outp
 	outputFrame = planes[0];
 }
 
-void CameraCOM::MatDeBlur::CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr)
+void CameraCOM::MatDeal::CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr)
 {
 	cv::Mat h_PSF_shifted;
 	Fftshift(input_h_PSF, h_PSF_shifted);
@@ -97,7 +97,7 @@ void CameraCOM::MatDeBlur::CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& ou
 	cv::divide(planes[0], denom, output_G);
 }
 //here are motiondeblur function last
-void CameraCOM::MatDeBlur::Edgetaper(const cv::Mat& inputFrame, cv::Mat& outputFrame, double gamma, double beta)
+void CameraCOM::MatDeal::Edgetaper(const cv::Mat& inputFrame, cv::Mat& outputFrame, double gamma, double beta)
 {
 	int Nx = inputFrame.cols;
 	int Ny = inputFrame.rows;

@@ -14,7 +14,7 @@
 
 namespace CameraCOM
 {
-	class MatDeBlur
+	class MatDeal
 	{
 	public:
 		cv::Mat FrameMotionDEBlur(cv::Mat inputFrame);
