@@ -18,7 +18,7 @@ project(Ru_APM)
 #Opencv----4.1.0
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-
+ 
 #wiringPi
 IF(UNIX)
 	find_library(wiringPi_LIB wiringPi)

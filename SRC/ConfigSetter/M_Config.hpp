@@ -19,15 +19,15 @@
 
 namespace JsonConfig
 {
-class CVConfig
-{
-public:
-	CVConfig();
-	std::string dataTmp;
+	class CVConfig
+	{
+	public:
+		CVConfig();
+		std::string dataTmp;
 
-private:
-	const std::string cvConfigName = "./CVConfig.json";
-	nlohmann::json cvExample = R"(
+	private:
+		const std::string cvConfigName = "./CVConfig.json";
+		nlohmann::json cvExample = R"(
 		{
 			"CameraConfig":{
 				"Camera_FrameBuff": 1,
@@ -55,36 +55,5 @@ private:
 			}
 		}
 		)"_json;
-};
-
-class SensorsInfo
-{
-public:
-	SensorsInfo();
-
-private:
-	std::string dataTmp;
-	const std::string sensorsConfigName = "./Sensors.json";
-	nlohmann::json sensorsExample = R"(
-		{
-			"SensorConfigure":[
-				{
-					"Device": "BH1750VI",
-					"DeviceKinds": "LIGHTSENSORS",
-					"I2CAddress":"0x23",
-					"StartFlag":{
-						"addr01": "value",
-						"addr02": "value",
-						"addr02": "value"
-					},
-					"VerDataAddress": [
-						"dataaddr01",
-						"dataaddr02",
-						"dataaddr03"
-					]
-				}
-			]
-		}
-	)"_json;
-};
+	};
 } // namespace JsonConfig
