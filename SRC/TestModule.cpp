@@ -17,7 +17,6 @@
 
 int main(int argc, char* argv[])
 {
-	I2Ccontrol_REC::PCA9685_AirSet ins;
 	//cv::Mat ims = Base::Matcom::ImageGet(".\\Data\\QJ.jpg");
 	//cv::Mat IMS;
 	//cv::Mat IMSO;
