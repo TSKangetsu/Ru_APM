@@ -90,7 +90,7 @@ namespace CameraCOM
 		{
 			cv::Mat CatchTMP;
 			cv::VideoCapture VideoCatch(startFlag);
-			CameraCOM::DnnModule ModuleSet;
+			//CameraCOM::DnnModule ModuleSet;
 			if (!VideoCatch.isOpened())
 			{
 				std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -101,7 +101,7 @@ namespace CameraCOM
 				while (true)
 				{
 					VideoCatch >> CatchTMP;
-					cv::imshow("test", ModuleSet.MatDnnDeal(CatchTMP));
+					cv::imshow("test", CatchTMP);
 					if (cv::waitKey(1) == 'q')
 						break;
 				}

@@ -1,4 +1,2 @@
-IF(UNIX)
-	aux_source_directory(. LIB_AirControl)
-	add_library(AirControl ${LIB_AirControl})
-ENDIF()
+aux_source_directory(. LIB_AirControl)
+add_library(AirControl ${LIB_AirControl})
