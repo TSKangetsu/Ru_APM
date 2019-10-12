@@ -10,7 +10,7 @@ void _SBUS::_SBUS::FrameWait()
 	wiringPiSetup();
 	pinMode(wpin, OUTPUT);
 	wiringPiISR(wpin,
-		INT_EDGE_FALLING,
+		INT_EDGE_BOTH,
 		&this->FrameRecive);
 }
 
@@ -18,7 +18,7 @@ void _SBUS::_SBUS::FrameRecive()
 {
 	for (int count = 0; count < 50; count++)
 	{
-		int SingleData = digitalReadByte();
+		int SingleData = digitalRead(wpin);
 		std::cout << SingleData << "\n";
 	}
 }
