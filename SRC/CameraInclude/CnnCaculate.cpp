@@ -57,7 +57,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 			break;
 		}
 	}
-	catch (const std::exception& e)
+	catch (const std::exception & e)
 	{
 		std::cout << "\033[031m[DnnModule]Load net model or protxt failed , info : ";
 		std::cerr << e.what();
@@ -71,7 +71,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 		NetInside.setPreferableTarget(CV_Config.Preferable_Target);
 		std::cout << "success!\033[0m\n";
 	}
-	catch (const std::exception& e)
+	catch (const std::exception & e)
 	{
 		std::cout << "\033[31m[DnnModule]Are you using raspbian with VPU?";
 		std::cerr << e.what();
@@ -80,7 +80,7 @@ void CameraCOM::DnnModule::DnnModuleSet()
 }
 
 
-int CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int*& objectIndex)
+int CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame, float*& Data)
 {
 	cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame,
 		1.0,
@@ -105,11 +105,20 @@ int CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int*&
 		outRaw.size[3],
 		CV_32F);
 
+	Data = new  float[resultsMat.rows * 5 + 1];
+
 	for (int i = 0; i < resultsMat.rows; i++)
 	{
 		float confidence = resultsMat.at<float>(i, 2);
 		if (confidence > CV_Config.confidence_threshold)
 		{
+			int set = i * 5;
+			Data[set] = resultsMat.at<float>(i, 1);
+			Data[set + 1] = resultsMat.at<float>(i, 3);
+			Data[set + 2] = resultsMat.at<float>(i, 4);
+			Data[set + 3] = resultsMat.at<float>(i, 5);
+			Data[set + 4] = resultsMat.at<float>(i, 6);
+
 		}
 	}
 	return 0;

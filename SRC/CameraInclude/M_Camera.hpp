@@ -44,10 +44,10 @@ namespace CameraCOM
 	{
 	public:
 		DnnModule();
-
+		//return a marked image
 		cv::Mat MatDnnDeal(cv::Mat inputFrame);
-		int MatDnnDeal(cv::Mat inputFrame, int*& x, int*& y, int *&objectIndex);
-
+		//output image detected object datas
+		int MatDnnDeal(cv::Mat inputFrame, float*& Data);
 		void AsyncMatDnnDeal();
 
 	private:
