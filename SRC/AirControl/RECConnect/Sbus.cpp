@@ -9,9 +9,9 @@ void _SBUS::_SBUS::FrameWait()
 {
 	wiringPiSetup();
 	pinMode(wpin, OUTPUT);
-	wiringPiISR(wpin,
-		INT_EDGE_BOTH,
-		&this->FrameRecive);
+	//wiringPiISR(wpin,
+	//	INT_EDGE_BOTH,
+	//	&this->FrameRecive);
 }
 
 void _SBUS::_SBUS::FrameRecive()

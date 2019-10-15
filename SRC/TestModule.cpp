@@ -18,20 +18,35 @@
 
 int main(int argc, char* argv[])
 {
-	cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
-	cv::Mat IMSHVS;
-	cv::cvtColor(ims , IMSHVS , cv::COLOR_BGR2HSV);
-	imshow("ins", IMSHVS);	cv::waitKey();
+	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc2.jpg");
+	//CameraCOM::DnnModule MCS;
+	//cv::Mat res = MCS.MatDnnDeal(ims);
+	//imshow("", res);
+	//cv::waitKey();
 	//
-	cv::Mat IMSO;
-	cv::inRange(IMSHVS, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 128), IMSO);
-	cv::Mat locations;
-	cv::findNonZero(IMSO, locations);
-	for (int i = 0; i < 100; i++)
-	{
-		cv::Point loca = locations.at<cv::Point>(i);
-		std::cout << loca.x << std::endl;
-	}
-	imshow("ins", IMSO);
-	cv::waitKey();
+	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
+	//CameraCOM::DnnModule MCS;
+	//float* Data;
+	//MCS.MatDnnDeal(ims, Data);
+	//for (int i; i < 10; i++)
+	//{
+	//	std::cout << Data[i] << "\n";
+	//}
+	//return  0;
+	//
+	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
+	//cv::Mat IMSHVS;
+	//cv::cvtColor(ims , IMSHVS , cv::COLOR_BGR2HSV);
+	//imshow("ins", IMSHVS);	cv::waitKey();
+	//cv::Mat IMSO;
+	//cv::inRange(IMSHVS, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 128), IMSO);
+	//cv::Mat locations;
+	//cv::findNonZero(IMSO, locations);
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	cv::Point loca = locations.at<cv::Point>(i);
+	//	std::cout << loca.x << std::endl;
+	//}
+	//imshow("ins", IMSO);
+	//cv::waitKey();
 }
