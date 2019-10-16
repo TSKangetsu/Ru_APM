@@ -77,6 +77,13 @@ namespace CameraCOM
 		} CV_Config;
 	};
 
+	class MarkOutModule
+	{
+	public:
+		MarkOutModule(int ModeType) {};
+		cv::Mat ColorCut(cv::Mat InputArray , cv::Scalar Settings);
+	};
+
 	class FramePost
 	{
 	public:
