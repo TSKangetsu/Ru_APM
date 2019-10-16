@@ -18,28 +18,22 @@
 
 int main(int argc, char* argv[])
 {
-	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc2.jpg");
-	//CameraCOM::DnnModule MCS;
-	//cv::Mat res = MCS.MatDnnDeal(ims);
-	//imshow("", res);
-	//cv::waitKey();
-	//
-	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
-	//CameraCOM::DnnModule MCS;
-	//float* Data;
-	//MCS.MatDnnDeal(ims, Data);
-	//for (int i; i < 10; i++)
-	//{
-	//	std::cout << Data[i] << "\n";
-	//}
-	//return  0;
-	//
-	//cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
-	//cv::Mat IMSHVS;
-	//cv::cvtColor(ims , IMSHVS , cv::COLOR_BGR2HSV);
-	//imshow("ins", IMSHVS);	cv::waitKey();
-	//cv::Mat IMSO;
-	//cv::inRange(IMSHVS, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 128), IMSO);
+	cv::Mat IMSO;
+	cv::Mat EnSO;
+	cv::Mat GAUS;
+	cv::Mat Dele;
+	//cv::Mat cvt;
+
+	cv::Mat ims = Base::Matcom::ImageGet("/Data/dc.png");
+	//cv::cvtColor(ims, cvt, cv::COLOR_BGR2HSV);
+	cv::Mat Ele = cv::getStructuringElement(cv::MORPH_RECT,
+		cv::Size(8 * 1, 8 * 1), 
+		cv::Point(2,2));
+	cv::erode(ims, EnSO, Ele);
+	cv::inRange(EnSO, cv::Scalar(0, 0, 0), cv::Scalar(0, 255, 0), IMSO);
+	cv::erode(IMSO, EnSO, Ele);
+	cv::GaussianBlur(EnSO, GAUS, cv::Size(11, 11), 0);
+	cv::dilate(GAUS, Dele, Ele);
 	//cv::Mat locations;
 	//cv::findNonZero(IMSO, locations);
 	//for (int i = 0; i < 100; i++)
@@ -47,6 +41,6 @@ int main(int argc, char* argv[])
 	//	cv::Point loca = locations.at<cv::Point>(i);
 	//	std::cout << loca.x << std::endl;
 	//}
-	//imshow("ins", IMSO);
-	//cv::waitKey();
+	imshow("ins", GAUS);
+	cv::waitKey();
 }
