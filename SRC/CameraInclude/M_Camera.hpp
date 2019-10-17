@@ -81,7 +81,7 @@ namespace CameraCOM
 	{
 	public:
 		MarkOutModule(int ModeType) {};
-		cv::Mat ColorCut(cv::Mat InputArray , cv::Scalar Settings);
+		cv::Mat ColorCut(cv::Mat InputArray, cv::Scalar Settings);
 		cv::Point* ImgMarkOut(cv::Mat InputArrayRanged);
 	};
 
@@ -94,11 +94,10 @@ namespace CameraCOM
 		int FramePostNet(int startCode);
 #endif
 		template<class _Tp>
-		int CameraCheck(_Tp startFlag)
+		int CameraOutput(_Tp startFlag)
 		{
 			cv::Mat CatchTMP;
 			cv::VideoCapture VideoCatch(startFlag);
-			//CameraCOM::DnnModule ModuleSet;
 			if (!VideoCatch.isOpened())
 			{
 				std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -109,7 +108,30 @@ namespace CameraCOM
 				while (true)
 				{
 					VideoCatch >> CatchTMP;
-					cv::imshow("test", CatchTMP);
+					cv::imshow("NormalCamera", CatchTMP);
+					if (cv::waitKey(1) == 'q')
+						break;
+				}
+			}
+		}
+		template<class _Tp>
+		int CameraDNNOutput(_Tp startFlag)
+		{
+			cv::Mat CatchTMP;
+			cv::VideoCapture VideoCatch(startFlag);
+			CameraCOM::DnnModule ModuleSet;
+			if (!VideoCatch.isOpened())
+			{
+				std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
+				return -1;
+			}
+			else
+			{
+				while (true)
+				{
+					VideoCatch >> CatchTMP;
+					CatchTMP = ModuleSet.MatDnnDeal(CatchTMP);
+					cv::imshow("DnnOutput", CatchTMP);
 					if (cv::waitKey(1) == 'q')
 						break;
 				}

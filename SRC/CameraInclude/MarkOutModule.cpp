@@ -45,11 +45,8 @@ cv::Point* CameraCOM::MarkOutModule::ImgMarkOut(cv::Mat InputArrayRanged)
 	cv::Mat contourfound;
 	cv::findContours(InputArrayRanged, contourfound, cv::RETR_LIST ,cv::CHAIN_APPROX_NONE);
 
-	//cv::imshow("counter", contourfound);
-	//cv::waitKey();
+	std::cout << contourfound.size() << "\n";
 
-	//cv::Mat location;
-	//cv::findNonZero(InputArrayRanged, location);
 	cv::Point* resultLocation = new cv::Point[10];
 	return resultLocation;
 }

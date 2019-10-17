@@ -1,5 +1,5 @@
 #ifdef linux
-#include "LinuxClient.hpp"
+#include "ComClient.hpp"
 void APMClient::GUIClient::RecvShow(std::string ipaddress, int localport, int remoteport)
 {
     Base::Socket sock;

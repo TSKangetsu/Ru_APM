@@ -1,5 +1,5 @@
 #include <wiringPi.h>
-
+#include <softTone.h>
 #define BuzzPin 25
 
 #define CL0 0
