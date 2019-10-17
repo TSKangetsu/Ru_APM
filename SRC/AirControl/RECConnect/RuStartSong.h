@@ -1,22 +1,4 @@
-#include <stdio.h>
-#include <opencv2/opencv.hpp>
-#include <string>
-#include <thread>
-#include <iostream>
-#include "CameraInclude/M_Camera.hpp"
-#include "ToolsInclude/M_Tools.hpp"
-#include "APM_Client/LinuxClient.hpp"
-#include "ConfigSetter/M_Config.hpp"
-#include "AirControl/RECConnect/M_RECsetter.hpp"
-#ifdef linux
-#include <softTone.h>
-#include <unistd.h>
-#include <time.h>
-#endif
-
-#ifdef windows
-#include <Windows.h>
-#endif
+#include <wiringPi.h>
 
 #define BuzzPin 25
 
@@ -46,10 +28,11 @@
 #define CH6 882
 #define CH7 990
 
+
 int song_1[] = { CM5,CL0,CM5,CM4,CM4,CM6,CM5,CM1,CM4,CM3,CM2,CM3,CM1,CM5,CL0,CM5,CM7,CH1,CM5,CL0};
 
 double beat_1[] = { 2,0.1,1,1,1,1,2,1,1,1,1,1,2,0.1,2,1,1,1,3,2};
-int main(int argc, char* argv[])
+inline int yongchang()
 {
 	int i, j;
 

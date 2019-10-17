@@ -82,6 +82,7 @@ namespace CameraCOM
 	public:
 		MarkOutModule(int ModeType) {};
 		cv::Mat ColorCut(cv::Mat InputArray , cv::Scalar Settings);
+		cv::Point* ImgMarkOut(cv::Mat InputArrayRanged);
 	};
 
 	class FramePost
