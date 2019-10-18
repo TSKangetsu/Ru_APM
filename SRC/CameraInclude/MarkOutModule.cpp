@@ -1,8 +1,17 @@
 #include "M_Camera.hpp"
 
+CameraCOM::MarkOutModule::MarkOutModule(int modeType)
+{
+	JsonConfig::CVConfig JsonSet;
+	nlohmann::json Data = nlohmann::json::parse(JsonSet.dataTmp);
+
+	auto colorRangeTmp = Data["Color_Range"].get<std::vector<int>>();
+	Markout_Args.Color_Range[0] = cv::Scalar(colorRangeTmp[0], colorRangeTmp[1], colorRangeTmp[2]);
+	Markout_Args.Color_Range[1] = cv::Scalar(colorRangeTmp[3], colorRangeTmp[4], colorRangeTmp[5]);
+}
+
 cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray, cv::Scalar Settings)
 {
-	cv::Mat DealTmp;
 	cv::Mat ReasultMat;
 	cv::Mat Element;
 
@@ -17,7 +26,13 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray, cv::Scalar Settin
 		cv::Point(2, 2)
 	);
 
-	cv::dilate(InputArray, ReasultMat, Element);
+	cv::erode(
+		InputArray,
+		ReasultMat,
+		Element
+	);
+
+	cv::inRange(ReasultMat, Markout_Args.Color_Range[0], Markout_Args.Color_Range[1], ReasultMat);
 
 	cv::erode(
 		ReasultMat,
@@ -25,25 +40,20 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray, cv::Scalar Settin
 		Element
 	);
 
-	cv::GaussianBlur(
-		ReasultMat,
-		ReasultMat,
-		cv::Size(11, 11),
-		0
-	);
-
-	cv::inRange(ReasultMat, cv::Scalar(0, 8, 0), cv::Scalar(0, 255, 128), ReasultMat);
+	cv::dilate(ReasultMat, ReasultMat, Element);
 
 	end = clock();
-	std::cout << "MatDealTime: " << (int)(end - begin) << "\n";
 
+	std::cout << "MatDealTime: " << (int)(end - begin) << "\n";
+	cv::imshow("test", ReasultMat);
+	cv::waitKey();
 	return ReasultMat;
 }
 
 cv::Point* CameraCOM::MarkOutModule::ImgMarkOut(cv::Mat InputArrayRanged)
 {
 	cv::Mat contourfound;
-	cv::findContours(InputArrayRanged, contourfound, cv::RETR_LIST ,cv::CHAIN_APPROX_NONE);
+	cv::findContours(InputArrayRanged, contourfound, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
 
 	std::cout << contourfound.size() << "\n";
 

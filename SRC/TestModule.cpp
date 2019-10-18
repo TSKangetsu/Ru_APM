@@ -18,7 +18,10 @@
 #endif
 int main(int argc, char* argv[])
 {
-	APMClient::CliClient ems;
-	ems.Client_server();
+	cv::Mat ins = Base::Matcom::ImageGet("/Data/ds2.jpg");
+	cv::imshow("test" , ins);
+	cv::waitKey();
+	CameraCOM::MarkOutModule ems(0);
+	ems.ColorCut(ins , cv::Scalar(2,2));
 	return 0;
 }

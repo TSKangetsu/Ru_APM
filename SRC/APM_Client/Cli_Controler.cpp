@@ -4,20 +4,19 @@ void APMClient::CliClient::Client_server()
 {
 	while (true)
 	{
-		while (true)
+		std::cout << ">>";
+		std::cin >> incommingData;
+
+		if (incommingData.compare("dnncamera start") == 0)
 		{
-			std::cout << ">>";
-			std::cin >> incommingData;
-			std::cout << "\n";
-			break;
-		}
-		if (incommingData.c_str() == "CameraNCSStart")
-		{
-			std::cout << "NCSCameraStart" << "\n";
 			auto thread = std::async(std::launch::async, [] {
 				CameraCOM::FramePost StartNCSCamera;
 				StartNCSCamera.CameraDNNOutput(0);
-			});
+				});
+		}
+		else if (incommingData.compare("dnncamera start") == 0)
+		{
+
 		}
 	}
 }
