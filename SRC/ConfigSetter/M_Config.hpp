@@ -52,17 +52,18 @@ namespace JsonConfig
 					"args1": "none",
 					"args2": "none"
 				}
-			}
+			},
 			"Mark_Config":{
 				"Color_Range":[
 					0,
 					0,
-					0
+					0,
 					0,
 					255,
 					0
 				]
 			}
+		}
 		)"_json;
 	};
 } // namespace JsonConfig

@@ -1,11 +1,11 @@
-#base--
+ #base--
 cmake_minimum_required(VERSION 3.10)
 IF(UNIX)
 	set(CMAKE_C_COMPILER "/usr/bin/gcc")
 	set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 	set(OpenCV_DIR "/opt/intel/openvino/opencv/cmake")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath -Wl,/opt/intel/openvino/inference_engine/lib/armv7l")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -march=armv7-a")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread -march=armv7-a")
 	add_definitions(-Dlinux)
 ELSEIF(WIN32)
 	add_definitions(-Dwindows)

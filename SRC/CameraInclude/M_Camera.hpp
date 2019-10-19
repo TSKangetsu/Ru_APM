@@ -80,8 +80,8 @@ namespace CameraCOM
 	class MarkOutModule
 	{
 	public:
-		MarkOutModule(int ModeType);
-		cv::Mat ColorCut(cv::Mat InputArray, cv::Scalar Settings);
+		MarkOutModule();
+		cv::Mat ColorCut(cv::Mat InputArray);
 		cv::Point* ImgMarkOut(cv::Mat InputArrayRanged);
 		struct Markout_Args
 		{
