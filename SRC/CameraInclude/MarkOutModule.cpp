@@ -14,6 +14,7 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
 {
 	cv::Mat ReasultMat;
 	cv::Mat Element;
+	cv::Mat Element2;
 
 	clock_t begin;
 	clock_t end;
@@ -22,13 +23,19 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
 
 	cv::cvtColor(InputArray, ReasultMat, cv::COLOR_BGR2HSV);
 
+	cv::inRange(ReasultMat, Markout_Args.Color_Range[0], Markout_Args.Color_Range[1], ReasultMat);
+
 	Element = cv::getStructuringElement(
 		cv::MORPH_RECT,
-		cv::Size(8, 8),
-		cv::Point(2, 2)
+		cv::Size(2, 2),
+		cv::Point(1, 1)
 	);
 
-	cv::inRange(InputArray, Markout_Args.Color_Range[0], Markout_Args.Color_Range[1], ReasultMat);
+	Element2 = cv::getStructuringElement(
+		cv::MORPH_RECT,
+		cv::Size(40, 40),
+		cv::Point(1,1)
+	);
 
 	cv::erode(
 		ReasultMat,
@@ -36,23 +43,17 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
 		Element
 	);
 
-	cv::dilate(ReasultMat, ReasultMat, Element);
-
+	cv::dilate(ReasultMat, ReasultMat, Element2);
 	end = clock();
 
 	std::cout << "MatDealTime: " << (int)(end - begin) << "\n";
-	cv::imshow("test", ReasultMat);
-	cv::waitKey();
+
 	return ReasultMat;
 }
 
-cv::Point* CameraCOM::MarkOutModule::ImgMarkOut(cv::Mat InputArrayRanged)
+int CameraCOM::MarkOutModule::ImgMarkOut(cv::Mat InputArrayRanged)
 {
-	cv::Mat contourfound;
-	cv::findContours(InputArrayRanged, contourfound, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
-
-	std::cout << contourfound.size() << "\n";
-
-	cv::Point* resultLocation = new cv::Point[10];
-	return resultLocation;
+	std::vector<std::vector<cv::Point>> contourfound;
+	cv::findContours(InputArrayRanged, contourfound, cv::RETR_CCOMP , cv::CHAIN_APPROX_TC89_KCOS);
+	return contourfound.size();
 }

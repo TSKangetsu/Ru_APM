@@ -18,9 +18,11 @@
 #endif
 int main(int argc, char* argv[])
 {
-	cv::Mat ins = Base::Matcom::ImageGet("/Data/da.png");
-	CameraCOM::MarkOutModule ems;
-	cv::Mat inas = ems.ColorCut(ins);
-	ems.ImgMarkOut(inas);
+	cv::Mat origin = Base::Matcom::ImageGet("da.png");
+	CameraCOM::MarkOutModule tas;
+	cv::Mat deal = tas.ColorCut(origin);
+	std::cout <<"found:" << tas.ImgMarkOut(deal) << "\n";
+	cv::imshow("test", deal);
+	cv::waitKey();
 	return 0;
 }

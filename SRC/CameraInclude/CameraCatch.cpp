@@ -1,5 +1,16 @@
 #include "M_Camera.hpp"
 
+CameraCOM::FramePost::FramePost()
+{
+	JsonConfig::CVConfig Config;
+	nlohmann::json data;
+	//parse will error on windows mvsc , it just a intellisense problem , not need to do something
+	data = nlohmann::json::parse(Config.dataTmp);
+	CameraConfig.Camera_Buff = data["CameraConfig"]["Camera_FrameBuff"].get<int>();
+	CameraConfig.Camera_Height = data["CameraConfig"]["Camera_Height"].get<int>();
+	CameraConfig.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
+}
+
 #ifdef linux
 int CameraCOM::FramePost::FramePostNet(int startCode)
 {

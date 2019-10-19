@@ -56,10 +56,6 @@ namespace CameraCOM
 
 		struct CV_Config
 		{
-			int Camera_Buff;
-			int Camera_Width;
-			int Camera_Height;
-
 			int Model_Type;
 
 			int Blob_Scalar[3];
@@ -82,7 +78,7 @@ namespace CameraCOM
 	public:
 		MarkOutModule();
 		cv::Mat ColorCut(cv::Mat InputArray);
-		cv::Point* ImgMarkOut(cv::Mat InputArrayRanged);
+		int ImgMarkOut(cv::Mat InputArrayRanged);
 		struct Markout_Args
 		{
 			cv::Scalar Color_Range[2];
@@ -93,10 +89,9 @@ namespace CameraCOM
 	{
 	public:
 #ifdef linux
-		FramePost() {};
-		~FramePost() {};
 		int FramePostNet(int startCode);
 #endif
+		FramePost();
 		template<class _Tp>
 		int CameraOutput(_Tp startFlag)
 		{
@@ -141,6 +136,14 @@ namespace CameraCOM
 				}
 			}
 		}
+	private:
+		struct CameraConfig
+		{
+			int Camera_Buff;
+			int Camera_Width;
+			int Camera_Height;
+		}CameraConfig;
+
 	};
 
 	template <typename T>

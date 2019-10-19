@@ -8,7 +8,10 @@
 #include <future>
 #include "../ToolsInclude/M_Tools.hpp"
 #include "../CameraInclude/M_Camera.hpp"
+
+#ifdef linux
 #include <unistd.h>
+#endif
 
 namespace APMClient
 {
