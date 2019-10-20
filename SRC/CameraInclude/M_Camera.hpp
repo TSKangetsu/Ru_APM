@@ -103,6 +103,10 @@ namespace CameraCOM
 
 		struct CV_Config
 		{
+			int Camera_Buff;
+			int Camera_Width;
+			int Camera_Height;
+
 			int Model_Type;
 
 			int Blob_Scalar[3];
@@ -149,6 +153,11 @@ namespace CameraCOM
 		{
 			cv::Mat CatchTMP;
 			cv::VideoCapture VideoCatch(startFlag);
+			VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, CameraConfig.Camera_Height);
+			VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, CameraConfig.Camera_Width);
+			VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, CameraConfig.Camera_Buff);
+			cv::namedWindow("NormalCamera", cv::WINDOW_NORMAL);
+			cv::setWindowProperty("NormalCamera", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 			if (!VideoCatch.isOpened())
 			{
 				std::cout << "\033[35m[CameraStatus] camera start failed\033[0m\n";
@@ -171,6 +180,11 @@ namespace CameraCOM
 		{
 			cv::Mat CatchTMP;
 			cv::VideoCapture VideoCatch(startFlag);
+			VideoCatch.set(cv::CAP_PROP_FRAME_HEIGHT, CameraConfig.Camera_Height);
+			VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, CameraConfig.Camera_Width);
+			VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, CameraConfig.Camera_Buff);
+			cv::namedWindow("DnnOutput", cv::WINDOW_NORMAL);
+			cv::setWindowProperty("DnnOutput", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 			CameraCOM::DnnModule ModuleSet;
 			if (!VideoCatch.isOpened())
 			{

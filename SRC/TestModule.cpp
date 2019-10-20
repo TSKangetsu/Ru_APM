@@ -18,8 +18,9 @@
 #endif
 int main(int argc, char* argv[])
 {
-	CameraCOM::FramePost AsyncTest(5);
-	int i;
-	std::cin >> i;
+	CameraCOM::DnnModule async;
+	async.AsyncMatDnnDeal();
+	//CameraCOM::FramePost ema;
+	//ema.CameraOutput(0);
 	return 0;
 }

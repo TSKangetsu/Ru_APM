@@ -7,6 +7,10 @@ CameraCOM::DnnModule::DnnModule()
 	//parse will error on windows mvsc , it just a intellisense problem , not need to do something
 	data = nlohmann::json::parse(Config.dataTmp);
 
+	CV_Config.Camera_Buff = data["CameraConfig"]["Camera_FrameBuff"].get<int>();
+	CV_Config.Camera_Height = data["CameraConfig"]["Camera_Height"].get<int>();
+	CV_Config.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
+
 	auto scalarTmp = data["DnnConfig"]["Blob_Scalar"].get<std::vector<short>>();
 	CV_Config.Blob_Scalar[0] = scalarTmp[0];
 	CV_Config.Blob_Scalar[1] = scalarTmp[1];
@@ -179,7 +183,12 @@ cv::Mat CameraCOM::DnnModule::MatDnnDeal(cv::Mat inputFrame)
 //testbed_function
 void CameraCOM::DnnModule::AsyncMatDnnDeal()
 {
+	cv::namedWindow("AsyncDnn", cv::WINDOW_NORMAL);
+	cv::setWindowProperty("AsyncDnn", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 	cv::VideoCapture cap(0);
+	cap.set(cv::CAP_PROP_FRAME_HEIGHT, CV_Config.Camera_Height);
+	cap.set(cv::CAP_PROP_FRAME_WIDTH, CV_Config.Camera_Width);
+	cap.set(cv::CAP_PROP_BUFFERSIZE, CV_Config.Camera_Buff);
 	FrameBuffer<cv::Mat> camBuffer;
 	cv::Mat capFrameTmp;
 	bool prograssing = true;
@@ -260,7 +269,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				float confidence = resultsMat.at<float>(i, 2);
 				if (confidence > CV_Config.confidence_threshold)
 				{
-					size_t objIndex = (size_t)(resultsMat.at<float>(i, 1));
+					float objIndex = resultsMat.at<float>(i, 1);
 					float tl_x = resultsMat.at<float>(i, 3) * inputFrame.cols;
 					float tl_y = resultsMat.at<float>(i, 4) * inputFrame.rows;
 					float br_x = resultsMat.at<float>(i, 5) * inputFrame.cols;
@@ -271,6 +280,12 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 					putText(inputFrame,
 						cv::format(" confidence %.2f", confidence),
 						cv::Point(tl_x - 10, tl_y - 5),
+						cv::FONT_HERSHEY_SIMPLEX, 0.7,
+						cv::Scalar(255, 0, 0), 2, 8);
+
+					putText(inputFrame,
+						cv::format(" Index %.2f", objIndex),
+						cv::Point(tl_x - 10, tl_y - 20),
 						cv::FONT_HERSHEY_SIMPLEX, 0.7,
 						cv::Scalar(255, 0, 0), 2, 8);
 
@@ -285,7 +300,7 @@ void CameraCOM::DnnModule::AsyncMatDnnDeal()
 				}
 			}
 
-			cv::imshow("ins", inputFrame);
+			cv::imshow("AsyncDnn", inputFrame);
 			if (cv::waitKey(10) == 'q')
 				break;
 		}
