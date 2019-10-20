@@ -11,6 +11,27 @@ CameraCOM::FramePost::FramePost()
 	CameraConfig.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
 }
 
+CameraCOM::FramePost::FramePost(int frameBufferCount)
+{
+	cv::VideoCapture cap(0);
+	cv::Mat capFrameTmp;
+	std::thread camThread([&]() {
+		while (Asyncprograssing)
+		{
+			cap >> capFrameTmp;
+			if (!capFrameTmp.empty())
+			{
+				AsyncCamBuffer.pushFrame(capFrameTmp);
+			}
+			else
+			{
+				break;
+			}
+		}
+		});
+}
+
+
 #ifdef linux
 int CameraCOM::FramePost::FramePostNet(int startCode)
 {
