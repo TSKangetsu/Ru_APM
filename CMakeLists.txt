@@ -25,6 +25,8 @@ IF(UNIX)
 	find_library(wiringPi_LIB wiringPi)
 #AirControl
 	add_subdirectory(SRC/AirControl/RECConnect)
+#Sensors
+	add_subdirectory(SRC/AirControl/SensorsConnet)
 #APM_Client
 	add_subdirectory(SRC/APM_Client)
 ENDIF()
@@ -55,5 +57,6 @@ target_link_libraries( RuAPM_Cli nlohmann_json::nlohmann_json)
 IF(UNIX)
 	target_link_libraries( RuAPM_Cli APM_Client)
 	target_link_libraries( RuAPM_Cli AirControl)
+	target_link_libraries( RuAPM_Cli Sensors)
 	target_link_libraries( RuAPM_Cli ${wiringPi_LIB})
 ENDIF()

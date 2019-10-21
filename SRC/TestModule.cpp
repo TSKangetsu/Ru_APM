@@ -7,8 +7,9 @@
 #include "ToolsInclude/M_Tools.hpp"
 #include "APM_Client/ComClient.hpp"
 #include "ConfigSetter/M_Config.hpp"
-#include "AirControl/RECConnect/M_RECsetter.hpp"
 #ifdef linux
+#include "AirControl/RECConnect/M_RECsetter.hpp"
+#include "AirControl/SensorsConnet/SensorsDevice.hpp"
 #include <unistd.h>
 #include <time.h>
 #endif
@@ -18,9 +19,7 @@
 #endif
 int main(int argc, char* argv[])
 {
-	CameraCOM::DnnModule async;
-	async.AsyncMatDnnDeal();
-	//CameraCOM::FramePost ema;
-	//ema.CameraOutput(0);
+	Sensors::I2CSensors_GY67 emsa;
+	emsa.DataGet();
 	return 0;
 }
