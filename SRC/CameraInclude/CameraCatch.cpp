@@ -11,16 +11,8 @@ CameraCOM::FramePost::FramePost()
 	CameraConfig.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
 }
 
-CameraCOM::FramePost::FramePost(int frameBufferCount)
+void CameraCOM::FramePost::FramePostAsync(int frameBufferCount)
 {
-	JsonConfig::CVConfig Config;
-	nlohmann::json data;
-	//parse will error on windows mvsc , it just a intellisense problem , not need to do something
-	data = nlohmann::json::parse(Config.dataTmp);
-	CameraConfig.Camera_Buff = data["CameraConfig"]["Camera_FrameBuff"].get<int>();
-	CameraConfig.Camera_Height = data["CameraConfig"]["Camera_Height"].get<int>();
-	CameraConfig.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
-
 	cv::VideoCapture cap(0);
 	cap.set(cv::CAP_PROP_FRAME_HEIGHT, CameraConfig.Camera_Height);
 	cap.set(cv::CAP_PROP_FRAME_WIDTH, CameraConfig.Camera_Width);

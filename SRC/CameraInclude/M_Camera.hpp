@@ -144,7 +144,7 @@ namespace CameraCOM
 #endif
 		FramePost();
 
-		FramePost(int frameBufferCount);
+		void FramePostAsync(int frameBufferCount);
 		bool Asyncprograssing = true;
 		FrameBuffer<cv::Mat> AsyncCamBuffer;
 
