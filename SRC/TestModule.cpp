@@ -19,7 +19,29 @@
 #endif
 int main(int argc, char* argv[])
 {
-	Sensors::I2CSensors_GY67 emsa;
-	emsa.DataGet();
-	return 0;
+	CameraCOM::FramePost emTest;
+	CameraCOM::MarkOutModule Marking;
+	cv::Mat FrameCatch;
+	cv::Mat FrameDeal;
+	std::thread([&] {
+		emTest.FramePostAsync(5);
+		});
+	std::thread([&] {
+		while (true)
+		{
+			if (!emTest.AsyncCamBuffer.empty())
+			{
+				FrameDeal = Marking.ColorCut(emTest.AsyncCamBuffer.getFrame());
+				FrameDeal = Marking.ImgMarkOut(FrameDeal);
+			}
+		}
+		});
+	while (true)
+	{
+		if (!emTest.AsyncCamBuffer.empty())
+		{
+			FrameCatch = emTest.AsyncCamBuffer.getFrame();
+			cv::imshow("Async", FrameCatch);
+		}
+	}
 }
