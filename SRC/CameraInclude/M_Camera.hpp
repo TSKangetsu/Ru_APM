@@ -133,6 +133,8 @@ namespace CameraCOM
 		struct Markout_Args
 		{
 			cv::Scalar Color_Range[2];
+			cv::Scalar Color_Range_Target1[2];
+			cv::Scalar Color_Range_Target2[2];
 		}Markout_Args;
 	};
 

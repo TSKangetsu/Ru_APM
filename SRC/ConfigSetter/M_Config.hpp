@@ -61,6 +61,24 @@ namespace JsonConfig
 					0,
 					255,
 					0
+				],
+				"Color_Range_Target1":
+				[
+					0,
+					0,
+					0,
+					0,
+					0,	
+					0
+				],
+				"ColorRange_Target2":
+				[
+					20,
+					38,
+					254,
+					97,
+					255,
+					255
 				]
 			}
 		}

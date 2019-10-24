@@ -8,6 +8,12 @@ CameraCOM::MarkOutModule::MarkOutModule()
 	auto colorRangeTmp = Data["Mark_Config"]["Color_Range"].get<std::vector<int>>();
 	Markout_Args.Color_Range[0] = cv::Scalar(colorRangeTmp[0], colorRangeTmp[1], colorRangeTmp[2]);
 	Markout_Args.Color_Range[1] = cv::Scalar(colorRangeTmp[3], colorRangeTmp[4], colorRangeTmp[5]);
+	colorRangeTmp = Data["Mark_Config"]["Color_Range_Target1"].get<std::vector<int>>();
+	Markout_Args.Color_Range_Target1[0] = cv::Scalar(colorRangeTmp[0], colorRangeTmp[1], colorRangeTmp[2]);
+	Markout_Args.Color_Range_Target1[1] = cv::Scalar(colorRangeTmp[3], colorRangeTmp[4], colorRangeTmp[5]);
+	colorRangeTmp = Data["Mark_Config"]["ColorRange_Target2"].get<std::vector<int>>();
+	Markout_Args.Color_Range_Target2[0] = cv::Scalar(colorRangeTmp[0], colorRangeTmp[1], colorRangeTmp[2]);
+	Markout_Args.Color_Range_Target2[1] = cv::Scalar(colorRangeTmp[3], colorRangeTmp[4], colorRangeTmp[5]);
 }
 
 cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
@@ -23,7 +29,7 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
 
 	cv::cvtColor(InputArray, ReasultMat, cv::COLOR_BGR2HSV);
 
-	cv::inRange(ReasultMat, Markout_Args.Color_Range[0], Markout_Args.Color_Range[1], ReasultMat);
+	cv::inRange(ReasultMat, Markout_Args.Color_Range_Target2[0], Markout_Args.Color_Range_Target2[1], ReasultMat);
 
 	Element = cv::getStructuringElement(
 		cv::MORPH_RECT,
@@ -61,3 +67,4 @@ int CameraCOM::MarkOutModule::ImgMarkOut(cv::Mat InputArrayRanged)
 	cv::findContours(InputArrayRanged, contourfound, cv::RETR_CCOMP, cv::CHAIN_APPROX_TC89_KCOS);
 	return contourfound.size();
 }
+

@@ -22,32 +22,51 @@ int main(int argc, char* argv[])
 {
 	CameraCOM::FramePost emTest;
 	CameraCOM::MarkOutModule Marker;
+	cv::Mat Tester[6];
+	for (int i = 0; i < 7; i++)
+	{
+		Tester[i] = cv::Mat();
+	}
 	cv::Mat FrameCatch;
 	cv::Mat Deal;
-	int ContourFound;
+	int ContourFound[6];
+	int MaxContourFound;
 
 	std::thread FrameCatcher([&] {
 		emTest.FramePostAsync(5);
 		});
 
 	std::thread FrameDealer([&] {
+		sleep(2);
 		while (true)
 		{
 			if (!emTest.AsyncCamBuffer.empty())
 			{
-				Deal = emTest.AsyncCamBuffer.front();
-				Deal = Marker.ColorCut(Deal);
-				ContourFound = Marker.ImgMarkOut(Deal);
-#define DEBUG
-#ifdef DEBUG
-				std::cout << "contourfound:" << ContourFound << "\n";
-#endif
-				cv::imshow("x", Deal);
-				if (cv::waitKey(10) == 'q')
-					break;
-				Sleep(200);
-
+				for (int i = 0; i < 6; i++)
+				{
+					Tester[i] = emTest.AsyncCamBuffer.front();
+					sleep(0.5);
+				}
+				for (int i = 0; i < 6; i++)
+				{
+					Deal = emTest.AsyncCamBuffer.front();
+					Deal = Marker.ColorCut(Deal);
+					ContourFound[i] = Marker.ImgMarkOut(Deal);
+				}
+				for (int i = 0; i < 6; i++)
+				{
+					int tmp;
+					if (ContourFound[i] < ContourFound[i - 1])
+					{
+						tmp = ContourFound[i];
+						ContourFound[i - 1] = ContourFound[i];
+						ContourFound[i] = tmp;
+					}
+				}
+				MaxContourFound = ContourFound[6];
+				std::cout << MaxContourFound;
 			}
+			sleep(1);
 		}
 		});
 
@@ -56,6 +75,8 @@ int main(int argc, char* argv[])
 		if (!emTest.AsyncCamBuffer.empty())
 		{
 			FrameCatch = emTest.AsyncCamBuffer.front();
+			if (emTest.AsyncCamBuffer.frameCount == 5)
+				emTest.AsyncCamBuffer.clearBuffer();
 			cv::imshow("test", FrameCatch);
 			if (cv::waitKey(10) == 'q')
 				break;
