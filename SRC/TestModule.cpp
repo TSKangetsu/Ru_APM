@@ -15,33 +15,50 @@
 #endif
 
 #ifdef windows
+#include <io.h>
 #include <Windows.h>
 #endif
 int main(int argc, char* argv[])
 {
 	CameraCOM::FramePost emTest;
-	CameraCOM::MarkOutModule Marking;
+	CameraCOM::MarkOutModule Marker;
 	cv::Mat FrameCatch;
-	cv::Mat FrameDeal;
-	std::thread([&] {
+	cv::Mat Deal;
+	int ContourFound;
+
+	std::thread FrameCatcher([&] {
 		emTest.FramePostAsync(5);
 		});
-	std::thread([&] {
+
+	std::thread FrameDealer([&] {
 		while (true)
 		{
 			if (!emTest.AsyncCamBuffer.empty())
 			{
-				FrameDeal = Marking.ColorCut(emTest.AsyncCamBuffer.getFrame());
-				FrameDeal = Marking.ImgMarkOut(FrameDeal);
+				Deal = emTest.AsyncCamBuffer.front();
+				Deal = Marker.ColorCut(Deal);
+				ContourFound = Marker.ImgMarkOut(Deal);
+#define DEBUG
+#ifdef DEBUG
+				std::cout << "contourfound:" << ContourFound << "\n";
+#endif
+				cv::imshow("x", Deal);
+				if (cv::waitKey(10) == 'q')
+					break;
+				Sleep(200);
+
 			}
 		}
 		});
+
 	while (true)
 	{
 		if (!emTest.AsyncCamBuffer.empty())
 		{
-			FrameCatch = emTest.AsyncCamBuffer.getFrame();
-			cv::imshow("Async", FrameCatch);
+			FrameCatch = emTest.AsyncCamBuffer.front();
+			cv::imshow("test", FrameCatch);
+			if (cv::waitKey(10) == 'q')
+				break;
 		}
 	}
 }

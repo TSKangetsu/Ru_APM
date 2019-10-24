@@ -45,10 +45,11 @@ cv::Mat CameraCOM::MarkOutModule::ColorCut(cv::Mat InputArray)
 
 	cv::dilate(ReasultMat, ReasultMat, Element2);
 	end = clock();
+
 #define DEBUG
 
 #ifdef DEBUG
-	std::cout << "MatDealTime: " << (int)(end - begin) << "\n";
+	std::cout << "MatDealTime :" << (int)(end - begin) << "\n";
 #endif
 
 	return ReasultMat;
