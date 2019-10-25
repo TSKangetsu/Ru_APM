@@ -10,6 +10,8 @@
 #ifdef linux
 #include "AirControl/RECConnect/M_RECsetter.hpp"
 #include "AirControl/SensorsConnet/SensorsDevice.hpp"
+#include "AirControl/RECConnect/RuStartSong.h"
+#include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
 #endif
@@ -18,53 +20,59 @@
 #include <io.h>
 #include <Windows.h>
 #endif
-int main(int argc, char* argv[])
+
+int PWMTime;
+bool startingMarking = false;
+bool Markfinish = false;
+struct timeval ts, te;
+
+void Markout()
 {
+	cv::namedWindow("Test", cv::WINDOW_NORMAL);
+	cv::setWindowProperty("Test", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 	CameraCOM::FramePost emTest;
 	CameraCOM::MarkOutModule Marker;
-	cv::Mat Tester[6];
-	for (int i = 0; i < 7; i++)
-	{
-		Tester[i] = cv::Mat();
-	}
 	cv::Mat FrameCatch;
 	cv::Mat Deal;
-	int ContourFound[6];
-	int MaxContourFound;
+	int ContourFound;
 
 	std::thread FrameCatcher([&] {
 		emTest.FramePostAsync(5);
 		});
 
 	std::thread FrameDealer([&] {
-		sleep(2);
 		while (true)
 		{
-			if (!emTest.AsyncCamBuffer.empty())
+			std::cout << "pwmTime:" << PWMTime << "\n";
+			if (PWMTime < 2100 && PWMTime >1700)
 			{
-				for (int i = 0; i < 6; i++)
+				sleep(1);
+				if (PWMTime < 2100 && PWMTime >1700)
 				{
-					Tester[i] = emTest.AsyncCamBuffer.front();
-					sleep(0.5);
-				}
-				for (int i = 0; i < 6; i++)
-				{
-					Deal = emTest.AsyncCamBuffer.front();
-					Deal = Marker.ColorCut(Deal);
-					ContourFound[i] = Marker.ImgMarkOut(Deal);
-				}
-				for (int i = 0; i < 6; i++)
-				{
-					int tmp;
-					if (ContourFound[i] < ContourFound[i - 1])
+					startingMarking = true;
+					if (!emTest.AsyncCamBuffer.empty())
 					{
-						tmp = ContourFound[i];
-						ContourFound[i - 1] = ContourFound[i];
-						ContourFound[i] = tmp;
+						Deal = emTest.AsyncCamBuffer.front();
+						Deal = Marker.ColorCut(Deal);
+						ContourFound = Marker.ImgMarkOut(Deal);
+						std::cout << "  contourfound:" << ContourFound << "\n";
+						for (int i = 0; i < 5; i++)
+						{
+							for (int i = 0; i < ContourFound; i++)
+							{
+								digitalWrite(7, LOW);
+								usleep(500000);
+								digitalWrite(7, HIGH);
+								usleep(500000);
+							}
+							sleep(1);
+						}
+						startingMarking = false;
+						Markfinish = true;
+						sleep(1);
+						Markfinish = false;
 					}
 				}
-				MaxContourFound = ContourFound[6];
-				std::cout << MaxContourFound;
 			}
 			sleep(1);
 		}
@@ -75,11 +83,88 @@ int main(int argc, char* argv[])
 		if (!emTest.AsyncCamBuffer.empty())
 		{
 			FrameCatch = emTest.AsyncCamBuffer.front();
-			if (emTest.AsyncCamBuffer.frameCount == 5)
-				emTest.AsyncCamBuffer.clearBuffer();
-			cv::imshow("test", FrameCatch);
+			if (PWMTime < 2100 && PWMTime >1700)
+			{
+				cv::putText(FrameCatch, "Start to Detecting...", cv::Point(0, 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0));
+			}
+			if (Markfinish)
+			{
+				cv::putText(FrameCatch, "Marking Finish", cv::Point(10, 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255));
+			}
+			if (startingMarking)
+			{
+				cv::putText(FrameCatch, "makring start", cv::Point(10, 15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0));
+			}
+			cv::imshow("Test", FrameCatch);
 			if (cv::waitKey(10) == 'q')
 				break;
+		}
+	}
+}
+
+void PWMread()
+{
+	int value = digitalRead(0);
+	if (value == 1)
+	{
+		gettimeofday(&ts, NULL);
+	}
+	gettimeofday(&te, NULL);
+	PWMTime = (te.tv_sec - ts.tv_sec) * 1000000 + (te.tv_usec - ts.tv_usec);
+}
+
+void wiringPisuckUp()
+{
+	piHiPri(99);
+	if (wiringPiSetup() == -1) {
+		printf("[WiringPiStatus] WiringPi initialization failed !");
+	}
+	std::cout << "[WiringPiStatus] WiringPI SetSuccessfull !" << "\n";
+
+	//----buzzer
+	pinMode(7, OUTPUT);
+	digitalWrite(7, HIGH);
+
+	pinMode(0, INPUT);
+	wiringPiISR(0, INT_EDGE_BOTH, PWMread);
+}
+
+int main(int argc, char* argv[])
+{
+	int argvs;
+	int data_comfirm;
+	while ((argvs = getopt(argc, argv, "vtsm")) != -1)
+	{
+		switch (argvs)
+		{
+		case 'v':
+			std::cout << cv::getBuildInformation() << std::endl;
+			break;
+		case 't':
+		{
+			CameraCOM::FramePost emtTest;
+			emtTest.CameraOutput(0);
+		}
+		break;
+		case 's':
+		{
+			Markout();
+		}
+		break;
+		case 'm':
+		{
+			std::thread tmw([] {
+				wiringPisuckUp();
+				});
+			cpu_set_t cpuset;
+			CPU_ZERO(&cpuset);
+			CPU_SET(3, &cpuset);
+			int rc = pthread_setaffinity_np(tmw.native_handle(),
+				sizeof(cpu_set_t), &cpuset);
+			tmw.join();
+			Markout();
+		}
+		break;
 		}
 	}
 }

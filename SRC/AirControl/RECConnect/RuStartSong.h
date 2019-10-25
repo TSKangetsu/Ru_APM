@@ -1,6 +1,6 @@
 #include <wiringPi.h>
 #include <softTone.h>
-#define BuzzPin 25
+#define BuzzPin 7
 
 #define CL0 0
 
@@ -29,9 +29,9 @@
 #define CH7 990
 
 
-int song_1[] = { CM5,CL0,CM5,CM4,CM4,CM6,CM5,CM1,CM4,CM3,CM2,CM3,CM1,CM5,CL0,CM5,CM7,CH1,CM5,CL0};
+int song_1[] = { CM5,CL0,CM5,CM4,CM4,CM6,CM5,CM1,CM4,CM3,CM2,CM3,CM1,CM5,CL0,CM5,CM7,CH1,CM5,CL0 };
 
-double beat_1[] = { 2,0.1,1,1,1,1,2,1,1,1,1,1,2,0.1,2,1,1,1,3,2};
+double beat_1[] = { 2,0.1,1,1,1,1,2,1,1,1,1,1,2,0.1,2,1,1,1,3,2 };
 inline int yongchang()
 {
 	int i, j;
@@ -41,19 +41,43 @@ inline int yongchang()
 		return 1;
 	}
 
+	pinMode(7, OUTPUT);
+
 	if (softToneCreate(BuzzPin) == -1) {
 		printf("14CORE| Soft Tone Failed !");
 		return 1;
 	}
-
-	while (1) {
-		printf("14CORE| Sound is generated...\n");
-
-		for (i = 0; i < sizeof(song_1) / 4; i++) {
-			softToneWrite(BuzzPin, song_1[i]);
-			delay(beat_1[i] * 500);
-		}
+	printf("14CORE| Sound is generated...\n");
+	for (i = 0; i < sizeof(song_1) / 4; i++) {
+		softToneWrite(BuzzPin, song_1[i]);
+		delay(beat_1[i] * 500);
 	}
-
 	return 0;
+}
+
+inline int Blinking()
+{
+	if (wiringPiSetup() == -1) {
+		printf("14CORE | WiringPi initialization failed !");
+		return 1;
+	}
+	if (softToneCreate(BuzzPin) == -1) {
+		printf("14CORE| Soft Tone Failed !");
+		return 1;
+	}
+	softToneWrite(BuzzPin, 700);
+	sleep(2);
+}
+
+inline int stopBlinking()
+{
+	if (wiringPiSetup() == -1) {
+		printf("14CORE | WiringPi initialization failed !");
+		return 1;
+	}
+	if (softToneCreate(BuzzPin) == -1) {
+		printf("14CORE| Soft Tone Failed !");
+		return 1;
+	}
+	softToneWrite(BuzzPin, 0);
 }

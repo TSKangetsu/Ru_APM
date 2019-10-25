@@ -145,7 +145,7 @@ namespace CameraCOM
 		int FramePostNet(int startCode);
 #endif
 		FramePost();
-
+		cv::Mat TMPMat;
 		void FramePostAsync(int frameBufferCount);
 		bool Asyncprograssing = true;
 		FrameBuffer<cv::Mat> AsyncCamBuffer;
@@ -170,7 +170,8 @@ namespace CameraCOM
 				while (true)
 				{
 					VideoCatch >> CatchTMP;
-					cv::imshow("NormalCamera", CatchTMP);
+					cv::flip(CatchTMP , TMPMat,0);
+					cv::imshow("NormalCamera", TMPMat);
 					if (cv::waitKey(1) == 'q')
 						break;
 				}

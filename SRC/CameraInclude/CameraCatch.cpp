@@ -21,9 +21,10 @@ void CameraCOM::FramePost::FramePostAsync(int frameBufferCount)
 	while (Asyncprograssing)
 	{
 		cap >> capFrameTmp;
+		cv::flip(capFrameTmp, TMPMat, 0);
 		if (!capFrameTmp.empty())
 		{
-			AsyncCamBuffer.pushFrame(capFrameTmp);
+			AsyncCamBuffer.pushFrame(TMPMat);
 		}
 		else
 		{
