@@ -43,13 +43,15 @@ void Markout()
 	std::thread FrameDealer([&] {
 		while (true)
 		{
-			std::cout << "pwmTime:" << PWMTime << "\n";
 			if (PWMTime < 2100 && PWMTime >1700)
 			{
 				sleep(1);
 				if (PWMTime < 2100 && PWMTime >1700)
 				{
 					startingMarking = true;
+					digitalWrite(26, HIGH);
+					sleep(5);
+					digitalWrite(26, LOW);
 					if (!emTest.AsyncCamBuffer.empty())
 					{
 						Deal = emTest.AsyncCamBuffer.front();
@@ -61,9 +63,9 @@ void Markout()
 							for (int i = 0; i < ContourFound; i++)
 							{
 								digitalWrite(7, LOW);
-								usleep(500000);
+								usleep(200000);
 								digitalWrite(7, HIGH);
-								usleep(500000);
+								usleep(200000);
 							}
 							sleep(1);
 						}
@@ -120,6 +122,12 @@ void wiringPisuckUp()
 		printf("[WiringPiStatus] WiringPi initialization failed !");
 	}
 	std::cout << "[WiringPiStatus] WiringPI SetSuccessfull !" << "\n";
+
+	//----light
+	pinMode(26, OUTPUT);
+	digitalWrite(26, HIGH);
+	sleep(1);
+	digitalWrite(26, LOW);
 
 	//----buzzer
 	pinMode(7, OUTPUT);
