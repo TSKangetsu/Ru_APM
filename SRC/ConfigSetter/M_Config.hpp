@@ -52,34 +52,6 @@ namespace JsonConfig
 					"args1": "none",
 					"args2": "none"
 				}
-			},
-			"Mark_Config":{
-				"Color_Range":[
-					0,
-					0,
-					0,
-					0,
-					255,
-					0
-				],
-				"Color_Range_Target1":
-				[
-					0,
-					0,
-					0,
-					0,
-					0,	
-					0
-				],
-				"ColorRange_Target2":
-				[
-					20,
-					38,
-					254,
-					97,
-					255,
-					255
-				]
 			}
 		}
 		)"_json;

@@ -124,20 +124,6 @@ namespace CameraCOM
 		} CV_Config;
 	};
 
-	class MarkOutModule
-	{
-	public:
-		MarkOutModule();
-		cv::Mat ColorCut(cv::Mat InputArray);
-		int ImgMarkOut(cv::Mat InputArrayRanged);
-		struct Markout_Args
-		{
-			cv::Scalar Color_Range[2];
-			cv::Scalar Color_Range_Target1[2];
-			cv::Scalar Color_Range_Target2[2];
-		}Markout_Args;
-	};
-
 	class FramePost
 	{
 	public:
@@ -145,8 +131,7 @@ namespace CameraCOM
 		int FramePostNet(int startCode);
 #endif
 		FramePost();
-		cv::Mat TMPMat;
-		void FramePostAsync(int frameBufferCount);
+		void FramePostAsync();
 		bool Asyncprograssing = true;
 		FrameBuffer<cv::Mat> AsyncCamBuffer;
 
@@ -170,8 +155,7 @@ namespace CameraCOM
 				while (true)
 				{
 					VideoCatch >> CatchTMP;
-					cv::flip(CatchTMP , TMPMat,0);
-					cv::imshow("NormalCamera", TMPMat);
+					cv::imshow("NormalCamera", CatchTMP);
 					if (cv::waitKey(1) == 'q')
 						break;
 				}

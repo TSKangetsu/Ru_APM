@@ -1,5 +1,5 @@
  #base--
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 IF(UNIX)
 	set(CMAKE_C_COMPILER "/usr/bin/gcc")
 	set(CMAKE_CXX_COMPILER "/usr/bin/g++")

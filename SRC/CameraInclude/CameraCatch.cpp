@@ -11,7 +11,7 @@ CameraCOM::FramePost::FramePost()
 	CameraConfig.Camera_Width = data["CameraConfig"]["Camera_Width"].get<int>();
 }
 
-void CameraCOM::FramePost::FramePostAsync(int frameBufferCount)
+void CameraCOM::FramePost::FramePostAsync()
 {
 	cv::VideoCapture cap(0);
 	cap.set(cv::CAP_PROP_FRAME_HEIGHT, CameraConfig.Camera_Height);
@@ -21,10 +21,9 @@ void CameraCOM::FramePost::FramePostAsync(int frameBufferCount)
 	while (Asyncprograssing)
 	{
 		cap >> capFrameTmp;
-		cv::flip(capFrameTmp, TMPMat, 0);
 		if (!capFrameTmp.empty())
 		{
-			AsyncCamBuffer.pushFrame(TMPMat);
+			AsyncCamBuffer.pushFrame(capFrameTmp);
 		}
 		else
 		{
