@@ -4,7 +4,7 @@
 #endif
 #include "../ToolsInclude/M_Tools.hpp"
 #include "../ConfigSetter/M_Config.hpp"
-#include "../_thirdparty/json/single_include/nlohmann/json.hpp"
+#include "../_thirdparty/json/json.hpp"
 #include <string>
 #include <iostream>
 #include <opencv2/opencv.hpp>

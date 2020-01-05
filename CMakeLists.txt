@@ -1,5 +1,5 @@
  #base--
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 IF(UNIX)
 	set(CMAKE_C_COMPILER "/usr/bin/gcc")
 	set(CMAKE_CXX_COMPILER "/usr/bin/g++")
@@ -23,14 +23,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 IF(UNIX)
 #wiringPi
 	find_library(wiringPi_LIB wiringPi)
-#AirControl
-	add_subdirectory(SRC/AirControl/RECConnect)
-#Sensors
-	add_subdirectory(SRC/AirControl/SensorsConnet)
-#APMModule
-	add_subdirectory(SRC/APMModule)
-#APM_Client
-	add_subdirectory(SRC/APM_Client)
 ENDIF()
 
 #json------3.7.0
@@ -54,12 +46,8 @@ target_link_libraries( RuAPM_Cli CameraControl)
 target_link_libraries( RuAPM_Cli ConfigSetter)
 #target_link_thirdparty
 target_link_libraries( RuAPM_Cli ${OpenCV_LIBS})
-target_link_libraries( RuAPM_Cli nlohmann_json::nlohmann_json)
+target_link_libraries( RuAPM_Cli Json)
 
 IF(UNIX)
-	target_link_libraries( RuAPM_Cli APM_Client)
-	target_link_libraries( RuAPM_Cli APMModule)
-	target_link_libraries( RuAPM_Cli AirControl)
-	target_link_libraries( RuAPM_Cli Sensors)
 	target_link_libraries( RuAPM_Cli ${wiringPi_LIB})
 ENDIF()

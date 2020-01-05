@@ -2,7 +2,7 @@
 #ifndef MCONFIG_H
 #define MCONFIG_H
 #endif
-#include "../_thirdparty/json/single_include/nlohmann/json.hpp"
+#include "../_thirdparty/json/json.hpp"
 #include "../ToolsInclude/M_Tools.hpp"
 #include <fcntl.h>
 #include <fstream>
