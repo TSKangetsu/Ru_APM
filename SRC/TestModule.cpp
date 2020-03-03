@@ -1,8 +1,8 @@
 #include <iostream>
-#include "CameraInclude/M_Camera.hpp"
+#include <unistd.h>
+#include <libmill.h>
 
-int main(int argc, char* argv[])
+int main()
 {
-	CameraCOM::DnnModule Test;
-	Test.AsyncMatDnnDeal();
+	return 0;
 }
