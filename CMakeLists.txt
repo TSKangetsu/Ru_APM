@@ -46,6 +46,7 @@ add_subdirectory(SRC/APMController)
 
 #SingleAPMAPI
 add_subdirectory(SRC/RPiSingleAPM/src)
+add_subdirectory(SRC/RPiSingleAPM/_thirdparty)
 
 #main-include
 add_executable(RuAPM_Cli SRC/TestModule.cpp)
@@ -56,6 +57,7 @@ target_link_libraries( RuAPM_Cli CameraControl)
 target_link_libraries( RuAPM_Cli ConfigSetter)
 target_link_libraries( RuAPM_Cli APMController)
 target_link_libraries( RuAPM_Cli RPiSingleAPI)
+target_link_libraries( RuAPM_Cli LIB)
 #target_link_thirdparty
 target_link_libraries( RuAPM_Cli ${OpenCV_LIBS})
 target_link_libraries( RuAPM_Cli Json)
