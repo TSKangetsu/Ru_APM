@@ -1,10 +1,11 @@
+#include <csignal>
 #include <iostream>
 #include <unistd.h>
-#include "APMController/M_APMController.hpp"
+#include "ToolsInclude/M_Tools.hpp"
+#include "APMController/M_APMMain.hpp"
 
 int main()
 {
-	APMMain::APMControl apmtest;
-	apmtest.APMRuingSettle();
+	APMMain::APMController APMTest;
 	return 0;
 }

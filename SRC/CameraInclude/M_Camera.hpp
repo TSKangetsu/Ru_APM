@@ -127,9 +127,6 @@ namespace CameraCOM
 	class FramePost
 	{
 	public:
-#ifdef linux
-		int FramePostNet(int startCode);
-#endif
 		FramePost();
 		void FramePostAsync();
 		bool Asyncprograssing = true;

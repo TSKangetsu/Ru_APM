@@ -56,4 +56,9 @@ namespace JsonConfig
 		}
 		)"_json;
 	};
+
+	class APMConfig
+	{
+
+	};
 } // namespace JsonConfig
