@@ -33,7 +33,7 @@ bool APMMain::APMController::APMMainThread()
 				sendOutDataBuff[3] = std::to_string(SF._uORB_Accel_Pitch);
 				sendOutDataBuff[4] = std::to_string(SF._uORB_Accel__Roll);
 				dataSender(dataCreator(deviceID, sendOutDataBuff, 5));
-				usleep(8000);
+				usleep(24000);
 			}
 		});
 

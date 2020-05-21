@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <unistd.h>
 #include <iostream>
@@ -5,6 +6,7 @@
 #include <signal.h>
 #include "../ToolsInclude/M_Tools.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
+#include <libmill.h>
 
 namespace APMMain
 {
@@ -12,8 +14,14 @@ namespace APMMain
 	{
 	protected:
 		int deviceID;
+#ifdef millSocket
+		tcpsock mainSocks;
+#endif // DEBUG
+		char dataBuff[256];
+#ifdef linuxSocket
 		Base::Socket* mainSock;
 		std::string dataBuff;
+#endif // linuxSocket
 		NetworkController();
 		void ACCSSConnectionSet();
 		void dataSender(std::string);
