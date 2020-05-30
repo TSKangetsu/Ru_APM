@@ -17,7 +17,6 @@ bool APMMain::APMController::APMMainThread()
 				AttitudeUpdate();
 				SaftyChecking();
 				ESCUpdate();
-				//DebugOutPut();
 				ClockingTimer();
 			}
 		});
