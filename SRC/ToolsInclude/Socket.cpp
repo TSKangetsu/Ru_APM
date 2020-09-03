@@ -1,152 +1,144 @@
 #include "M_Tools.hpp"
-using namespace Base;
-const int MAXHOSTNAME = 200;
-const int MAXCONNECTIONS = 5;
-const int MAXRECV = 500;
 
-Socket::Socket() :m_sock(-1)
+Base::Socket::Socket()
 {
-	memset(&m_addr,
-		0,
-		sizeof(m_addr));
-
+	memset(&m_addr, 0, sizeof(m_addr));
+#ifdef DEBUG
+	std::cout << "\033[32m[SocketInfo]Socket got a initialization\033[0m\n";
+#endif
 }
 
-Socket::~Socket()
+Base::Socket::~Socket()
 {
-	if (is_valid())
-		::close(m_sock);
+	close(m_sock);
+#ifdef DEBUG
+	std::cout << "\033[31m[SocketInfo]Socket Close\n";
+#endif
 }
 
-bool Socket::create()
+bool Base::Socket::Create()
 {
-	m_sock = socket(AF_INET,
-		SOCK_STREAM,
-		0);
-	if (!is_valid())
+	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (!Is_valid())
+	{
 		return false;
+	}
 	int on = 1;
-	if (setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on)) == -1)
-		return false;
+#ifdef DEBUG
+	std::cout << "\033[32m[SocketInfo]Socket create sucess\033[0m\n";
+#endif
 	return true;
-
 }
 
-
-
-bool Socket::bind(const char* ip, const int port)
+bool Base::Socket::Bind(std::string IPAddress, int port)
 {
-	if (!is_valid())
+	if (!Is_valid())
 	{
 		return false;
 	}
 	m_addr.sin_family = AF_INET;
-	m_addr.sin_addr.s_addr = inet_addr(ip);
+	inet_pton(AF_INET, IPAddress.c_str(), &(m_addr.sin_addr));
 	m_addr.sin_port = htons(port);
-	int bind_return = ::bind(m_sock,
-		(struct sockaddr*) & m_addr,
-		sizeof(m_addr));
+	int bind_return = bind(m_sock, (struct sockaddr *)&m_addr, sizeof(m_addr));
 	if (bind_return == -1)
 	{
+#ifdef DEBUG
+		std::cout << "\033[31m[SocketInfo]Socket Bind error!!!!!!!!!!!!!!!!!!\033[0m\n";
+#endif
+		close(m_sock);
 		return false;
 	}
+#ifdef DEBUG
+	std::cout << "\033[32m[SocketInfo]Socket is working at ";
+	std::cout << IPAddress << ":";
+	std::cout << port;
+	std::cout << "\033[0m\n";
+#endif
 	return true;
 }
 
-
-bool Socket::listen() const
+bool Base::Socket::Listen(int maxConnections)
 {
-	if (!is_valid())
+	if (!Is_valid())
 	{
 		return false;
 	}
-	int listen_return = ::listen(m_sock, MAXCONNECTIONS);
+	int listen_return = listen(m_sock, maxConnections);
 	if (listen_return == -1)
 	{
 		return false;
 	}
+#ifdef DEBUG
+	std::cout << "\033[32m[SocketInfo]Socket starting listen\033[0m\n";
+#endif
 	return true;
 }
 
-
-bool Socket::accept(Socket& new_socket) const
+bool Base::Socket::Accept(Socket &newSocket)
 {
 	int addr_length = sizeof(m_addr);
-	new_socket.m_sock = ::accept(m_sock, (sockaddr*)&m_addr, (socklen_t*)&addr_length);
-	if (new_socket.m_sock <= 0)
-		return false;
-	else
-		return true;
-}
-
-
-bool Socket::send(const std::string s) const
-{
-	int status = ::send(m_sock, s.c_str(), s.size(), MSG_NOSIGNAL);
-	if (status == -1)
+	newSocket.m_sock = accept(m_sock, (sockaddr *)&m_addr, (socklen_t *)&addr_length);
+	if (newSocket.m_sock <= 0)
 	{
+#ifdef DEBUG
+		std::cout << "\033[31m[SocketInfo]Remote Stop connect\033[0m\n";
+#endif
 		return false;
 	}
 	else
 	{
+#ifdef DEBUG
+		std::cout << "\033[32m[SocketInfo]Socket recving a new connect\033[0m\n";
+#endif
 		return true;
 	}
 }
 
-
-int Socket::recv(std::string& s) const
+bool Base::Socket::Connect(std::string host, const int port)
 {
-	char buf[MAXRECV + 1];
-	s = "";
-	memset(buf, 0, MAXRECV + 1);
-
-	int status = ::recv(m_sock, buf, MAXRECV, 0);
-
-	if (status == -1)
+	if (!Is_valid())
 	{
-		std::cout << "status == -1   errno == " << errno << "  in Socket::recv\n";
-		return 0;
+		return false;
 	}
-	else if (status == 0)
-	{
-		return 0;
-	}
-	else
-	{
-		s = buf;
-		return status;
-	}
-}
-
-
-
-bool Socket::connect(const std::string host, const int port)
-{
-	if (!is_valid()) return false;
 	m_addr.sin_family = AF_INET;
 	m_addr.sin_port = htons(port);
 	int status = inet_pton(AF_INET, host.c_str(), &m_addr.sin_addr);
-	if (errno == EAFNOSUPPORT) return false;
-	status = ::connect(m_sock, (sockaddr*)&m_addr, sizeof(m_addr));
-	if (status == 0)
-		return true;
-	else
+	if (errno == EAFNOSUPPORT)
+	{
+#ifdef DEBUG
+		std::cout << "\033[31m[SocketInfo]HostName failed abort\033[0m\n";
+#endif
 		return false;
+	}
+
+	status = ::connect(m_sock, (sockaddr *)&m_addr, sizeof(m_addr));
+	if (status == 0)
+	{
+#ifdef DEBUG
+		std::cout << "\033[32m[SocketInfo]Socket connected to a server\033[0m\n";
+#endif
+		return true;
+	}
+	else
+	{
+#ifdef DEBUG
+		std::cout << "\033[31m[SocketInfo]Remote Server could not connect\033[0m\n";
+#endif
+		return false;
+	}
 }
 
-void Socket::set_non_blocking(const bool b)
+void Base::Socket::SocketServer(Socket &socketSub, std::string IPAddress, int localPort, int maxConnection)
 {
-	int opts;
-	opts = fcntl(m_sock,
-		F_GETFL);
-	if (opts < 0)
-	{
-		return;
-	}
-	if (b)
-		opts = (opts | O_NONBLOCK);
-	else
-		opts = (opts & ~O_NONBLOCK);
-	fcntl(m_sock,
-		F_SETFL, opts);
+	Create();
+	Bind(IPAddress, localPort);
+	Listen(maxConnection);
+	Accept(socketSub);
+}
+
+void Base::Socket::SocketClient(std::string LocalIPAddress, std::string RemoteIPAddress, int localPort, int remotePort)
+{
+	Create();
+	Bind(LocalIPAddress, localPort);
+	Connect(RemoteIPAddress, remotePort);
 }
