@@ -15,7 +15,7 @@ APMMain::NetworkController::NetworkController()
 		std::cout << "[APMController] bind retry!...\n";
 		sleep(2);
 	}
-	while (!mainSock->Connect("192.168.31.35", 10086))
+	while (!mainSock->Connect("192.168.137.1", 10086))
 	{
 		std::cout << "[APMController] connection retry!...\n";
 		sleep(10);

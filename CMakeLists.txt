@@ -18,7 +18,6 @@ project(Ru_APM)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
  
-
 IF(UNIX)
 #wiringPi
 	find_library(wiringPi_LIB wiringPi)
@@ -28,7 +27,6 @@ ENDIF()
 add_subdirectory(SRC/_thirdparty/json)
 
 #libmillNet
-find_library(mill mill)
 
 #CameraControl
 add_subdirectory(SRC/CameraInclude)
@@ -59,7 +57,6 @@ target_link_libraries( RuAPM_Cli LIB)
 #target_link_thirdparty
 target_link_libraries( RuAPM_Cli ${OpenCV_LIBS})
 target_link_libraries( RuAPM_Cli Json)
-target_link_libraries( RuAPM_Cli ${mill})
 
 IF(UNIX)
 	target_link_libraries( RuAPM_Cli ${wiringPi_LIB})

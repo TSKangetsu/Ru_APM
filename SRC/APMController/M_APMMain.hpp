@@ -36,7 +36,7 @@ namespace APMMain
 	{
 		std::thread *Network;
 		std::thread *Controller;
-		std::string sendOutDataBuff[7];
+		std::string sendOutDataBuff[9];
 		SingleAPMAPI::APMSettinngs settings;
 		bool APMMainThread();
 

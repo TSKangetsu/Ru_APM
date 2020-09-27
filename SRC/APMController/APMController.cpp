@@ -8,18 +8,10 @@ APMMain::APMController::APMController() : NetworkController()
 
 bool APMMain::APMController::APMMainThread()
 {
-	Controller = new std::thread([&] {
-		while (true)
-		{
-			IMUSensorsParse();
-			ControlParse();
-			AttitudeUpdate();
-			SaftyChecking();
-			ESCUpdate();
-			ClockingTimer();
-		}
-	});
-
+	IMUSensorsTaskReg();
+	ControllerTaskReg();
+	ESCUpdateTaskReg();
+	AltholdSensorsTaskReg();
 	Network = new std::thread([&] {
 		ACCSSConnectionSet();
 		while (true)
@@ -31,16 +23,12 @@ bool APMMain::APMController::APMMainThread()
 			sendOutDataBuff[4] = std::to_string(SF._uORB_Accel__Roll);
 			sendOutDataBuff[5] = std::to_string(SF._uORB_Real_Pitch);
 			sendOutDataBuff[6] = std::to_string(SF._uORB_Real__Roll);
-			dataSender(dataCreator(deviceID, sendOutDataBuff, 7));
+			sendOutDataBuff[7] = std::to_string(SF._uORB_MS5611_ClimbeRate);
+			sendOutDataBuff[8] = std::to_string(SF._uORB_MS5611_Pressure);
+			dataSender(dataCreator(deviceID, sendOutDataBuff, 9));
 			usleep(24000);
 		}
 	});
-
-	cpu_set_t cpuset;
-	CPU_ZERO(&cpuset);
-	CPU_SET(3, &cpuset);
-	int rc = pthread_setaffinity_np(Controller->native_handle(), sizeof(cpu_set_t), &cpuset);
-	Controller->join();
-
+	TaskThreadBlock();
 	return true;
 }
