@@ -19,9 +19,9 @@ namespace CameraCOM
 	{
 	public:
 		unsigned int frameCount;
-		FrameBuffer() : frameCount(0) {};
+		FrameBuffer() : frameCount(0){};
 
-		void pushFrame(const T& FrameBuffering)
+		void pushFrame(const T &FrameBuffering)
 		{
 			std::lock_guard<std::mutex> lock(mutex);
 
@@ -66,16 +66,17 @@ namespace CameraCOM
 	public:
 		cv::Mat FrameMotionDEBlur(cv::Mat inputFrame);
 		cv::Mat FrameOFFDEBlur(cv::Mat inputFrame);
+
 	private:
 		//this is a OFF deblur function
-		void CalcPSF(cv::Mat& outframe, cv::Size filterSize, int R);
+		void CalcPSF(cv::Mat &outframe, cv::Size filterSize, int R);
 		//this is a motion deblur function
-		void CalcPSF(cv::Mat& outputframe, cv::Size filterSize, int len, double theta);
-		void Fftshift(const cv::Mat& inputFrame, cv::Mat& outputFrame);
-		void Filter2DFreq(const cv::Mat& inputFrame, cv::Mat& outputImg, const cv::Mat& H);
-		void CalcWnrFilter(const cv::Mat& input_h_PSF, cv::Mat& output_G, double nsr);
+		void CalcPSF(cv::Mat &outputframe, cv::Size filterSize, int len, double theta);
+		void Fftshift(const cv::Mat &inputFrame, cv::Mat &outputFrame);
+		void Filter2DFreq(const cv::Mat &inputFrame, cv::Mat &outputImg, const cv::Mat &H);
+		void CalcWnrFilter(const cv::Mat &input_h_PSF, cv::Mat &output_G, double nsr);
 		//here are motiondeblur function last
-		void Edgetaper(const cv::Mat& inputFrame, cv::Mat& outputframe, double gamma = 5.0, double beta = 0.2);
+		void Edgetaper(const cv::Mat &inputFrame, cv::Mat &outputframe, double gamma = 5.0, double Beta = 0.2);
 
 		struct DeBlur_Config
 		{
@@ -84,7 +85,7 @@ namespace CameraCOM
 			int MODE_LEN = 0;
 			int MODE_THETA = 0;
 			int MODE_SNR = 200;
-		}DeBlur_Config;
+		} DeBlur_Config;
 	};
 
 	class DnnModule
@@ -94,7 +95,7 @@ namespace CameraCOM
 		//return a marked image
 		cv::Mat MatDnnDeal(cv::Mat inputFrame);
 		//output image detected object datas
-		int MatDnnDeal(cv::Mat inputFrame, float*& Data);
+		int MatDnnDeal(cv::Mat inputFrame, float *&Data);
 		void AsyncMatDnnDeal();
 
 	private:
@@ -132,7 +133,7 @@ namespace CameraCOM
 		bool Asyncprograssing = true;
 		FrameBuffer<cv::Mat> AsyncCamBuffer;
 
-		template<class _Tp>
+		template <class _Tp>
 		int CameraOutput(_Tp startFlag)
 		{
 			cv::Mat CatchTMP;
@@ -159,7 +160,7 @@ namespace CameraCOM
 			}
 		}
 
-		template<class _Tp>
+		template <class _Tp>
 		int CameraDNNOutput(_Tp startFlag)
 		{
 			cv::Mat CatchTMP;
@@ -168,7 +169,7 @@ namespace CameraCOM
 			VideoCatch.set(cv::CAP_PROP_FRAME_WIDTH, CameraConfig.Camera_Width);
 			VideoCatch.set(cv::CAP_PROP_BUFFERSIZE, CameraConfig.Camera_Buff);
 			cv::namedWindow("DnnOutput", cv::WINDOW_NORMAL);
-			cv::setWindowProperty("DnnOutput", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+			// cv::setWindowProperty("DnnOutput", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
 			CameraCOM::DnnModule ModuleSet;
 			if (!VideoCatch.isOpened())
 			{
@@ -194,9 +195,7 @@ namespace CameraCOM
 			int Camera_Buff;
 			int Camera_Width;
 			int Camera_Height;
-		}CameraConfig;
-
+		} CameraConfig;
 	};
-
 
 } // namespace CameraCOM
