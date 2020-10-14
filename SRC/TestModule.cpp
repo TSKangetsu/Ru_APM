@@ -1,12 +1,15 @@
 #include <csignal>
 #include <iostream>
 #include <unistd.h>
-#include "ToolsInclude/M_Tools.hpp"
-#include "APMController/M_APMMain.hpp"
-#include "CameraInclude/M_Camera.hpp"
+#include "_VisionBase/VisionBaseExec.hpp"
 
 int main()
 {
-	CameraCOM::FramePost mainPost;
-	mainPost.CameraDNNOutput(0);
+	VideoConfig config;
+	config.Width = 640;
+	config.Height = 380;
+	config.CameraDevice = "/dev/video0";
+	config.VideoPushMode = PushMode::RTMP;
+	VideoServer myserver;
+	myserver.VideoServerReInit(config);
 }
