@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <fstream>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -10,8 +11,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "../_Excutable/Drive_Json.hpp"
 #include "../_Excutable/Drive_Socket.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
+using namespace SingleAPMAPI;
 #define DEFAULT_RECV_SIZE 512
 
 namespace APMMain
@@ -32,13 +35,14 @@ namespace APMMain
 		std::string dataCreator(int deviceID, std::string data[], int dataLength);
 	};
 
-	class APMController : SingleAPMAPI::RPiSingleAPM, public NetworkController
+	class APMController : protected SingleAPMAPI::RPiSingleAPM, public NetworkController
 	{
 		std::thread *Network;
 		std::thread *Controller;
 		std::string sendOutDataBuff[9];
 		SingleAPMAPI::APMSettinngs settings;
 		bool APMMainThread();
+		void configSettle(const char *configDir, SingleAPMAPI::APMSettinngs &APMInit);
 
 	public:
 		APMController();
