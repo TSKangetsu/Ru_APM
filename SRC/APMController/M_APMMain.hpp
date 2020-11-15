@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "../ToolsInclude/M_Tools.hpp"
+#include "../_Excutable/Drive_Socket.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
 #define DEFAULT_RECV_SIZE 512
 
@@ -23,7 +23,7 @@ namespace APMMain
 		int targetPort = 10086;
 		std::string targetIP;
 		char *inputBuff;
-		Base::Socket *mainSock;
+		Socket *mainSock;
 		NetworkController();
 		void ACCSSConnectionSet();
 		void connectionSearch();

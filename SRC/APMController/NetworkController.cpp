@@ -3,7 +3,7 @@
 APMMain::NetworkController::NetworkController()
 {
 	connectionSearch();
-	mainSock = new Base::Socket();
+	mainSock = new Socket();
 	std::cout << "[APMController] InitNetroking.....\n";
 	while (!mainSock->Create())
 	{

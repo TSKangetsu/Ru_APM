@@ -1,5 +1,5 @@
 #pragma once
-#include "Drive_Socket.hpp"
+#include "../../_Excutable/Drive_Socket.hpp"
 
 class MJPEGServer
 {
