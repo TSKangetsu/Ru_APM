@@ -8,11 +8,9 @@
 int main()
 {
     cv::VideoCapture cap(0);
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 1280);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
     double rate = 10.0;
     cv::VideoWriter vw;
-    vw.open("videoTest.avi", cv::VideoWriter::fourcc('H', '2', '6', '4'), rate, cv::Size(1280, 720));
+    vw.open("videoTest.avi", cv::VideoWriter::fourcc('H', '2', '6', '4'), rate, cv::Size(cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
     cv::Mat tmpMat;
     cv::Mat vmpMat;
     CVInferConfig mt;
