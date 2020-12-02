@@ -102,7 +102,7 @@ cv::Mat CVInferEngine::CVInferMatSync(cv::Mat inputFrame)
     return inputFrame;
 }
 
-void CVInferEngine::CVInferDataSync(cv::Mat inputFrame, float *Data)
+int CVInferEngine::CVInferDataSync(cv::Mat inputFrame, float *Data, int dataSize)
 {
     cv::Mat blobImage = cv::dnn::blobFromImage(inputFrame,
                                                1.0,
@@ -113,30 +113,35 @@ void CVInferEngine::CVInferDataSync(cv::Mat inputFrame, float *Data)
     InferEngine.setInput(blobImage);
     cv::Mat outRaw = InferEngine.forward();
 
-    if (InferConfig.Enable_FPS_Detect)
-    {
-        std::vector<double> layersTimings;
-        double tick_freq = cv::getTickFrequency();
-        double time_ms = InferEngine.getPerfProfile(layersTimings) / tick_freq * 1000;
-        cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-                    cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
-    }
+    // if (InferConfig.Enable_FPS_Detect)
+    // {
+    //     std::vector<double> layersTimings;
+    //     double tick_freq = cv::getTickFrequency();
+    //     double time_ms = InferEngine.getPerfProfile(layersTimings) / tick_freq * 1000;
+    //     cv::putText(inputFrame, cv::format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+    //                 cv::Point(20, 20), 0, 0.5, cv::Scalar(255, 100, 0));
+    // }
 
     cv::Mat resultsMat = cv::Mat(outRaw.size[2], outRaw.size[3], CV_32F, outRaw.ptr<unsigned char>());
-    Data = new float[resultsMat.rows * 5 + 1];
+    int DataCount = 0;
     for (int i = 0; i < resultsMat.rows; i++)
     {
         float confidence = resultsMat.at<float>(i, 2);
         if (confidence > InferConfig.Confidence_Threshold)
         {
-            int set = i * 5;
+            if (DataCount > dataSize)
+                break;
+            int set = i * 6;
             Data[set] = resultsMat.at<float>(i, 1);
-            Data[set + 1] = resultsMat.at<float>(i, 3);
-            Data[set + 2] = resultsMat.at<float>(i, 4);
-            Data[set + 3] = resultsMat.at<float>(i, 5);
-            Data[set + 4] = resultsMat.at<float>(i, 6);
+            Data[set + 1] = resultsMat.at<float>(i, 2) * 100;
+            Data[set + 2] = resultsMat.at<float>(i, 3);
+            Data[set + 3] = resultsMat.at<float>(i, 4);
+            Data[set + 4] = resultsMat.at<float>(i, 5);
+            Data[set + 5] = resultsMat.at<float>(i, 6);
+            DataCount++;
         }
     }
+    return DataCount;
 }
 
 cv::Mat CVInferEngine::CVINferMatAsyncBlock(int CAM)

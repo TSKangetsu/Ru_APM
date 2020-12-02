@@ -27,7 +27,7 @@ public:
 
     cv::Mat CVInferMatSync(cv::Mat inputFrame);
 
-    void CVInferDataSync(cv::Mat inputFrame, float *Data);
+    int CVInferDataSync(cv::Mat inputFrame, float *Data, int dataSize);
 
 private:
     cv::dnn::Net InferEngine;
