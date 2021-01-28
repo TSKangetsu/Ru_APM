@@ -31,7 +31,7 @@ public:
     };
     inline bool Create()
     {
-        m_sock = socket(AF_INET, SOCK_STREAM, 0);
+        m_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (!Is_valid())
         {
             return false;
