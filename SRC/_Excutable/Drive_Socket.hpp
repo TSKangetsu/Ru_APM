@@ -6,43 +6,44 @@
 #include <string>
 #include <arpa/inet.h>
 #include <string.h>
+#include <sys/time.h>
+#include <functional>
+#include <thread>
+#include <sys/stat.h>
 #ifdef DEBUG
 #include <iostream>
 #endif
-class Socket
+#define SYSMAXConnection sizeof(fd_set)
+
+template <bool Block>
+class uSocket
 {
 public:
-    inline Socket()
+    friend class SocketAsyncServer;
+    uSocket()
     {
+        m_sock = 0;
         memset(&m_addr, 0, sizeof(m_addr));
-#ifdef DEBUG
-        std::cout << "\033[32m[SocketInfo]Socket got a initialization\033[0m\n";
-#endif
     };
-    inline ~Socket()
+    ~uSocket()
     {
-        if (Is_valid())
-        {
-            close(m_sock);
-#ifdef DEBUG
-            std::cout << "\033[31m[SocketInfo]Socket Close\n";
-#endif
-        }
+        release();
     };
-    inline bool Create()
+    bool Create()
     {
         m_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (!Is_valid())
         {
             return false;
         }
-        int on = 1;
+        if (!Block)
+            setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, (char *)1, sizeof((char *)1));
 #ifdef DEBUG
         std::cout << "\033[32m[SocketInfo]Socket create sucess\033[0m\n";
 #endif
         return true;
     };
-    inline bool Bind(std::string IPAddress = std::string("0.0.0.0"), int port = 27015)
+    bool Bind(std::string IPAddress = std::string("0.0.0.0"), int port = 27015)
     {
         if (!Is_valid())
         {
@@ -68,7 +69,7 @@ public:
 #endif
         return true;
     };
-    inline bool Listen(int maxConnections)
+    bool Listen(int maxConnections)
     {
         if (!Is_valid())
         {
@@ -84,26 +85,7 @@ public:
 #endif
         return true;
     };
-    inline bool Accept(Socket &newSocket)
-    {
-        int addr_length = sizeof(m_addr);
-        newSocket.m_sock = accept(m_sock, (sockaddr *)&m_addr, (socklen_t *)&addr_length);
-        if (newSocket.m_sock <= 0)
-        {
-#ifdef DEBUG
-            std::cout << "\033[31m[SocketInfo]Remote Stop connect\033[0m\n";
-#endif
-            return false;
-        }
-        else
-        {
-#ifdef DEBUG
-            std::cout << "\033[32m[SocketInfo]Socket recving a new connect\033[0m\n";
-#endif
-            return true;
-        }
-    };
-    inline bool Connect(std::string host, int port)
+    bool Connect(std::string host, int port)
     {
         if (!Is_valid())
         {
@@ -121,6 +103,8 @@ public:
         }
 
         status = ::connect(m_sock, (sockaddr *)&m_addr, sizeof(m_addr));
+        socklen_t addr_size = sizeof(struct sockaddr_in);
+        getpeername(m_sock, (struct sockaddr *)&RemoteSockInfo, (socklen_t *)&addr_size);
         if (status == 0)
         {
 #ifdef DEBUG
@@ -136,21 +120,36 @@ public:
             return false;
         }
     };
-    inline void SocketServer(Socket &socketSub, std::string IPAddress, int localPort, int maxConnection)
+    void GetRemoteInfo(std::string &RemoteIPAddr, int &RemotePort)
     {
-        Create();
-        Bind(IPAddress, localPort);
-        Listen(maxConnection);
-        Accept(socketSub);
-    };
-    inline void SocketClient(std::string LocalIPAddress, std::string RemoteIPAddress, int localPort, int remotePort)
+        RemoteIPAddr = inet_ntoa(RemoteSockInfo.sin_addr);
+        RemotePort = ntohs(RemoteSockInfo.sin_port);
+    }
+
+    template <typename SocketType>
+    bool Accept(SocketType &newSocket)
     {
-        Create();
-        Bind(LocalIPAddress, localPort);
-        Connect(RemoteIPAddress, remotePort);
+        int addr_length = sizeof(m_addr);
+        newSocket.m_sock = accept(m_sock, (sockaddr *)&m_addr, (socklen_t *)&addr_length);
+        getpeername(newSocket.m_sock, (struct sockaddr *)&newSocket.RemoteSockInfo, (socklen_t *)&addr_length);
+        if (newSocket.m_sock <= 0)
+        {
+#ifdef DEBUG
+            std::cout << "\033[31m[SocketInfo]Remote Stop connect\033[0m\n";
+#endif
+            return false;
+        }
+        else
+        {
+#ifdef DEBUG
+            std::cout << "\033[32m[SocketInfo]Socket recving a new connect\033[0m\n";
+#endif
+
+            return true;
+        }
     };
 
-    template <class _Tp>
+    template <typename _Tp>
     bool Send(_Tp *data, int sendSize)
     {
         int status = send(m_sock, data, sendSize, 0);
@@ -170,7 +169,7 @@ public:
         }
     }
 
-    template <class _Tp>
+    template <typename _Tp>
     bool Recv(_Tp *&data, int recvSize)
     {
         _Tp buffer[recvSize + 1];
@@ -205,5 +204,179 @@ public:
 private:
     int m_sock;
     sockaddr_in m_addr;
+    struct sockaddr_in RemoteSockInfo;
     bool Is_valid() const { return m_sock != -1; }
+    int GetSockFD() { return m_sock; }
+    void release()
+    {
+        if (Is_valid())
+        {
+            close(m_sock);
+            m_sock = 0;
+            socklen_t addr_size = sizeof(struct sockaddr_in);
+            getpeername(m_sock, (struct sockaddr *)&RemoteSockInfo, (socklen_t *)&addr_size);
+#ifdef DEBUG
+            std::cout << "\033[31m[SocketInfo]Socket Close\033[0m\n";
+#endif
+        }
+    }
+};
+
+typedef uSocket<true> Socket;
+typedef uSocket<false> sSocket;
+
+/*Usage:
+    SocketAsyncServer().SocketServer("0.0.0.0", 27015, SYSMAXConnection)
+            .OnConnection(4096, [](auto *req) {
+                int Port;
+                std::string IPAddr;
+                std::cout << "\033[32m[SocketInfo]New connection incomming :";
+                req->GetRemoteInfo(IPAddr, Port);
+                std::cout << IPAddr << ":" << Port << "\033[0m\n";
+            })
+            .OnMessage([](auto *req, auto *data) {
+                int Port;
+                std::string IPAddr;
+                req->GetRemoteInfo(IPAddr, Port);
+                std::cout << "\033[32m[SocketInfo]DataIncoming From " << IPAddr << ":" << Port << " is \033[0m" << data << "\n";
+                req->Send("=-=", 512);
+            })
+            .OnDisConnect([](auto *req) {
+                int Port;
+                std::string IPAddr;
+                req->GetRemoteInfo(IPAddr, Port);
+                std::cout << "\033[31m[SocketInfo]Client Disconnect from " << IPAddr << ":" << Port << "\033[0m\n";
+            })
+            .Run()
+            .Wait();*/
+class SocketAsyncServer
+{
+public:
+    SocketAsyncServer(){};
+    // Disallow copying, only move
+    SocketAsyncServer(const SocketAsyncServer &other) = delete;
+
+    SocketAsyncServer &&SocketServer(std::string iPAddress, int localPort, int maxConnection)
+    {
+        IsRun = false;
+        IPAddr = iPAddress;
+        LocalPort = localPort;
+        MaxConnection = maxConnection;
+        MainSocks = new sSocket();
+
+        AcceptThread = std::thread([&] {
+            do
+            {
+                usleep(200000);
+            } while (!IsRun);
+
+            sSocket SubSocks[MaxConnection];
+            MainSocks->Create();
+            MainSocks->Bind(IPAddr, LocalPort);
+            MainSocks->Listen(MaxConnection);
+
+            while (true)
+            {
+                FD_ZERO(&ServerFD);
+                FD_SET(MainSocks->GetSockFD(), &ServerFD);
+                Max_SD = MainSocks->GetSockFD();
+                for (size_t i = 0; i < MaxConnection; i++)
+                {
+                    if (SubSocks[i].GetSockFD() > 0)
+                        FD_SET(SubSocks[i].GetSockFD(), &ServerFD);
+                    if (SubSocks[i].GetSockFD() > Max_SD)
+                        Max_SD = SubSocks[i].GetSockFD();
+                }
+                int activity = select(Max_SD + 1, &ServerFD, NULL, NULL, NULL);
+                for (size_t i = 0; i <= Max_SD && activity > 0; i++)
+                {
+                    if (FD_ISSET(i, &ServerFD))
+                    {
+                        activity--;
+                        if (i == MainSocks->GetSockFD())
+                        {
+                            for (size_t i = 0; i < MaxConnection; i++)
+                            {
+                                if (!(SubSocks[i].GetSockFD() > 0))
+                                {
+                                    bool AcceptSuccess = MainSocks->Accept(SubSocks[i]);
+                                    OnConnectionFunction(&SubSocks[i]);
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (size_t s = 0; s < MaxConnection; s++)
+                            {
+                                if (SubSocks[s].GetSockFD() == i)
+                                {
+                                    struct stat buf;
+                                    if (!SubSocks[s].Recv(RecvDataBuff, RecvMaxSize))
+                                    {
+                                        OnDisConnectFunction(&SubSocks[s]);
+                                        SubSocks[s].~sSocket();
+                                    }
+                                    else
+                                    {
+                                        OnMessageFunction(&SubSocks[s], RecvDataBuff);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        return std::move(*this);
+    };
+
+    SocketAsyncServer &&OnConnection(int recvMaxSize, std::function<void(sSocket *)> &&CustomFunction)
+    {
+        RecvMaxSize = recvMaxSize;
+        OnConnectionFunction = CustomFunction;
+        return std::move(*this);
+    }
+
+    SocketAsyncServer &&OnMessage(std::function<void(sSocket *, char *data)> &&CustomFunction)
+    {
+        OnMessageFunction = CustomFunction;
+        return std::move(*this);
+    }
+
+    SocketAsyncServer &&OnDisConnect(std::function<void(sSocket *)> &&CustomFunction)
+    {
+        OnDisConnectFunction = CustomFunction;
+        return std::move(*this);
+    }
+
+    SocketAsyncServer &&Run()
+    {
+        IsRun = true;
+        return std::move(*this);
+    }
+    //Notice: This will block you thread
+    SocketAsyncServer &&Wait()
+    {
+        AcceptThread.join();
+        return std::move(*this);
+    }
+
+private:
+    int Max_SD;
+    bool IsRun;
+    int LocalPort;
+    int MaxConnection;
+    std::string IPAddr;
+
+    int RecvMaxSize;
+    char *RecvDataBuff;
+
+    fd_set ServerFD;
+    sSocket *MainSocks;
+
+    std::thread AcceptThread;
+    std::function<void(sSocket *)> OnConnectionFunction;
+    std::function<void(sSocket *, char *data)> OnMessageFunction;
+    std::function<void(sSocket *)> OnDisConnectFunction;
 };
