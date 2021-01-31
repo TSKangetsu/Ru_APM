@@ -275,6 +275,156 @@ int MessageController::WebSocketDataFrameCreator(uint8_t *data, uint32_t data_le
 	return len;
 }
 
+int MessageController::WebSocketDataFrameDecoder(uint8_t *data, uint32_t data_len, uint8_t *package, uint32_t package_max_len, uint32_t *package_len)
+{
+	/*掩码*/
+	uint8_t mask_key[4] = {0};
+	uint8_t temp1, temp2;
+	char mask = 0, type;
+	int count, ret;
+	uint32_t i, len = 0, data_start = 2;
+	if (data_len < 2)
+		return -1;
+
+	type = data[0] & 0x0F;
+
+	if ((data[0] & 0x80) == 0x80)
+	{
+		if (type == 0x01)
+			ret = WCT_TXTDATA;
+		else if (type == 0x02)
+			ret = WCT_BINDATA;
+		else if (type == 0x08)
+			ret = WCT_DISCONN;
+		else if (type == 0x09)
+			ret = WCT_PING;
+		else if (type == 0x0A)
+			ret = WCT_PONG;
+		else
+			return WCT_ERR;
+	}
+	else if (type == 0x00)
+	{
+		ret = WCT_MINDATA;
+	}
+	else
+	{
+		return WCT_ERR;
+	}
+
+	if ((data[1] & 0x80) == 0x80)
+	{
+		mask = 1;
+		count = 4;
+	}
+	else
+	{
+		mask = 0;
+		count = 0;
+	}
+
+	len = data[1] & 0x7F;
+
+	if (len == 126)
+	{
+		if (data_len < 4)
+			return WCT_ERR;
+		len = data[2];
+		len = (len << 8) + data[3];
+		if (data_len < len + 4 + count)
+			return WCT_ERR;
+		if (mask)
+		{
+			mask_key[0] = data[4];
+			mask_key[1] = data[5];
+			mask_key[2] = data[6];
+			mask_key[3] = data[7];
+			data_start = 8;
+		}
+		else
+		{
+			data_start = 4;
+		}
+	}
+	else if (len == 127)
+	{
+		if (data_len < 10)
+			return WCT_ERR;
+
+		/*使用8个字节存储长度时, 前4位必须为0, 装不下那么多数据...*/
+		if (data[2] != 0 || data[3] != 0 || data[4] != 0 || data[5] != 0)
+			return WCT_ERR;
+		len = data[6];
+		len = (len << 8) + data[7];
+		len = (len << 8) + data[8];
+		len = (len << 8) + data[9];
+		if (data_len < len + 10 + count)
+			return WCT_ERR;
+
+		if (mask)
+		{
+			mask_key[0] = data[10];
+			mask_key[1] = data[11];
+			mask_key[2] = data[12];
+			mask_key[3] = data[13];
+			data_start = 14;
+		}
+		else
+		{
+			data_start = 10;
+		}
+	}
+	else
+	{
+		if (data_len < len + 2 + count)
+			return WCT_ERR;
+
+		if (mask)
+		{
+			mask_key[0] = data[2];
+			mask_key[1] = data[3];
+			mask_key[2] = data[4];
+			mask_key[3] = data[5];
+			data_start = 6;
+		}
+		else
+		{
+			data_start = 2;
+		}
+	}
+
+	if (data_len < len + data_start)
+		return WCT_ERR;
+
+	if (package_max_len < len + 1)
+		return WCT_ERR;
+
+	/*解包数据使用掩码时, 使用异或解码, maskKey[4]依次和数据异或运算, 逻辑如下*/
+	if (mask)
+	{
+		for (i = 0, count = 0; i < len; i++)
+		{
+			temp1 = mask_key[count];
+			temp2 = data[i + data_start];
+			/*异或运算后得到数据*/
+			*package++ = (char)(((~temp1) & temp2) | (temp1 & (~temp2)));
+			count += 1;
+			/*mask_key[4]循环使用*/
+			if (count >= sizeof(mask_key))
+				count = 0;
+		}
+		*package = '\0';
+	}
+	else
+	{
+		/*解包数据没使用掩码, 直接复制数据段*/
+		memcpy(package, &data[data_start], len);
+		package[len] = '\0';
+	}
+	*package_len = len;
+	return ret;
+}
+
 std::string MessageController::WebSocketHeaderCreator(std::string base64)
 {
 	std::string Header = "HTTP/1.1 101 Switching Protocols\r\n"
@@ -286,25 +436,26 @@ std::string MessageController::WebSocketHeaderCreator(std::string base64)
 	return Header;
 }
 
-void MessageController::WebSocketServer::WebSocketServerInit()
+void MessageController::WebSocketServer::dataSender(sSocket *Target, std::string SendData, w_com_type optype)
+{
+	uint8_t SendingData[512] = {0};
+	int len = WebSocketDataFrameCreator((uint8_t *)SendData.c_str(), SendData.size(), SendingData, 512, false, optype);
+	Target->Send(SendingData, len);
+}
+
+MessageController::WebSocketServer &&MessageController::WebSocketServer::WebSocketServerInit()
 {
 	ServerMain = new SocketAsyncServer();
-	ServerMain->SocketServer("0.0.0.0", 27015, 30).OnConnection(4096, [](auto *req) {
+	ServerMain->SocketServer("0.0.0.0", 27015, 30).OnConnection(4096, [&](auto *req) {
 													  int Port;
 													  std::string IPAddr;
 													  std::cout << "\033[32m[SocketInfo]New connection incomming :";
 													  req->GetRemoteInfo(IPAddr, Port);
 													  std::cout << IPAddr << ":" << Port << "\033[0m\n";
 												  })
-		.OnMessage([](auto *req, auto *data) {
-			int Port;
-			std::string IPAddr;
-			req->GetRemoteInfo(IPAddr, Port);
-
+		.OnMessage([&](auto *req, auto *data) {
 			bool IsFirstConnect = false;
 			std::string mydata = data;
-			unsigned char Hash[256];
-			std::string base64Client;
 			std::string databuff[25];
 			//
 			MessageController::dataParese(mydata, databuff, "\r\n");
@@ -320,44 +471,46 @@ void MessageController::WebSocketServer::WebSocketServerInit()
 			//
 			if (IsFirstConnect)
 			{
-
+				unsigned char Hash[256];
+				std::string base64Client;
 				MessageController::dataParese(mydata, databuff, ":");
 				databuff[1] += "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 				databuff[1].erase(0, 1);
-				//
 				unsigned char *HashDataTmp = (unsigned char *)databuff[1].c_str();
 				SHA1(HashDataTmp, strlen((char *)HashDataTmp), Hash);
 				base64Client = MessageController::base64_encode(Hash, strlen((const char *)Hash));
-				//
 				req->Send(MessageController::WebSocketHeaderCreator(base64Client).c_str(), strlen(MessageController::WebSocketHeaderCreator(base64Client).c_str()));
+				OnConnectionFunction(req, data);
 			}
 			else
 			{
-				std::cout << "\033[32m[SocketInfo]DataIncoming From " << IPAddr << ":" << Port << " is\n";
 				int size = strlen(data);
+				uint32_t Decodelen;
+				uint8_t RecvingData[512] = {0};
+				std::cout << "RawData: ";
 				for (size_t i = 0; i < size; i++)
 				{
-
 					std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
 				}
-				std::cout << "\033[0m\n";
-				uint8_t SendingData[127] = {0};
-				std::string OutputData = "4300/OK!";
-				int len = WebSocketDataFrameCreator((uint8_t *)OutputData.c_str(), OutputData.size(), SendingData, 512, false, WCT_TXTDATA);
-				std::cout << "\033[32m[SocketInfo]SendingBack Data  " << IPAddr << ":" << Port << " is\n";
-				for (size_t i = 0; i < len; i++)
+				std::cout << "\n"
+						  << std::dec;
+				int opcode = MessageController::WebSocketDataFrameDecoder((uint8_t *)data, strlen(data), RecvingData, 512, &Decodelen);
+				if (opcode == -1)
 				{
-					std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)SendingData[i] << " ";
+					OnErrorFunction(req, data, opcode, Decodelen);
 				}
-				req->Send(SendingData, len);
+				else
+				{
+					OnMessageFunction(req, (char *)RecvingData, opcode, Decodelen);
+				}
 			}
 		})
-		.OnDisConnect([](auto *req) {
+		.OnDisConnect([&](auto *req) {
 			int Port;
 			std::string IPAddr;
 			req->GetRemoteInfo(IPAddr, Port);
 			std::cout << "\033[31m[SocketInfo]Client Disconnect from " << IPAddr << ":" << Port << "\033[0m\n";
-		})
-		.Run()
-		.Wait();
+			OnDisConnectionFunction(req);
+		});
+	return std::move(*this);
 }
