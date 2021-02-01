@@ -487,13 +487,6 @@ MessageController::WebSocketServer &&MessageController::WebSocketServer::WebSock
 				int size = strlen(data);
 				uint32_t Decodelen;
 				uint8_t RecvingData[512] = {0};
-				std::cout << "RawData: ";
-				for (size_t i = 0; i < size; i++)
-				{
-					std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)data[i] << " ";
-				}
-				std::cout << "\n"
-						  << std::dec;
 				int opcode = MessageController::WebSocketDataFrameDecoder((uint8_t *)data, strlen(data), RecvingData, 512, &Decodelen);
 				if (opcode == -1)
 				{

@@ -46,6 +46,7 @@ namespace Action
                             dataQueue.pop();
                         json OutputJSON = {
                             {"type", 4200},
+                            {"flyMode", MessageController::StringRounder(AF.AutoPilotMode, 2)},
                             {"ESCA1", MessageController::StringRounder(EF._uORB_A1_Speed, 2)},
                             {"ESCA2", MessageController::StringRounder(EF._uORB_A2_Speed, 2)},
                             {"ESCB1", MessageController::StringRounder(EF._uORB_B1_Speed, 2)},
