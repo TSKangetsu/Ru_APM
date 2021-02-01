@@ -438,8 +438,8 @@ std::string MessageController::WebSocketHeaderCreator(std::string base64)
 
 void MessageController::WebSocketServer::dataSender(sSocket *Target, std::string SendData, w_com_type optype)
 {
-	uint8_t SendingData[512] = {0};
-	int len = WebSocketDataFrameCreator((uint8_t *)SendData.c_str(), SendData.size(), SendingData, 512, false, optype);
+	uint8_t SendingData[SendData.size() + 256] = {0};
+	int len = WebSocketDataFrameCreator((uint8_t *)SendData.c_str(), SendData.size(), SendingData, SendData.size() + 256, false, optype);
 	Target->Send(SendingData, len);
 }
 

@@ -86,10 +86,14 @@ namespace MessageController
 		}
 		WebSocketServer &&Run()
 		{
-			ServerMain->Run()
-				.Wait();
+			ServerMain->Run();
 			return std::move(*this);
 		};
+		WebSocketServer &&Wait()
+		{
+			ServerMain->Wait();
+			return std::move(*this);
+		}
 
 	private:
 		int Status;
