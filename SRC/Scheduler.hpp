@@ -42,7 +42,7 @@ namespace Action
                 ControllerThread = std::thread([&] {
                     while (true)
                     {
-                        if (dataQueue.size() > 5)
+                        if (dataQueue.size() > 2)
                             dataQueue.pop();
                         json OutputJSON = {
                             {"type", 4200},
@@ -69,9 +69,26 @@ namespace Action
                             {"RCPitch", MessageController::StringRounder(RF._uORB_RC_Out_Pitch, 2)},
                             {"RCThrottle", MessageController::StringRounder(RF._uORB_RC_Out_Throttle, 2)},
                             {"RCYaw", MessageController::StringRounder(RF._uORB_RC_Out___Yaw, 2)},
+                            {"RCYaw", MessageController::StringRounder(RF._uORB_RC_Out___Yaw, 2)},
+                            {"RawADFX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_X, 2)},
+                            {"RawADFY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_Y, 2)},
+                            {"RawADFZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_Z, 2)},
+                            {"RawFAX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_X, 2)},
+                            {"RawFAY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_Y, 2)},
+                            {"RawFAZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_Z, 2)},
+                            {"RawSAX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_X, 2)},
+                            {"RawSAY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_Y, 2)},
+                            {"RawSAZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_Z, 2)},
+                            {"SpeedX", MessageController::StringRounder(SF._uORB_MPU_Speed_X, 2)},
+                            {"SpeedY", MessageController::StringRounder(SF._uORB_MPU_Speed_Y, 2)},
+                            {"SpeedZ", MessageController::StringRounder(SF._uORB_MPU_Speed_Z, 2)},
+                            {"AccelX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Acceleration_X, 2)},
+                            {"AccelY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Acceleration_Y, 2)},
+                            {"AccelZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Acceleration_Z, 2)},
+                            {"ClimbeRate", MessageController::StringRounder(SF._uORB_MS5611_ClimbeRate, 2)},
+                            //
                             {"GPSNMode:", SF._uORB_GPS_Data.lat_North_Mode},
                             {"GPSEMode:", SF._uORB_GPS_Data.lat_East_Mode},
-                            //
                             {"F_ESCARM", AF._flag_ESC_ARMED},
                             {"F_Error", AF._flag_Error},
                             {"F_RCDisconnect", AF._flag_RC_Disconnected},
@@ -113,9 +130,6 @@ namespace Action
                         return;
                     })
                     .OnError([&](auto *req, auto *data, auto opcode, auto len) {
-                        std::cout << "data: " << data << "\n";
-                        std::cout << "opcode:" << opcode << " ,len: " << len << "\n";
-                        std::cout << "This is an error Frame\n";
                         std::string output = "4300/ERROR!";
                         MessageController::WebSocketServer::dataSender(req, output, WCT_TXTDATA);
                     })
@@ -167,17 +181,16 @@ namespace Action
             APMInit._flag_B1_Pin = Configdata["_flag_B1_Pin"].get<int>();
             APMInit._flag_B2_Pin = Configdata["_flag_B2_Pin"].get<int>();
             //==================================================================PID cofig==/
-            APMInit._flag_PID_P_TAsix_Gain = Configdata["_flag_PID_P_TAsix_Gain"].get<float>();
             APMInit._flag_PID_P__Roll_Gain = Configdata["_flag_PID_P__Roll_Gain"].get<float>();
             APMInit._flag_PID_P_Pitch_Gain = Configdata["_flag_PID_P_Pitch_Gain"].get<float>();
             APMInit._flag_PID_P___Yaw_Gain = Configdata["_flag_PID_P___Yaw_Gain"].get<float>();
-            APMInit._flag_PID_P_Alt_Gain = Configdata["_flag_PID_P_Alt_Gain"].get<float>();
+            APMInit._flag_PID_P_SpeedZ_Gain = Configdata["_flag_PID_P_SpeedZ_Gain"].get<float>();
             APMInit._flag_PID_P_GPS_Gain = Configdata["_flag_PID_P_GPS_Gain"].get<float>();
 
             APMInit._flag_PID_I__Roll_Gain = Configdata["_flag_PID_I__Roll_Gain"].get<float>();
             APMInit._flag_PID_I_Pitch_Gain = Configdata["_flag_PID_I_Pitch_Gain"].get<float>();
             APMInit._flag_PID_I___Yaw_Gain = Configdata["_flag_PID_I___Yaw_Gain"].get<float>();
-            APMInit._flag_PID_I_Alt_Gain = Configdata["_flag_PID_I_Alt_Gain"].get<float>();
+            APMInit._flag_PID_I_SpeedZ_Gain = Configdata["_flag_PID_I_SpeedZ_Gain"].get<float>();
             APMInit._flag_PID_I__Roll_Max__Value = Configdata["_flag_PID_I__Roll_Max__Value"].get<float>();
             APMInit._flag_PID_I_Pitch_Max__Value = Configdata["_flag_PID_I_Pitch_Max__Value"].get<float>();
             APMInit._flag_PID_I___Yaw_Max__Value = Configdata["_flag_PID_I___Yaw_Max__Value"].get<float>();
@@ -185,7 +198,7 @@ namespace Action
             APMInit._flag_PID_D__Roll_Gain = Configdata["_flag_PID_D__Roll_Gain"].get<float>();
             APMInit._flag_PID_D_Pitch_Gain = Configdata["_flag_PID_D_Pitch_Gain"].get<float>();
             APMInit._flag_PID_D___Yaw_Gain = Configdata["_flag_PID_D___Yaw_Gain"].get<float>();
-            APMInit._flag_PID_D_Alt_Gain = Configdata["_flag_PID_D_Alt_Gain"].get<float>();
+            APMInit._flag_PID_D_SpeedZ_Gain = Configdata["_flag_PID_D_SpeedZ_Gain"].get<float>();
             APMInit._flag_PID_D_GPS_Gain = Configdata["_flag_PID_D_GPS_Gain"].get<float>();
 
             APMInit._flag_PID_Hover_Throttle = Configdata["_flag_PID_Hover_Throttle"].get<float>();

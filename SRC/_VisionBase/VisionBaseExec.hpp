@@ -67,3 +67,5 @@ private:
         return RoundResult;
     }
 };
+
+void VideoRecorderTest();
