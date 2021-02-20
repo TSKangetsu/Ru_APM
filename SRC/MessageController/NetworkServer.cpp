@@ -429,7 +429,7 @@ std::string MessageController::WebSocketHeaderCreator(std::string base64)
 {
 	std::string Header = "HTTP/1.1 101 Switching Protocols\r\n"
 						 "Upgrade: websocket\r\n"
-						 "Connection : Upgrade\r\n"
+						 "Connection: Upgrade\r\n"
 						 "Sec-WebSocket-Accept:";
 	Header += base64;
 	Header += "\r\n\r\n";
