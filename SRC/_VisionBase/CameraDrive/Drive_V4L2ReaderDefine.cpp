@@ -117,6 +117,7 @@ V4L2Tools::V4L2Drive::~V4L2Drive()
         munmap(v4l2Buffers[i], v4l2.CameraQBuffer.length);
     }
     free(v4l2Buffers);
+    close(_flag_CameraFD);
 }
 
 void V4L2Tools::V4L2Drive::yuyv2rgb24(const unsigned char *src, unsigned char *dest, int width, int height)
@@ -152,6 +153,9 @@ void V4L2Tools::V4L2Drive::V4L2Log(int signal, int error)
 {
     if (signal == -1)
     {
+#ifdef DEBUG
+        std::cout << "\033[31m[V4L2Expection]V4L2 Error with: \033[0m" << error << "\n";
+#endif
         throw error;
     }
 }

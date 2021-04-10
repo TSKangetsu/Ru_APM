@@ -85,5 +85,4 @@ RTMPPusher::~RTMPPusher()
     av_write_trailer(BaseFormatContext);
     avcodec_close(BaseCodecContext);
     avio_close(BaseFormatContext->pb);
-    avformat_free_context(BaseFormatContext);
 }
