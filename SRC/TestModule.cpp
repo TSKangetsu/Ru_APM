@@ -8,5 +8,5 @@
 
 int main(int argc, char **argv)
 {
-    Action::Action();
+    Action::Action().Wait();
 }

@@ -10,6 +10,7 @@
 #include "_VisionBase/VideoStreamDrive/Drive_RTMPPush.hpp"
 #include "_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
 #include "MessageController/MessageController.hpp"
+#include "LuaLocal.hpp"
 
 extern "C"
 {
@@ -31,8 +32,8 @@ namespace Action
     protected:
         struct VideoConfig
         {
-            bool EnableVideoControll = true;
-            bool EnableVideoStream = true;
+            bool EnableVideoControll = false;
+            bool EnableVideoStream = false;
         } VC;
         struct MessageConfig
         {
@@ -41,10 +42,11 @@ namespace Action
         struct ControllerConfig
         {
             APMSettinngs setting;
+            bool LUAAllowUserScript = true;
         } CC;
     };
 
-    class Action : private ConfigCenter, private RPiSingleAPM
+    class Action : private ConfigCenter, private RPiSingleAPM, private LuaLocal
     {
     public:
         Action()
@@ -220,6 +222,7 @@ namespace Action
                         TmpInfo.FrameBuffer = 1;
                         TmpInfo.PixFormat = V4L2_PIX_FMT_YUYV;
                         V4L2Main[i].reset(new V4L2Tools::V4L2Drive(videoName, TmpInfo));
+                        int ThreadSigned = VideoJSONConfig["UsingVideo"][i][videoName]["threadSigned"].get<int>();
                         CameraThread[i] = std::thread([&] {
                             int CAMNUM = i;
                             int CAMLoop = 0;
@@ -231,10 +234,17 @@ namespace Action
                             int FPS = VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["FPS"].get<int>();
                             int CAMWidth = VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["Width"].get<int>();
                             int CAMHeight = VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["Height"].get<int>();
+                            if (VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["RTMP"]["enable"].get<bool>())
+                            {
+                                RTMPCameraSigned = CAMNUM;
+                                RTMPWidth = VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["RTMP"]["Width"].get<int>();
+                                RTMPHeight = VideoJSONConfig["UsingVideo"][CAMNUM][videoName]["RTMP"]["Height"].get<int>();
+                                RTMPFPS = FPS;
+                            }
                             std::string x11Name = "RuAPS_X11Direct" + std::to_string(CAMNUM);
                             if (IsX11Enable)
                             {
-                                cv::namedWindow(x11Name);
+                                cv::namedWindow(x11Name, cv::WND_PROP_FULLSCREEN);
                                 cv::setWindowProperty(x11Name, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
                             }
 
@@ -255,7 +265,6 @@ namespace Action
                                 cv::cvtColor(TmpMat, TmpMat, cv::COLOR_RGB2BGR);
                                 if (IsX11Enable)
                                 {
-
                                     cv::imshow(x11Name, TmpMat);
                                     cv::waitKey(10);
                                 }
@@ -280,7 +289,7 @@ namespace Action
                         });
                         cpu_set_t cpuset;
                         CPU_ZERO(&cpuset);
-                        CPU_SET(0, &cpuset);
+                        CPU_SET(ThreadSigned, &cpuset);
                         int rc = pthread_setaffinity_np(CameraThread[i].native_handle(), sizeof(cpu_set_t), &cpuset);
                         while (!CameraControll[i])
                             usleep(50000);
@@ -293,8 +302,8 @@ namespace Action
 
             if (VC.EnableVideoStream)
             {
-                RTMPServer.reset(new RTMPPusher({._flag_Width = 640,
-                                                 ._flag_Height = 480,
+                RTMPServer.reset(new RTMPPusher({._flag_Width = RTMPWidth,
+                                                 ._flag_Height = RTMPHeight,
                                                  ._flag_Bitrate = 300000,
                                                  ._flag_FPS = 15,
                                                  ._flag_BufferSize = 12,
@@ -306,16 +315,16 @@ namespace Action
                     StreamControll = true;
                     while (StreamControll)
                     {
-                        if (CAMBuffer[0].size() > 0)
+                        if (CAMBuffer[RTMPCameraSigned].size() > 0)
                         {
-                            cv::Mat TmpMat = CAMBuffer[0].getFrame();
+                            cv::Mat TmpMat = CAMBuffer[RTMPCameraSigned].getFrame();
                             if (!TmpMat.empty())
                             {
                                 RTMPFrame = RTMPServer->CVMattToAvframe(&TmpMat, RTMPFrame);
                                 RTMPServer->RTMPSender(RTMPFrame);
                             }
                         }
-                        usleep(33000);
+                        usleep((1.f / RTMPFPS) * 1000000.f);
                     }
                 });
                 cpu_set_t cpuset;
@@ -324,9 +333,34 @@ namespace Action
                 int rc = pthread_setaffinity_np(VideoStreamThread.native_handle(), sizeof(cpu_set_t), &cpuset);
             }
 
+            if (CC.LUAAllowUserScript)
+            {
+                LuaLocal ts;
+                ts.LuaLocalInit();
+                ts.LuaLocalLoad((char *)"../LuaTester.lua");
+                ts.LuaLocalFunctionPush<int>("test", [&]() -> int {
+                    return (int)SF._uORB_MPU_Data._uORB_Real__Roll;
+                });
+                while (true)
+                {
+                    ts.LuaLocalRun();
+                    usleep(10000);
+                }
+            }
+
+            // lua_State *LuaMainLocation;
+            // LuaMainLocation = luaL_newstate();
+            // luaL_openlibs(LuaMainLocation);
+            // lua_pushnumber(LuaMainLocation, RTMPFPS);
+            // lua_pushcclosure(LuaMainLocation, VOTest, 1);
+            // luaL_dofile(LuaMainLocation, "../LuaTester.lua");
+        };
+
+        Action &&Wait()
+        {
             ControllerThread.join();
             MessageServer.Wait();
-        };
+        }
 
     private:
         int DetectedVideo = 0;
@@ -350,6 +384,10 @@ namespace Action
         std::unique_ptr<V4L2Tools::V4L2Drive> V4L2Main[5];
 
         bool StreamControll;
+        int RTMPFPS;
+        int RTMPWidth;
+        int RTMPHeight;
+        int RTMPCameraSigned;
         AVFrame *RTMPFrame = nullptr;
         std::unique_ptr<RTMPPusher> RTMPServer;
 
@@ -374,11 +412,31 @@ namespace Action
             APMInit._IsMS5611Enable = Configdata["_IsMS5611Enable"].get<bool>();
             APMInit._IsRCSafeEnable = Configdata["_IsRCSafeEnable"].get<bool>();
             //==========================================================Controller cofig==/
-            APMInit._flag_RC_ARM_PWM_Value = Configdata["_flag_RC_ARM_PWM_Value"].get<int>();
             APMInit._flag_RC_Min_PWM_Value = Configdata["_flag_RC_Min_PWM_Value"].get<int>();
             APMInit._flag_RC_Mid_PWM_Value = Configdata["_flag_RC_Mid_PWM_Value"].get<int>();
             APMInit._flag_RC_Max_PWM_Value = Configdata["_flag_RC_Max_PWM_Value"].get<int>();
+            //===========================
+            APMInit._flag_RC_ARM_PWM_Value = Configdata["_flag_RC_ARM_PWM_Value"].get<int>();
+            APMInit._flag_RC_ARM_PWM_Channel = Configdata["_flag_RC_ARM_PWM_Channel"].get<int>();
 
+            APMInit._flag_RC_AP_ManualHold_PWM_Value = Configdata["_flag_RC_AP_ManualHold_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_ManualHold_PWM_Channel = Configdata["_flag_RC_AP_ManualHold_PWM_Channel"].get<int>();
+
+            APMInit._flag_RC_AP_AutoStable_PWM_Value = Configdata["_flag_RC_AP_AutoStable_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_AutoStable_PWM_Channel = Configdata["_flag_RC_AP_AutoStable_PWM_Channel"].get<int>();
+
+            APMInit._flag_RC_AP_AltHold_PWM_Value = Configdata["_flag_RC_AP_AltHold_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_AltHold_PWM_Channel = Configdata["_flag_RC_AP_AltHold_PWM_Channel"].get<int>();
+
+            APMInit._flag_RC_AP_SpeedHold_PWM_Value = Configdata["_flag_RC_AP_SpeedHold_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_SpeedHold_PWM_Channel = Configdata["_flag_RC_AP_SpeedHold_PWM_Channel"].get<int>();
+
+            APMInit._flag_RC_AP_PositionHold_PWM_Value = Configdata["_flag_RC_AP_PositionHold_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_PositionHold_PWM_Channel = Configdata["_flag_RC_AP_PositionHold_PWM_Channel"].get<int>();
+
+            APMInit._flag_RC_AP_UserAuto_PWM_Value = Configdata["_flag_RC_AP_UserAuto_PWM_Value"].get<int>();
+            APMInit._flag_RC_AP_UserAuto_PWM_Channel = Configdata["_flag_RC_AP_UserAuto_PWM_Channel"].get<int>();
+            //===========================
             APMInit._flag_RCIsReserv__Roll = Configdata["_flag_RCIsReserv__Roll"].get<int>();
             APMInit._flag_RCIsReserv_Pitch = Configdata["_flag_RCIsReserv_Pitch"].get<int>();
             APMInit._flag_RCIsReserv___Yaw = Configdata["_flag_RCIsReserv___Yaw"].get<int>();
