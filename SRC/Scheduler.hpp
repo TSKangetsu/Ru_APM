@@ -335,25 +335,67 @@ namespace Action
 
             if (CC.LUAAllowUserScript)
             {
-                LuaLocal ts;
-                ts.LuaLocalInit();
-                ts.LuaLocalLoad((char *)"../LuaTester.lua");
-                ts.LuaLocalFunctionPush<int>("test", [&]() -> int {
-                    return (int)SF._uORB_MPU_Data._uORB_Real__Roll;
-                });
-                while (true)
-                {
-                    ts.LuaLocalRun();
-                    usleep(10000);
-                }
-            }
+                LuaUserLocal.LuaLocalInit();
+                LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
+                LuaUserLocal.LuaLocalFunctionPush("LF_GetAPSRTStatus", [&](lua_State *L) -> int {
+                    lua_newtable(L);
+                    lua_pushstring(L, "Real_Pitch");
+                    lua_pushinteger(L, SF._uORB_MPU_Data._uORB_Real_Pitch);
+                    lua_settable(L, -3);
 
-            // lua_State *LuaMainLocation;
-            // LuaMainLocation = luaL_newstate();
-            // luaL_openlibs(LuaMainLocation);
-            // lua_pushnumber(LuaMainLocation, RTMPFPS);
-            // lua_pushcclosure(LuaMainLocation, VOTest, 1);
-            // luaL_dofile(LuaMainLocation, "../LuaTester.lua");
+                    lua_pushstring(L, "Real__Roll");
+                    lua_pushinteger(L, SF._uORB_MPU_Data._uORB_Real__Roll);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Speed_X");
+                    lua_pushinteger(L, SF._uORB_MPU_Speed_X);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Speed_Y");
+                    lua_pushinteger(L, SF._uORB_MPU_Speed_Y);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Speed_Z");
+                    lua_pushinteger(L, SF._uORB_MPU_Speed_Z);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Move_X");
+                    lua_pushinteger(L, SF._uORB_MPU_Movement_X);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Move_Y");
+                    lua_pushinteger(L, SF._uORB_MPU_Movement_Y);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "Move_Z");
+                    lua_pushinteger(L, SF._uORB_MPU_Movement_Z);
+                    lua_settable(L, -3);
+                    return 1;
+                });
+                LuaRunThread = std::thread([&] {
+                    while (true)
+                    {
+                        LuaTimerStart = micros();
+                        LuaTimerNext = LuaTimerStart - LuaTimerEnd;
+                        //
+                        std::cout << "calling Lua,Time: " << LuaTimerLoop << "\n";
+                        LuaUserLocal.LuaLocalRun();
+                        //
+                        LuaTimerEnd = micros();
+                        LuaTimerLoop = LuaTimerEnd - LuaTimerStart;
+                        if (LuaTimerLoop + LuaTimerNext > LuaTimerMax | LuaTimerNext < 0)
+                        {
+                            usleep(50);
+                            LuaTimerError++;
+                        }
+                        else
+                        {
+                            usleep(LuaTimerMax - LuaTimerLoop - LuaTimerNext);
+                        }
+                        LuaTimerEnd = micros();
+                    }
+                });
+            }
         };
 
         Action &&Wait()
@@ -390,6 +432,24 @@ namespace Action
         int RTMPCameraSigned;
         AVFrame *RTMPFrame = nullptr;
         std::unique_ptr<RTMPPusher> RTMPServer;
+
+        int LuaTimerStart;
+        int LuaTimerEnd;
+        int LuaTimerNext;
+        int LuaTimerLoop;
+        int LuaTimerFreq = 100.f;
+        int LuaTimerMax = (float)1 / 100.f * 1000000.f;
+        int LuaTimerError;
+
+        LuaLocal LuaUserLocal;
+        std::thread LuaRunThread;
+        struct APMRTStatus
+        {
+            int Real__Roll;
+            int Real_Pitch;
+            int Speed_X;
+            int Speed_Y;
+        } APMRT;
 
         void configAPMSettle(const char *configDir, APMSettinngs &APMInit)
         {

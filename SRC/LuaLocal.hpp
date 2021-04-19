@@ -24,28 +24,30 @@ public:
         LuaRunnerMain = content;
     }
 
-    template <typename T>
-    LuaLocal &&LuaLocalVarPush(T PushFunction)
+    template <typename T, int StackOffset>
+    LuaLocal &&LuaLocalVarPush(T PushVar)
     {
         return std::move(*this);
     }
 
-    template <typename Return>
-    LuaLocal &&LuaLocalFunctionPush(std::string FunctionName, std::function<Return()> PushFunction)
+    LuaLocal &&LuaLocalFunctionPush(const char *FunctionName, std::function<int(lua_State *)> PushFunction)
     {
         void *p = lua_newuserdata(LuaMainLocation, sizeof(PushFunction));
-        luaL_setmetatable(LuaMainLocation, FunctionName.c_str());
-        new (p) std::function<Return()>(PushFunction);
-        auto Pusher = [](lua_State *L) -> Return {
-            //=================================//
-            std::function<Return()> CAPSTDFUNC =
-                *static_cast<std::function<Return()> *>(lua_touserdata(L, -3));
-            //=================================//
-            Return result = CAPSTDFUNC();
-            lua_pushinteger(L, result);
-            return 1;
+        new (p) std::function<int(lua_State *)>(PushFunction);
+        lua_setglobal(LuaMainLocation, FunctionName);
+        //
+        lua_pushstring(LuaMainLocation, FunctionName);
+        auto Pusher = [](lua_State *L) -> int {
+            const char *FUNCGName = lua_tostring(L, lua_upvalueindex(1));
+            lua_getglobal(L, FUNCGName);
+            std::function<int(lua_State *)> CAPSTDFUNC = *static_cast<std::function<int(lua_State *)> *>(lua_touserdata(L, -1));
+            return CAPSTDFUNC(L);
         };
-        lua_register(LuaMainLocation, FunctionName.c_str(), Pusher);
+        lua_pushcclosure(LuaMainLocation, Pusher, 1);
+        char *FunctionNameLUA;
+        strncpy(FunctionNameLUA, FunctionName + 3, 20);
+        lua_setglobal(LuaMainLocation, FunctionNameLUA);
+        //
         return std::move(*this);
     }
 
@@ -55,7 +57,10 @@ public:
         if (LuaStatus == LUA_OK)
             return true;
         else
+        {
+            lua_error(LuaMainLocation);
             return false;
+        }
     }
 
 private:
