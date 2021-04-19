@@ -372,6 +372,14 @@ namespace Action
                     lua_settable(L, -3);
                     return 1;
                 });
+
+                LuaUserLocal.LuaLocalFunctionPush("LF_SetAPSServo", [&](lua_State *L) -> int {
+                    int pin = lua_tointeger(L, 1);
+                    int _on = lua_tointeger(L, 2);
+                    int off = lua_tointeger(L, 3);
+                    APMControllerServo(pin, _on, off);
+                    return 0;
+                });
                 LuaRunThread = std::thread([&] {
                     while (true)
                     {
@@ -443,13 +451,6 @@ namespace Action
 
         LuaLocal LuaUserLocal;
         std::thread LuaRunThread;
-        struct APMRTStatus
-        {
-            int Real__Roll;
-            int Real_Pitch;
-            int Speed_X;
-            int Speed_Y;
-        } APMRT;
 
         void configAPMSettle(const char *configDir, APMSettinngs &APMInit)
         {

@@ -1,3 +1,8 @@
+SetAPSServo(13,0,600)
+SetAPSServo(14,0,600)
+SetAPSServo(15,0,600)
+SetAPSServo(16,0,600)
+
 status =  GetAPSRTStatus()
 print("Pitch  :".. status.Real_Pitch)
 print("Roll   :".. status.Real__Roll)
@@ -7,3 +12,4 @@ print("Speed_Z:".. status.Speed_Z)
 print("Move_X :".. status.Move_X)
 print("Move_Y :".. status.Move_Y)
 print("Move_Z :".. status.Move_Z)
+
