@@ -51,6 +51,20 @@ public:
         return std::move(*this);
     }
 
+    bool LuaLocalCall(const char *FunctionName, int args, int ReturnARGS)
+    {
+        lua_getglobal(LuaMainLocation, FunctionName);
+        if (lua_isfunction(LuaMainLocation, -1))
+        {
+            lua_pcall(LuaMainLocation, args, ReturnARGS, 0);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     bool LuaLocalRun()
     {
         int LuaStatus = luaL_dostring(LuaMainLocation, LuaRunnerMain.c_str());

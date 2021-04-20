@@ -337,6 +337,9 @@ namespace Action
             {
                 LuaUserLocal.LuaLocalInit();
                 LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
+                LuaUserLocal.LuaLocalRun();
+                LuaUserLocal.LuaLocalCall("Setup", 0, 0);
+                //
                 LuaUserLocal.LuaLocalFunctionPush("LF_GetAPSRTStatus", [&](lua_State *L) -> int {
                     lua_newtable(L);
                     lua_pushstring(L, "Real_Pitch");
@@ -372,7 +375,20 @@ namespace Action
                     lua_settable(L, -3);
                     return 1;
                 });
-
+                LuaUserLocal.LuaLocalFunctionPush("LF_GetAPSRCValue", [&](lua_State *L) -> int {
+                    lua_newtable(L);
+                    for (int i = 0; i < 15; i++)
+                    {
+                        lua_pushinteger(L, i + 1);
+                        lua_pushinteger(L, RF._uORB_RC_Channel_PWM[i]);
+                        lua_settable(L, -3);
+                    }
+                    return 1;
+                });
+                LuaUserLocal.LuaLocalFunctionPush("LF_GetLUARTStatus", [&](lua_State *L) -> int {
+                    lua_pushinteger(L, LuaTimerLoop);
+                    return 1;
+                });
                 LuaUserLocal.LuaLocalFunctionPush("LF_SetAPSServo", [&](lua_State *L) -> int {
                     int pin = lua_tointeger(L, 1);
                     int _on = lua_tointeger(L, 2);
@@ -380,14 +396,49 @@ namespace Action
                     APMControllerServo(pin, _on, off);
                     return 0;
                 });
+                LuaUserLocal.LuaLocalFunctionPush("LF_SetUserPosition", [&](lua_State *L) -> int {
+                    int x = lua_tointeger(L, 1);
+                    int y = lua_tointeger(L, 2);
+                    int z = lua_tointeger(L, 3);
+                    bool reset = lua_toboolean(L, 4);
+                    APMControllerPosition(x, y, z, reset);
+                });
+                LuaUserLocal.LuaLocalFunctionPush("LF_SetUserSpeed", [&](lua_State *L) -> int {
+                    int x = lua_tointeger(L, 1);
+                    int y = lua_tointeger(L, 2);
+                    int z = lua_tointeger(L, 3);
+                    APMControllerSpeed(x, y, z);
+                });
+                //
                 LuaRunThread = std::thread([&] {
+                    bool IsReloaded = true;
+                    bool IsReloadRequire = false;
                     while (true)
                     {
                         LuaTimerStart = micros();
                         LuaTimerNext = LuaTimerStart - LuaTimerEnd;
                         //
-                        std::cout << "calling Lua,Time: " << LuaTimerLoop << "\n";
-                        LuaUserLocal.LuaLocalRun();
+                        if (1800 < RF._uORB_RC_Channel_PWM[9] && RF._uORB_RC_Channel_PWM[9] < 2200)
+                        {
+                            if (IsReloaded)
+                                IsReloadRequire = false;
+                            else
+                                IsReloadRequire = true;
+                        }
+                        else
+                        {
+                            IsReloaded = false;
+                            IsReloadRequire = false;
+                        }
+                        if (IsReloadRequire && !IsReloaded)
+                        {
+                            LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
+                            LuaUserLocal.LuaLocalRun();
+                            LuaUserLocal.LuaLocalCall("Setup", 0, 0);
+                            IsReloaded = true;
+                        }
+                        else
+                            LuaUserLocal.LuaLocalCall("Loop", 0, 0);
                         //
                         LuaTimerEnd = micros();
                         LuaTimerLoop = LuaTimerEnd - LuaTimerStart;
@@ -445,8 +496,8 @@ namespace Action
         int LuaTimerEnd;
         int LuaTimerNext;
         int LuaTimerLoop;
-        int LuaTimerFreq = 100.f;
-        int LuaTimerMax = (float)1 / 100.f * 1000000.f;
+        int LuaTimerFreq = 50.f;
+        int LuaTimerMax = (float)1 / 50.f * 1000000.f;
         int LuaTimerError;
 
         LuaLocal LuaUserLocal;
