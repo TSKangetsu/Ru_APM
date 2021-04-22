@@ -24,13 +24,23 @@ public:
         LuaRunnerMain = content;
     }
 
-    template <typename T, int StackOffset>
+    int LuaLocalVarGet(const char *VARNAME)
+    {
+        lua_getglobal(LuaMainLocation, VARNAME);
+        if (lua_isnumber(LuaMainLocation, -1))
+        {
+            return lua_tonumber(LuaMainLocation, -1);
+        }
+        return -1;
+    }
+
+    template <typename T>
     LuaLocal &&LuaLocalVarPush(T PushVar)
     {
         return std::move(*this);
     }
 
-    LuaLocal &&LuaLocalFunctionPush(const char *FunctionName, std::function<int(lua_State *)> PushFunction)
+    void LuaLocalFunctionPush(const char *FunctionName, std::function<int(lua_State *)> PushFunction)
     {
         void *p = lua_newuserdata(LuaMainLocation, sizeof(PushFunction));
         new (p) std::function<int(lua_State *)>(PushFunction);
@@ -44,11 +54,9 @@ public:
             return CAPSTDFUNC(L);
         };
         lua_pushcclosure(LuaMainLocation, Pusher, 1);
-        char *FunctionNameLUA;
-        strncpy(FunctionNameLUA, FunctionName + 3, 20);
-        lua_setglobal(LuaMainLocation, FunctionNameLUA);
-        //
-        return std::move(*this);
+        std::string TMP = FunctionName;
+        int size = TMP.size();
+        lua_setglobal(LuaMainLocation, TMP.substr(3, size).c_str());
     }
 
     bool LuaLocalCall(const char *FunctionName, int args, int ReturnARGS)

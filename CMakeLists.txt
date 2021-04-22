@@ -8,6 +8,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lz -lpthread -Wl,-rpath -
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a")
 add_definitions(-DModuleTest)
 # add_definitions(-DDEBUG)
+# add_definitions(-DRPiDEBUG)
 project(Ru_APM)
 
 find_package(OpenCV REQUIRED)

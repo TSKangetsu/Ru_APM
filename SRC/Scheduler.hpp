@@ -337,8 +337,6 @@ namespace Action
             {
                 LuaUserLocal.LuaLocalInit();
                 LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
-                LuaUserLocal.LuaLocalRun();
-                LuaUserLocal.LuaLocalCall("Setup", 0, 0);
                 //
                 LuaUserLocal.LuaLocalFunctionPush("LF_GetAPSRTStatus", [&](lua_State *L) -> int {
                     lua_newtable(L);
@@ -373,6 +371,18 @@ namespace Action
                     lua_pushstring(L, "Move_Z");
                     lua_pushinteger(L, SF._uORB_MPU_Movement_Z);
                     lua_settable(L, -3);
+
+                    lua_pushstring(L, "AltHoldTarget");
+                    lua_pushinteger(L, PF._uORB_PID_AltHold_Target);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "FlowQuality");
+                    lua_pushinteger(L, SF._uORB_Flow_Quality);
+                    lua_settable(L, -3);
+
+                    lua_pushstring(L, "APMode");
+                    lua_pushinteger(L, AF.AutoPilotMode);
+                    lua_settable(L, -3);
                     return 1;
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_GetAPSRCValue", [&](lua_State *L) -> int {
@@ -387,7 +397,8 @@ namespace Action
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_GetLUARTStatus", [&](lua_State *L) -> int {
                     lua_pushinteger(L, LuaTimerLoop);
-                    return 1;
+                    lua_pushinteger(L, LuaTimerError);
+                    return 2;
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_SetAPSServo", [&](lua_State *L) -> int {
                     int pin = lua_tointeger(L, 1);
@@ -402,14 +413,32 @@ namespace Action
                     int z = lua_tointeger(L, 3);
                     bool reset = lua_toboolean(L, 4);
                     APMControllerPosition(x, y, z, reset);
+                    return 0;
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_SetUserSpeed", [&](lua_State *L) -> int {
                     int x = lua_tointeger(L, 1);
                     int y = lua_tointeger(L, 2);
                     int z = lua_tointeger(L, 3);
                     APMControllerSpeed(x, y, z);
+                    return 0;
                 });
-                //
+                LuaUserLocal.LuaLocalFunctionPush("LF_RequestDISARM", [&](lua_State *L) -> int {
+                    bool Request = lua_toboolean(L, 1);
+                    AF._flag_ESC_DISARMED_Request = Request;
+                    return 0;
+                });
+                LuaUserLocal.LuaLocalFunctionPush("LF_RequestFrame", [&](lua_State *L) -> int {
+                    cv::Mat MatToLua = cv::imread("/home/pi/Ru_APM/ssx.png");
+                    void *LUAMAT = lua_newuserdata(L, sizeof(cv::Mat));
+                    new (LUAMAT) cv::Mat(MatToLua);
+                    return 1;
+                });
+                LuaUserLocal.LuaLocalRun();
+                LuaUserLocal.LuaLocalCall("Setup", 0, 0);
+                LuaTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
+                LuaTimerMax = (float)1 / LuaTimerFreq * 1000000.f;
+                LuaResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
+                LuaResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
                 LuaRunThread = std::thread([&] {
                     bool IsReloaded = true;
                     bool IsReloadRequire = false;
@@ -418,7 +447,7 @@ namespace Action
                         LuaTimerStart = micros();
                         LuaTimerNext = LuaTimerStart - LuaTimerEnd;
                         //
-                        if (1800 < RF._uORB_RC_Channel_PWM[9] && RF._uORB_RC_Channel_PWM[9] < 2200)
+                        if (LuaResetValue - 100 < RF._uORB_RC_Channel_PWM[LuaResetChannel] && RF._uORB_RC_Channel_PWM[LuaResetChannel] < LuaResetValue + 100)
                         {
                             if (IsReloaded)
                                 IsReloadRequire = false;
@@ -435,6 +464,11 @@ namespace Action
                             LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
                             LuaUserLocal.LuaLocalRun();
                             LuaUserLocal.LuaLocalCall("Setup", 0, 0);
+                            LuaTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
+                            LuaTimerMax = (float)1 / LuaTimerFreq * 1000000.f;
+                            LuaResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
+                            LuaResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
+                            LuaTimerError = 0;
                             IsReloaded = true;
                         }
                         else
@@ -459,6 +493,7 @@ namespace Action
 
         Action &&Wait()
         {
+            // TaskThreadBlock();
             ControllerThread.join();
             MessageServer.Wait();
         }
@@ -492,14 +527,15 @@ namespace Action
         AVFrame *RTMPFrame = nullptr;
         std::unique_ptr<RTMPPusher> RTMPServer;
 
-        int LuaTimerStart;
-        int LuaTimerEnd;
-        int LuaTimerNext;
-        int LuaTimerLoop;
+        int LuaTimerStart = 0;
+        int LuaTimerEnd = 0;
+        int LuaTimerNext = 0;
+        int LuaTimerLoop = 0;
         int LuaTimerFreq = 50.f;
         int LuaTimerMax = (float)1 / 50.f * 1000000.f;
-        int LuaTimerError;
-
+        int LuaTimerError = 0;
+        int LuaResetChannel = 10;
+        int LuaResetValue = 1933;
         LuaLocal LuaUserLocal;
         std::thread LuaRunThread;
 
