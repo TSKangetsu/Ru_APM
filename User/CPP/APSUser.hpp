@@ -28,6 +28,16 @@ public:
     void APSOpreator_FunctionRegs_SetUserPosition(std::function<void(int, int, int, bool)> function);
 
 private:
+    float Status[15];
+    float RCValues[15];
+    int clockTimer = 0;
+    bool TakeoffFlag = false;
+    bool LandingFlag = false;
+
+    bool MissonASide = false;
+    bool MissonBSide = false;
+    bool MissonCSide = false;
+
     std::function<cv::Mat()> RequestFrame;
     std::function<void(bool)> RequestDISARM;
     std::function<void(float *)> GetRTStatus;

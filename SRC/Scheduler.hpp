@@ -38,7 +38,7 @@ namespace Action
             APMSettinngs setting;
             bool CPPAllowUserScript = true;
             bool LUAAllowUserScript = false;
-            bool EnableControllerDEBUG = false;
+            bool EnableControllerDEBUG = true;
         } CC;
     };
 
@@ -489,7 +489,7 @@ namespace Action
                     cv::Mat Tmp;
                     return Tmp;
                 });
-                UserCPP.APSOpreator_FunctionRegs_GetRTStatus([&](float *Status) {
+                UserCPP.APSOpreator_FunctionRegs_GetRTStatus([&](float *Status) -> void {
                     Status[0] = SF._uORB_MPU_Data._uORB_Real_Pitch;
                     Status[1] = SF._uORB_MPU_Data._uORB_Real__Roll;
                     Status[2] = SF._uORB_MPU_Speed_X;
@@ -502,22 +502,22 @@ namespace Action
                     Status[9] = SF._uORB_Flow_Quality;
                     Status[10] = AF.AutoPilotMode;
                 });
-                UserCPP.APSOpreator_FunctionRegs_GetRCValues([&](float *Value) {
+                UserCPP.APSOpreator_FunctionRegs_GetRCValues([&](float *Value) -> void {
                     for (int i = 0; i < 10; i++)
                     {
                         Value[i] = RF._uORB_RC_Channel_PWM[i];
                     }
                 });
-                UserCPP.APSOpreator_FunctionRegs_SetServo([&](int pin, int on, int off) {
+                UserCPP.APSOpreator_FunctionRegs_SetServo([&](int pin, int on, int off) -> void {
                     pca9685PWMWrite(DF.PCA9658_fd, pin, on, off);
                 });
-                UserCPP.APSOpreator_FunctionRegs_RequestDISARM([&](bool DISARM) {
+                UserCPP.APSOpreator_FunctionRegs_RequestDISARM([&](bool DISARM) -> void {
                     AF._flag_ESC_DISARMED_Request = DISARM;
                 });
-                UserCPP.APSOpreator_FunctionRegs_SetUserSpeed([&](int x, int y, int z) {
+                UserCPP.APSOpreator_FunctionRegs_SetUserSpeed([&](int x, int y, int z) -> void {
                     APMControllerSpeed(x, y, z);
                 });
-                UserCPP.APSOpreator_FunctionRegs_SetUserPosition([&](int x, int y, int z, bool reset) {
+                UserCPP.APSOpreator_FunctionRegs_SetUserPosition([&](int x, int y, int z, bool reset) -> void {
                     APMControllerPosition(x, y, z, reset);
                 });
                 UserCPP.Setup();
@@ -613,8 +613,8 @@ namespace Action
         int UserTimerEnd = 0;
         int UserTimerNext = 0;
         int UserTimerLoop = 0;
-        int UserTimerFreq = 50.f;
-        int UserTimerMax = (float)1 / 50.f * 1000000.f;
+        int UserTimerFreq = 100.f;
+        int UserTimerMax = (float)1 / 100.f * 1000000.f;
         int UserTimerError = 0;
         int UserResetChannel = 10;
         int UserResetValue = 1933;
