@@ -2,4 +2,6 @@
 /.vscode/
 /out/
 /.vs/
+/User/CPP/build
+/User/CPP/.vscode
 /CMakeSettings.json

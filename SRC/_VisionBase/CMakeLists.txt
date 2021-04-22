@@ -21,9 +21,6 @@ set(AV_Tool_LIB ${AVCODEC_LIBRARY} ${AVFORMAT_LIBRARY} ${AVUTIL_LIBRARY} ${AVDEV
 set(INC_DIRS ${AVCODEC_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR} ${AVUTIL_INCLUDE_DIR} ${AVDEVICE_INCLUDE_DIR} ${AVFILTER_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR})
 set(imgProcess ${CMAKE_CURRENT_SOURCE_DIR}/XthermCameraDrive/raspberrypi/libSimple.so ${CMAKE_CURRENT_SOURCE_DIR}/XthermCameraDrive/raspberrypi/libthermometry.so)
 
-find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIRS})
-
 add_library(VisionBase ${lib_VisionBase} ${lib_CameraDrive} ${lib_VideoStreamDrive} ${lib_VisionAIDrive} ${CMAKE_CURRENT_SOURCE_DIR}/XthermCameraDrive/XthermSDK.hpp)
 target_link_libraries(VisionBase ${OpenCV_LIBS})
 target_link_libraries(VisionBase ${AV_Tool_LIB})

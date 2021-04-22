@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <wiringPi.h>
 #include <opencv2/opencv.hpp>
+#include "../User/CPP/APSUser.hpp"
 #include "_Excutable/Drive_Json.hpp"
 #include "RPiSingleAPM/src/SingleAPM.hpp"
 #include "_VisionBase/VisionBaseExec.hpp"
@@ -11,13 +12,6 @@
 #include "_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
 #include "MessageController/MessageController.hpp"
 #include "LuaLocal.hpp"
-
-extern "C"
-{
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-}
 
 using json = nlohmann::json;
 using namespace SingleAPMAPI;
@@ -42,7 +36,9 @@ namespace Action
         struct ControllerConfig
         {
             APMSettinngs setting;
-            bool LUAAllowUserScript = true;
+            bool CPPAllowUserScript = true;
+            bool LUAAllowUserScript = false;
+            bool EnableControllerDEBUG = false;
         } CC;
     };
 
@@ -332,7 +328,10 @@ namespace Action
                 CPU_SET(0, &cpuset);
                 int rc = pthread_setaffinity_np(VideoStreamThread.native_handle(), sizeof(cpu_set_t), &cpuset);
             }
+        };
 
+        Action &&UserAction()
+        {
             if (CC.LUAAllowUserScript)
             {
                 LuaUserLocal.LuaLocalInit();
@@ -396,8 +395,8 @@ namespace Action
                     return 1;
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_GetLUARTStatus", [&](lua_State *L) -> int {
-                    lua_pushinteger(L, LuaTimerLoop);
-                    lua_pushinteger(L, LuaTimerError);
+                    lua_pushinteger(L, UserTimerLoop);
+                    lua_pushinteger(L, UserTimerError);
                     return 2;
                 });
                 LuaUserLocal.LuaLocalFunctionPush("LF_SetAPSServo", [&](lua_State *L) -> int {
@@ -427,27 +426,21 @@ namespace Action
                     AF._flag_ESC_DISARMED_Request = Request;
                     return 0;
                 });
-                LuaUserLocal.LuaLocalFunctionPush("LF_RequestFrame", [&](lua_State *L) -> int {
-                    cv::Mat MatToLua = cv::imread("/home/pi/Ru_APM/ssx.png");
-                    void *LUAMAT = lua_newuserdata(L, sizeof(cv::Mat));
-                    new (LUAMAT) cv::Mat(MatToLua);
-                    return 1;
-                });
                 LuaUserLocal.LuaLocalRun();
                 LuaUserLocal.LuaLocalCall("Setup", 0, 0);
-                LuaTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
-                LuaTimerMax = (float)1 / LuaTimerFreq * 1000000.f;
-                LuaResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
-                LuaResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
-                LuaRunThread = std::thread([&] {
+                UserTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
+                UserTimerMax = (float)1 / UserTimerFreq * 1000000.f;
+                UserResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
+                UserResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
+                UserRunThread = std::thread([&] {
                     bool IsReloaded = true;
                     bool IsReloadRequire = false;
                     while (true)
                     {
-                        LuaTimerStart = micros();
-                        LuaTimerNext = LuaTimerStart - LuaTimerEnd;
+                        UserTimerStart = micros();
+                        UserTimerNext = UserTimerStart - UserTimerEnd;
                         //
-                        if (LuaResetValue - 100 < RF._uORB_RC_Channel_PWM[LuaResetChannel] && RF._uORB_RC_Channel_PWM[LuaResetChannel] < LuaResetValue + 100)
+                        if (UserResetValue - 100 < RF._uORB_RC_Channel_PWM[UserResetChannel] && RF._uORB_RC_Channel_PWM[UserResetChannel] < UserResetValue + 100)
                         {
                             if (IsReloaded)
                                 IsReloadRequire = false;
@@ -464,39 +457,128 @@ namespace Action
                             LuaUserLocal.LuaLocalLoad((char *)"../LuaTester.lua");
                             LuaUserLocal.LuaLocalRun();
                             LuaUserLocal.LuaLocalCall("Setup", 0, 0);
-                            LuaTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
-                            LuaTimerMax = (float)1 / LuaTimerFreq * 1000000.f;
-                            LuaResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
-                            LuaResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
-                            LuaTimerError = 0;
+                            UserTimerFreq = LuaUserLocal.LuaLocalVarGet("LUARTFreq");
+                            UserTimerMax = (float)1 / UserTimerFreq * 1000000.f;
+                            UserResetChannel = LuaUserLocal.LuaLocalVarGet("LUARECH") - 1;
+                            UserResetValue = LuaUserLocal.LuaLocalVarGet("LUAREVA");
+                            UserTimerError = 0;
                             IsReloaded = true;
                         }
                         else
                             LuaUserLocal.LuaLocalCall("Loop", 0, 0);
                         //
-                        LuaTimerEnd = micros();
-                        LuaTimerLoop = LuaTimerEnd - LuaTimerStart;
-                        if (LuaTimerLoop + LuaTimerNext > LuaTimerMax | LuaTimerNext < 0)
+                        UserTimerEnd = micros();
+                        UserTimerLoop = UserTimerEnd - UserTimerStart;
+                        if (UserTimerLoop + UserTimerNext > UserTimerMax | UserTimerNext < 0)
                         {
                             usleep(50);
-                            LuaTimerError++;
+                            UserTimerError++;
                         }
                         else
                         {
-                            usleep(LuaTimerMax - LuaTimerLoop - LuaTimerNext);
+                            usleep(UserTimerMax - UserTimerLoop - UserTimerNext);
                         }
-                        LuaTimerEnd = micros();
+                        UserTimerEnd = micros();
                     }
                 });
             }
+
+            if (CC.CPPAllowUserScript)
+            {
+                UserCPP.APSOpreator_FunctionRegs_RequestFrame([&]() -> cv::Mat {
+                    cv::Mat Tmp;
+                    return Tmp;
+                });
+                UserCPP.APSOpreator_FunctionRegs_GetRTStatus([&](float *Status) {
+                    Status[0] = SF._uORB_MPU_Data._uORB_Real_Pitch;
+                    Status[1] = SF._uORB_MPU_Data._uORB_Real__Roll;
+                    Status[2] = SF._uORB_MPU_Speed_X;
+                    Status[3] = SF._uORB_MPU_Speed_Y;
+                    Status[4] = SF._uORB_MPU_Speed_Z;
+                    Status[5] = SF._uORB_MPU_Movement_X;
+                    Status[6] = SF._uORB_MPU_Movement_Y;
+                    Status[7] = SF._uORB_MPU_Movement_Z;
+                    Status[8] = PF._uORB_PID_AltHold_Target;
+                    Status[9] = SF._uORB_Flow_Quality;
+                    Status[10] = AF.AutoPilotMode;
+                });
+                UserCPP.APSOpreator_FunctionRegs_GetRCValues([&](float *Value) {
+                    for (int i = 0; i < 10; i++)
+                    {
+                        Value[i] = RF._uORB_RC_Channel_PWM[i];
+                    }
+                });
+                UserCPP.APSOpreator_FunctionRegs_SetServo([&](int pin, int on, int off) {
+                    pca9685PWMWrite(DF.PCA9658_fd, pin, on, off);
+                });
+                UserCPP.APSOpreator_FunctionRegs_RequestDISARM([&](bool DISARM) {
+                    AF._flag_ESC_DISARMED_Request = DISARM;
+                });
+                UserCPP.APSOpreator_FunctionRegs_SetUserSpeed([&](int x, int y, int z) {
+                    APMControllerSpeed(x, y, z);
+                });
+                UserCPP.APSOpreator_FunctionRegs_SetUserPosition([&](int x, int y, int z, bool reset) {
+                    APMControllerPosition(x, y, z, reset);
+                });
+                UserCPP.Setup();
+                UserRunThread = std::thread([&] {
+                    bool IsReloaded = true;
+                    bool IsReloadRequire = false;
+                    while (true)
+                    {
+                        UserTimerStart = micros();
+                        UserTimerNext = UserTimerStart - UserTimerEnd;
+                        //
+                        if (UserResetValue - 100 < RF._uORB_RC_Channel_PWM[UserResetChannel] &&
+                            RF._uORB_RC_Channel_PWM[UserResetChannel] < UserResetValue + 100)
+                        {
+                            if (IsReloaded)
+                                IsReloadRequire = false;
+                            else
+                                IsReloadRequire = true;
+                        }
+                        else
+                        {
+                            IsReloaded = false;
+                            IsReloadRequire = false;
+                        }
+                        if (IsReloadRequire && !IsReloaded)
+                        {
+                            UserTimerError = 0;
+                            IsReloaded = true;
+                        }
+                        else
+                        {
+                            UserCPP.Loop();
+                        }
+                        //
+                        UserTimerEnd = micros();
+                        UserTimerLoop = UserTimerEnd - UserTimerStart;
+                        if (UserTimerLoop + UserTimerNext > UserTimerMax | UserTimerNext < 0)
+                        {
+                            usleep(50);
+                            UserTimerError++;
+                        }
+                        else
+                        {
+                            usleep(UserTimerMax - UserTimerLoop - UserTimerNext);
+                        }
+                        UserTimerEnd = micros();
+                    }
+                });
+            }
+
+            return std::move(*this);
         };
 
         Action &&Wait()
         {
-            // TaskThreadBlock();
+            if (CC.EnableControllerDEBUG)
+                TaskThreadBlock();
             ControllerThread.join();
             MessageServer.Wait();
-        }
+            return std::move(*this);
+        };
 
     private:
         int DetectedVideo = 0;
@@ -527,17 +609,19 @@ namespace Action
         AVFrame *RTMPFrame = nullptr;
         std::unique_ptr<RTMPPusher> RTMPServer;
 
-        int LuaTimerStart = 0;
-        int LuaTimerEnd = 0;
-        int LuaTimerNext = 0;
-        int LuaTimerLoop = 0;
-        int LuaTimerFreq = 50.f;
-        int LuaTimerMax = (float)1 / 50.f * 1000000.f;
-        int LuaTimerError = 0;
-        int LuaResetChannel = 10;
-        int LuaResetValue = 1933;
+        int UserTimerStart = 0;
+        int UserTimerEnd = 0;
+        int UserTimerNext = 0;
+        int UserTimerLoop = 0;
+        int UserTimerFreq = 50.f;
+        int UserTimerMax = (float)1 / 50.f * 1000000.f;
+        int UserTimerError = 0;
+        int UserResetChannel = 10;
+        int UserResetValue = 1933;
+        std::thread UserRunThread;
+
+        APSCPPUser UserCPP;
         LuaLocal LuaUserLocal;
-        std::thread LuaRunThread;
 
         void configAPMSettle(const char *configDir, APMSettinngs &APMInit)
         {
