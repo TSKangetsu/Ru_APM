@@ -10,65 +10,30 @@ void APSCPPUser::Loop()
 {
     GetRTStatus(Status);
     GetRCValues(RCValues);
-    if (1700 < RCValues[6] && RCValues[6] < 2000)
-    {
-        clockTimer++;
-        //Misson Test
-        if (clockTimer == 500)
-        {
-            TakeoffFlag = true;
-            MissonASide = true;
-        }
-
-        if (MissonASide == true)
-        {
-            if ((47 < Status[RTStatus_Movement_Z] && Status[RTStatus_Movement_Z] < 53) &&
-                (-5 < Status[RTStatus_Movement_Y] && Status[RTStatus_Movement_Y] < 5))
-            {
-                SetUserPosition(0, -170, 85, false);
-            }
-            if ((-173 < Status[RTStatus_Movement_Y] && Status[RTStatus_Movement_Y] < -167))
-            {
-                LandingFlag = true;
-                MissonASide = false;
-            }
-        }
-        //Timer Test
-        // if (clockTimer == 200)
-        // {
-        //     TakeoffFlag = true;
-        // }
-        // if (clockTimer == 1000)
-        // {
-        //     LandingFlag = true;
-        // }
-        //TakeOff and Landing
-        {
-            if (TakeoffFlag)
-            {
-                RequestDISARM(true);
-                TakeoffFlag = false;
-            }
-            if (LandingFlag)
-            {
-                SetUserSpeed(0, 0, 35);
-                if (Status[RTStatus_Movement_Z] < 5)
-                {
-                    RequestDISARM(false);
-                    LandingFlag = false;
-                }
-            }
-        }
-    }
-    else
-    {
-        clockTimer = 0;
-        TakeoffFlag = false;
-        LandingFlag = false;
-        RequestDISARM(false);
-
-        MissonASide = false;
-        MissonBSide = false;
-        MissonCSide = false;
-    }
 };
+
+int APSCPPUser::CircleDetect(cv::Mat &IMG, float &x, float &y)
+{
+    cv::Mat edges;
+    cv::cvtColor(IMG, edges, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(edges, edges, cv::Size(5, 5), 2, 2);
+    std::vector<cv::Vec3f> circles;
+    cv::HoughCircles(edges, circles, cv::HOUGH_GRADIENT, 1.5, 10, 200, 100, 0, 0);
+    int x_Total = 0;
+    int y_Total = 0;
+    for (size_t i = 0; i < circles.size(); i++)
+    {
+        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radius = cvRound(circles[i][2]);
+        x_Total += cvRound(circles[i][0]);
+        y_Total += cvRound(circles[i][1]);
+        circle(IMG, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
+        circle(IMG, center, radius, cv::Scalar(155, 50, 255), 3, 8, 0);
+    }
+    if (circles.size() > 0)
+    {
+        x = x_Total / circles.size();
+        y = y_Total / circles.size();
+    }
+    return circles.size();
+}

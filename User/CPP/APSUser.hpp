@@ -1,6 +1,7 @@
+#include <thread>
 #include <functional>
 #include <opencv2/opencv.hpp>
-
+#include <vector>
 #define RTStatus_Real_Pitch 0
 #define RTStatus_Real__Roll 1
 #define RTStatus_Real_Speed_X 2
@@ -12,14 +13,17 @@
 #define RTStatus_AltHoldTarget 8
 #define RTStatus_FlowQuality 9
 #define RTStatus_APMode 10
+#define RTStatus_RunTime 11
+#define RTStatus_RunTimeError 12
 
 class APSCPPUser
 {
 public:
     void Setup();
     void Loop();
+    int CircleDetect(cv::Mat &IMG, float &x, float &y);
 
-    void APSOpreator_FunctionRegs_RequestFrame(std::function<cv::Mat()> function);
+    void APSOpreator_FunctionRegs_RequestFrame(std::function<void(cv::Mat &, int)> function);
     void APSOpreator_FunctionRegs_GetRTStatus(std::function<void(float *)> function);
     void APSOpreator_FunctionRegs_GetRCValues(std::function<void(float *)> function);
     void APSOpreator_FunctionRegs_SetServo(std::function<void(int, int, int)> function);
@@ -28,17 +32,23 @@ public:
     void APSOpreator_FunctionRegs_SetUserPosition(std::function<void(int, int, int, bool)> function);
 
 private:
+    float x = 0;
+    float y = 0;
+    float Sx = 0;
+    float Sy = 0;
+    int Detected = 0;
+
+    cv::Mat TMP;
+    cv::VideoCapture MainCAP;
+    std::thread CAPThread;
+
     float Status[15];
     float RCValues[15];
     int clockTimer = 0;
     bool TakeoffFlag = false;
     bool LandingFlag = false;
 
-    bool MissonASide = false;
-    bool MissonBSide = false;
-    bool MissonCSide = false;
-
-    std::function<cv::Mat()> RequestFrame;
+    std::function<void(cv::Mat &, int)> RequestFrame;
     std::function<void(bool)> RequestDISARM;
     std::function<void(float *)> GetRTStatus;
     std::function<void(float *)> GetRCValues;

@@ -1,6 +1,6 @@
 #include "APSUser.hpp"
 
-void APSCPPUser::APSOpreator_FunctionRegs_RequestFrame(std::function<cv::Mat()> function)
+void APSCPPUser::APSOpreator_FunctionRegs_RequestFrame(std::function<void(cv::Mat &, int)> function)
 {
     RequestFrame = function;
 };
@@ -22,14 +22,14 @@ void APSCPPUser::APSOpreator_FunctionRegs_SetServo(std::function<void(int, int, 
 void APSCPPUser::APSOpreator_FunctionRegs_RequestDISARM(std::function<void(bool)> function)
 {
     RequestDISARM = function;
-}
+};
 
 void APSCPPUser::APSOpreator_FunctionRegs_SetUserSpeed(std::function<void(int, int, int)> function)
 {
     SetUserSpeed = function;
-}
+};
 
 void APSCPPUser::APSOpreator_FunctionRegs_SetUserPosition(std::function<void(int, int, int, bool)> function)
 {
     SetUserPosition = function;
-}
+};
