@@ -36,7 +36,7 @@ namespace Action
         struct ControllerConfig
         {
             APMSettinngs setting;
-            bool CPPAllowUserScript = false;
+            bool CPPAllowUserScript = true;
             bool LUAAllowUserScript = false;
             bool EnableControllerDEBUG = true;
         } CC;
@@ -82,7 +82,6 @@ namespace Action
                                 {"GRYOYaw", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Gryo___Yaw, 2)},
                                 {"AccelPitch", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Accel_Pitch, 2)},
                                 {"AccelRoll", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Accel__Roll, 2)},
-                                {"AccelTrust", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Trust, 2)},
                                 {"RealPitch", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Real_Pitch, 2)},
                                 {"RealRoll", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_Real__Roll, 2)},
                                 {"PIDPitch", MessageController::StringRounder(PF._uORB_Leveling_Pitch, 2)},
@@ -93,8 +92,6 @@ namespace Action
                                 {"HoldPressure", MessageController::StringRounder(PF._uORB_PID_AltHold_Target, 2)},
                                 {"HoldThrottle", MessageController::StringRounder(PF._uORB_PID_Alt_Throttle, 2)},
 
-                                {"GPSLat", MessageController::StringRounder(SF._uORB_GPS_Lat_Smooth, 2)},
-                                {"GPSLng", MessageController::StringRounder(SF._uORB_GPS_Lng_Smooth, 2)},
                                 {"GPSSatCount", MessageController::StringRounder(SF._uORB_GPS_Data.satillitesCount, 2)},
 
                                 {"RCRoll", MessageController::StringRounder(RF._uORB_RC_Out__Roll, 2)},
@@ -106,9 +103,6 @@ namespace Action
                                 {"RawADFX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_X, 2)},
                                 {"RawADFY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_Y, 2)},
                                 {"RawADFZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_ADF_Z, 2)},
-                                {"RawFAX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_X, 2)},
-                                {"RawFAY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_Y, 2)},
-                                {"RawFAZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_AStaticFakeFD_Z, 2)},
                                 {"RawSAX", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_X, 2)},
                                 {"RawSAY", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_Y, 2)},
                                 {"RawSAZ", MessageController::StringRounder(SF._uORB_MPU_Data._uORB_MPU9250_A_Static_Z, 2)},
@@ -525,45 +519,43 @@ namespace Action
 
             if (CC.CPPAllowUserScript)
             {
-                UserCPP.APSOpreator_FunctionRegs_RequestFrame([&](cv::Mat &img, int Queue) {});
-                UserCPP.APSOpreator_FunctionRegs_GetRTStatus(
-                    [&](float *Status)
+                UserAPICPP::RequestFrame = [&](cv::Mat &img, int Queue) {};
+                UserAPICPP::GetRTStatus = [&](float *Status)
+                {
+                    Status[0] = SF._uORB_MPU_Data._uORB_Real_Pitch;
+                    Status[1] = SF._uORB_MPU_Data._uORB_Real__Roll;
+                    Status[2] = SF._uORB_True_Speed_X;
+                    Status[3] = SF._uORB_True_Speed_Y;
+                    Status[4] = SF._uORB_True_Speed_Z;
+                    Status[5] = SF._uORB_True_Movement_X;
+                    Status[6] = SF._uORB_True_Movement_Y;
+                    Status[7] = SF._uORB_True_Movement_Z;
+                    Status[8] = PF._uORB_PID_AltHold_Target;
+                    Status[9] = SF._uORB_Flow_Quality;
+                    Status[10] = AF.AutoPilotMode;
+                    Status[11] = UserTimerError;
+                    Status[12] = UserTimerLoop;
+                };
+                UserAPICPP::GetRCValues = [&](float *Value)
+                {
+                    for (int i = 0; i < 10; i++)
                     {
-                        Status[0] = SF._uORB_MPU_Data._uORB_Real_Pitch;
-                        Status[1] = SF._uORB_MPU_Data._uORB_Real__Roll;
-                        Status[2] = SF._uORB_True_Speed_X;
-                        Status[3] = SF._uORB_True_Speed_Y;
-                        Status[4] = SF._uORB_True_Speed_Z;
-                        Status[5] = SF._uORB_True_Movement_X;
-                        Status[6] = SF._uORB_True_Movement_Y;
-                        Status[7] = SF._uORB_True_Movement_Z;
-                        Status[8] = PF._uORB_PID_AltHold_Target;
-                        Status[9] = SF._uORB_Flow_Quality;
-                        Status[10] = AF.AutoPilotMode;
-                        Status[11] = UserTimerError;
-                        Status[12] = UserTimerLoop;
-                    });
-                UserCPP.APSOpreator_FunctionRegs_GetRCValues(
-                    [&](float *Value)
-                    {
-                        for (int i = 0; i < 10; i++)
-                        {
-                            Value[i] = RF._uORB_RC_Channel_PWM[i];
-                        }
-                    });
-                UserCPP.APSOpreator_FunctionRegs_SetServo(
-                    [&](int pin, int on, int off)
-                    { APMControllerServo(pin, on, off); });
-                UserCPP.APSOpreator_FunctionRegs_RequestDISARM(
-                    [&](bool DISARM)
-                    { AF._flag_ESC_DISARMED_Request = DISARM; });
-                UserCPP.APSOpreator_FunctionRegs_SetUserSpeed(
-                    [&](int x, int y, int z)
-                    { APMControllerSpeed(x, y, z); });
-                UserCPP.APSOpreator_FunctionRegs_SetUserPosition(
-                    [&](int x, int y, int z, bool reset)
-                    { APMControllerPosition(x, y, z, reset); });
-                UserCPP.Setup();
+                        Value[i] = RF._uORB_RC_Channel_PWM[i];
+                    }
+                };
+                UserAPICPP::SetServo = [&](int pin, int on, int off)
+                { APMControllerServo(pin, on, off); };
+                UserAPICPP::RequestDISARM = [&](bool DISARM)
+                { AF._flag_ESC_DISARMED_Request = DISARM; };
+                UserAPICPP::SetUserSpeed = [&](int x, int y, int z)
+                { APMControllerSpeed(x, y, z); };
+                UserAPICPP::SetUserPosition = [&](int x, int y, int z, bool reset)
+                { APMControllerPosition(x, y, z, reset); };
+                UserAPICPP::FakeRCImplment = [&](int *RCChannel, bool IsError)
+                {
+                    APMControllerFakeRC(RCChannel, IsError);
+                };
+                UserAPICPP::UserSetup();
                 UserRunThread = std::thread(
                     [&]
                     {
@@ -574,7 +566,7 @@ namespace Action
                             UserTimerStart = micros();
                             UserTimerNext = UserTimerStart - UserTimerEnd;
                             //
-                            UserCPP.Loop();
+                            UserAPICPP::UserLoop();
                             //
                             UserTimerEnd = micros();
                             UserTimerLoop = UserTimerEnd - UserTimerStart;
@@ -643,8 +635,6 @@ namespace Action
         int UserResetChannel = 10;
         int UserResetValue = 1933;
         std::thread UserRunThread;
-
-        APSCPPUser UserCPP;
         LuaLocal LuaUserLocal;
 
         void configAPMSettle(const char *configDir, APMSettinngs &APMInit)
@@ -756,16 +746,20 @@ namespace Action
             APMInit.SC._flag_MPU9250_A_Y_Scal = Configdata["_flag_MPU9250_A_Y_Scal"].get<double>();
             APMInit.SC._flag_MPU9250_A_Z_Scal = Configdata["_flag_MPU9250_A_Z_Scal"].get<double>();
 
-            APMInit.SC._flag_QMC5883L_Head_Asix = Configdata["_flag_QMC5883L_Head_Asix"].get<double>();
-            APMInit.SC._flag_QMC5883L_M_X_Offset = Configdata["_flag_QMC5883L_M_X_Offset"].get<double>();
-            APMInit.SC._flag_QMC5883L_M_Y_Offset = Configdata["_flag_QMC5883L_M_Y_Offset"].get<double>();
-            APMInit.SC._flag_QMC5883L_M_Z_Offset = Configdata["_flag_QMC5883L_M_Z_Offset"].get<double>();
-            APMInit.SC._flag_QMC5883L_M_Y_Scaler = Configdata["_flag_QMC5883L_M_Y_Scaler"].get<double>();
-            APMInit.SC._flag_QMC5883L_M_Z_Scaler = Configdata["_flag_QMC5883L_M_Z_Scaler"].get<double>();
+            APMInit.SC._flag_COMPASS_Y_Scaler = Configdata["_flag_COMPASS_Y_Scaler"].get<double>();
+            APMInit.SC._flag_COMPASS_Z_Scaler = Configdata["_flag_COMPASS_Z_Scaler"].get<double>();
+            APMInit.SC._flag_COMPASS_X_Offset = Configdata["_flag_COMPASS_X_Offset"].get<double>();
+            APMInit.SC._flag_COMPASS_Y_Offset = Configdata["_flag_COMPASS_Y_Offset"].get<double>();
+            APMInit.SC._flag_COMPASS_Z_Offset = Configdata["_flag_COMPASS_Z_Offset"].get<double>();
             //==============================================================Filter config==/
             APMInit.FC._flag_Filter_Gryo_Type = Configdata["_flag_Filter_Gryo_Type"].get<double>();
             APMInit.FC._flag_Filter_GYaw_CutOff = Configdata["_flag_Filter_GYaw_CutOff"].get<double>();
             APMInit.FC._flag_Filter_Gryo_CutOff = Configdata["_flag_Filter_Gryo_CutOff"].get<double>();
+            APMInit.FC._flag_Filter_Gryo_NotchFreq = Configdata["_flag_Filter_Gryo_NotchFreq"].get<double>();
+            APMInit.FC._flag_Filter_Gryo_NotchCutOff = Configdata["_flag_Filter_Gryo_NotchCutOff"].get<double>();
+            APMInit.FC._flag_Filter_Gryo_DynamicNotchRange = Configdata["_flag_Filter_Gryo_DynamicNotchRange"].get<double>();
+            APMInit.FC._flag_Filter_Gryo_DynamicNotchEnable = Configdata["_flag_Filter_Gryo_DynamicNotchEnable"].get<double>();
+            APMInit.FC._flag_Filter_Gryo_DynamicNotchMinFreq = Configdata["_flag_Filter_Gryo_DynamicNotchMinFreq"].get<double>();
             APMInit.FC._flag_Filter_Accel_Type = Configdata["_flag_Filter_Accel_Type"].get<double>();
             APMInit.FC._flag_Filter_Accel_CutOff = Configdata["_flag_Filter_Accel_CutOff"].get<double>();
             APMInit.FC._flag_Filter_AngleMix_Alpha = Configdata["_flag_Filter_AngleMix_Alpha"].get<double>();
@@ -782,6 +776,11 @@ namespace Action
             APMInit.FC._flag_Filter_PID_I_CutOff = Configdata["_flag_Filter_PID_I_CutOff"].get<double>();
             APMInit.FC._flag_Filter_PID_D_ST1_CutOff = Configdata["_flag_Filter_PID_D_ST1_CutOff"].get<double>();
             APMInit.FC._flag_Filter_PID_D_ST2_CutOff = Configdata["_flag_Filter_PID_D_ST2_CutOff"].get<double>();
+
+            APMInit.FC._flag_GPS_Config_Beta = Configdata["_flag_GPS_Config_Beta"].get<double>();
+            APMInit.FC._flag_Flow_Config_Beta = Configdata["_flag_Flow_Config_Beta"].get<double>();
+            APMInit.FC._flag_Braking_Speed_Gain = Configdata["_flag_Braking_Speed_Gain"].get<double>();
+            APMInit.FC._flag_Braking_AccelMax_Gain = Configdata["_flag_Braking_AccelMax_Gain"].get<double>();
         };
 
         template <typename T>

@@ -12,6 +12,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 find_package(Lua 5.3 REQUIRED)
 include_directories(${LUA_INCLUDE_DIR})
 
-add_library(APSCPPExample SHARED APSCPPExample.cpp APSUser.cpp)
+add_library(APSCPPExample SHARED APSCPPExample.cpp)
 target_link_libraries(APSCPPExample ${OpenCV_LIBS})
 target_link_libraries(APSCPPExample ${LUA_LIBRARIES})
