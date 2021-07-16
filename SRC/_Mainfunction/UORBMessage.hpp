@@ -1,6 +1,6 @@
 #pragma once
+#include <queue>
 #include <string>
-#include <vector>
 
 namespace RuAPSSys
 {
@@ -40,13 +40,21 @@ namespace RuAPSSys
 		int Data;
 	};
 	//
+	struct APSMessageType
+	{
+		std::string Message;
+		std::string MessageUser;
+		uint32_t MessageCode;
+	};
+	//
 	class UORBMessage
 	{
 	public:
 		// APSMessage is Report 100HZ By CONController
 		struct APSMessage_t
 		{
-			bool IsAPSMessageUpdate;
+			std::queue<APSMessageType> APSMessageGroup;
+			bool IsAPSMessageUpdate = false;
 		} APSMessage;
 		// APMMessage is Report 250HZ By APMController
 		struct APMMessage_t

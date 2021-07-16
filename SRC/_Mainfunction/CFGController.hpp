@@ -2,17 +2,36 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include "PLGController.hpp"
 #include "../_Excutable/Drive_Json.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
 
 namespace CFG
 {
+	enum ScriptType
+	{
+		Lua,
+		None,
+		Python,
+	};
+
 	static struct APSConfig_t
 	{
 		bool IsAPMConifgIsSet = false;
 		SingleAPMAPI::APMSettinngs APMConfig;
+		//============================================================//
+		struct NetWorkConfig_t
+		{
+			bool IsServerEnable = false;
+			bool IsClientEnable = false;
 
-		void APSConfigSet(SingleAPMAPI::APMSettinngs APMConfigIn)
+			int BindOfPort = 27015;
+			std::string BindOfIPAddress = "127.0.0.1";
+		} NetWorkConfig;
+		//
+		PLGSettings PLGConfig;
+		//============================================================//
+		void APMConfigSet(SingleAPMAPI::APMSettinngs APMConfigIn)
 		{
 			APMConfig = APMConfigIn;
 			IsAPMConifgIsSet = true;
@@ -169,7 +188,7 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 	APMConfigTMP.FC._flag_Braking_Speed_Gain = Configdata["_flag_Braking_Speed_Gain"].get<double>();
 	APMConfigTMP.FC._flag_Braking_AccelMax_Gain = Configdata["_flag_Braking_AccelMax_Gain"].get<double>();
 	//=============================================================================//
-	APSConfig.APSConfigSet(APMConfigTMP);
+	APSConfig.APMConfigSet(APMConfigTMP);
 };
 
 void CFG::ParseConfigFromJSONFile(std::string ConfigDir)

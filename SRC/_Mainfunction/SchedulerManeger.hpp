@@ -3,12 +3,13 @@
 #include "CFGController.hpp"
 #include "APMController.hpp"
 #include "COMController.hpp"
+#include "PLGController.hpp"
 #include "../_Excutable/FlowController.hpp"
 #define FileConfigTarget "/etc/APMconfig.json"
 #define MutilpleControllerIsNotSet 0
 #define IsServerSiteEnable true
 #define IsClientSiteEnable false
-#define FlowExchangeHZ 100.f
+#define FlowExchangeHZ 250.f
 #define FlowSytemMonHZ 50.f
 
 namespace RuAPSSys
@@ -26,7 +27,7 @@ namespace RuAPSSys
 			// Init Step 3 : Boot up and start a server to listen message from socket/TCP
 			COMController.reset(new COMController_t(IsServerSiteEnable, IsClientSiteEnable));
 			// Init Step 4 : Load cpp shared lib plugin
-
+			// PLGController.reset(new PLGController_t)
 			// Init Step 5 : Load high case user script, such as LUA or Python
 		};
 
@@ -39,6 +40,7 @@ namespace RuAPSSys
 		std::unique_ptr<FlowThread> SystemMonitoThread;
 		std::unique_ptr<APMController_t> APMController;
 		std::unique_ptr<COMController_t> COMController;
+		std::unique_ptr<PLGController_t> PLGController;
 	};
 }
 
@@ -56,7 +58,7 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 				}
 				//TODO : APSMessage network feedback sync
 
-				// Exchange Step 2 : Push APMController's message to COMController, and reset update statment , whole thread run in 100HZ
+				// Exchange Step 2 : Push APMController's message to COMController, and reset update statment , whole thread run in 250HZ
 				COMController->COMControllerPushQ(APMMessage);
 			},
 			FlowExchangeHZ));
