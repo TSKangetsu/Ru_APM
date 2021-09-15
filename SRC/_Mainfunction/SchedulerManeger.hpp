@@ -1,11 +1,14 @@
 #pragma once
+#include <systemd/sd-daemon.h>
+#include <systemd/sd-journal.h>
 #include "UORBMessage.hpp"
 #include "CFGController.hpp"
 #include "APMController.hpp"
 #include "COMController.hpp"
 #include "PLGController.hpp"
 #include "../_Excutable/FlowController.hpp"
-#define FileConfigTarget "/etc/APMconfig.json"
+
+#define FileConfigTarget "/boot/APMconfig.json"
 #define MutilpleControllerIsNotSet 0
 #define IsServerSiteEnable true
 #define IsClientSiteEnable false
@@ -29,6 +32,8 @@ namespace RuAPSSys
 			// Init Step 4 : Load cpp shared lib plugin
 			// PLGController.reset(new PLGController_t)
 			// Init Step 5 : Load high case user script, such as LUA or Python
+
+			// StepN : Notify to Systemd
 		};
 
 		void SystemReboot();
@@ -65,8 +70,9 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 	//
 	SystemMonitoThread.reset(
 		new FlowThread(
-			[&]() {
-
+			[&]()
+			{
+				//
 			},
 			FlowSytemMonHZ));
 	//

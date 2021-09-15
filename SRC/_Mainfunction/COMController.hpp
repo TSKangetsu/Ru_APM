@@ -19,6 +19,7 @@ public:
 private:
 	void COMControllerReg();
 	std::queue<std::string> APMMessageQ;
+	std::queue<APSMessageType> APSMessageQ;
 	std::unique_ptr<MessageController::WebSocketServer> ServerSite;
 	std::unique_ptr<MessageController::ClientNetController> ClientSite;
 };

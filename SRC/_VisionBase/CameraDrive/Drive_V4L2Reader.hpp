@@ -9,6 +9,7 @@
 #include <sys/ioctl.h>
 #include <cstring>
 #include <sys/mman.h>
+#include <errno.h>
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -26,7 +27,8 @@ namespace V4L2Tools
         fastmode is not thread block mode,fast speed loop will cost lot of cpu usage ,controll you self;
         if it set to false or framebuffer > 1 , thread will block untill v4l2buffer is updated; 
         */
-        int Is_fastMode = false;
+        bool Is_fastMode = false;
+        bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
     };
 
@@ -39,7 +41,8 @@ namespace V4L2Tools
         _v4l2_querybuff_error,
         _v4l2_qbuf_error,
         _v4l2_vidioc_streamon_error,
-        _v4l2_camread_error
+        _v4l2_camread_error,
+        _v4l2_autoset_error
     };
 
     class V4L2Drive
@@ -48,6 +51,7 @@ namespace V4L2Tools
         V4L2Drive(std::string Device, V4l2Info Info);
         int V4L2FDGetter() { return _flag_CameraFD; };
         bool V4L2Control(unsigned int id, int value);
+        V4l2Info V4L2InfoGet() { return v4l2d; };
         unsigned char *V4L2Read();
         unsigned char *RGB24DataInit() { return (unsigned char *)malloc(v4l2d.ImgWidth * v4l2d.ImgHeight * 3 * sizeof(char)); };
         void yuyv2rgb24(const unsigned char *src, unsigned char *dest, int width, int height);
@@ -70,6 +74,7 @@ namespace V4L2Tools
             v4l2_buf_type CameraType;
             v4l2_buffer CameraQBuffer;
             v4l2_buffer CameraBuffer;
+            v4l2_fmtdesc CameraFMTInfo;
         } v4l2;
     };
 } // namespace V4L2Tools

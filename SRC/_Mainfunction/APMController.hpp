@@ -1,5 +1,6 @@
 #pragma once
 #include <thread>
+#include <systemd/sd-daemon.h>
 #include "UORBMessage.hpp"
 #include "../_Excutable/FlowController.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
@@ -20,6 +21,7 @@ public:
 private:
 	void APMMessageUpdate();
 
+	std::thread RebootRequire;
 	bool IsAPMReporterRunning = false;
 	SingleAPMAPI::APMSettinngs APMSetttings_s;
 	std::unique_ptr<FlowThread> APMMessagePublic;
@@ -32,11 +34,7 @@ APMController_t::APMController_t(SingleAPMAPI::APMSettinngs InitSettings, int Co
 	IsControllerRunning = false;
 	APMSetttings_s = InitSettings;
 	RPiSingleAPMInit(APMSetttings_s);
-	IMUSensorsTaskReg();
-	ControllerTaskReg();
-	ESCUpdateTaskReg();
-	AltholdSensorsTaskReg();
-	PositionTaskReg();
+	RPiSingleAPMStartUp();
 	IsControllerRunning = true;
 	APMMessageUpdate();
 }
@@ -44,24 +42,30 @@ APMController_t::APMController_t(SingleAPMAPI::APMSettinngs InitSettings, int Co
 void APMController_t::APMControllerConfigUpdate(SingleAPMAPI::APMSettinngs UpdateSettings)
 {
 	if (IsControllerRunning)
-		RPiSingleAPMInit(APMSetttings_s);
+		RPiSingleAPMHotLoad(APMSetttings_s);
 }
 
 void APMController_t::APMControllerRequireReboot()
 {
 	if (IsControllerRunning)
 	{
-		APMMessagePublic->FlowStopAndWait();
-		APMMessagePublic.reset();
-		IsControllerRunning = false;
-		RPiSingleAPMInit(APMSetttings_s);
-		IMUSensorsTaskReg();
-		ControllerTaskReg();
-		ESCUpdateTaskReg();
-		AltholdSensorsTaskReg();
-		PositionTaskReg();
-		IsControllerRunning = true;
-		APMMessageUpdate();
+		if (RebootRequire.joinable() == false)
+		{
+
+			RebootRequire = std::thread(
+				[&]
+				{
+					APMMessagePublic->FlowStopAndWait();
+					APMMessagePublic.reset();
+					IsControllerRunning = false;
+					RPiSingleAPMDeInit();
+					RPiSingleAPMInit(APMSetttings_s);
+					APMMessageUpdate();
+					IsControllerRunning = true;
+				});
+		}
+		else
+			RebootRequire.join();
 	}
 }
 

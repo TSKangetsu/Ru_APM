@@ -39,14 +39,14 @@ namespace RuAPSSys
 		APMMessageDataType DataType;
 		int Data;
 	};
-	//
+	//----------------------------------------------------------------//
 	struct APSMessageType
 	{
 		std::string Message;
 		std::string MessageUser;
 		uint32_t MessageCode;
 	};
-	//
+	//----------------------------------------------------------------//
 	class UORBMessage
 	{
 	public:

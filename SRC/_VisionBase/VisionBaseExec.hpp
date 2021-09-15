@@ -33,7 +33,7 @@ class VideoServer
 {
 public:
     int VideoServerReInit(VideoConfig &config);
-    int VideoServerStop() { ProcessFlag = false; };
+    bool VideoServerStop() { ProcessFlag = false; };
 
 private:
     bool ProcessFlag;

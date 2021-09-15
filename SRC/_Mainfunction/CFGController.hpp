@@ -48,8 +48,9 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 {
 	APSConfig.IsAPMConifgIsSet = false;
 	SingleAPMAPI::APMSettinngs APMConfigTMP;
-	nlohmann::json Configdata = nlohmann::json::parse(JSON);
-	//==========================================================Device Type=======/
+	nlohmann::json Mas = nlohmann::json::parse(JSON);
+	nlohmann::json Configdata = Mas["7inch-2806"];
+
 	APMConfigTMP.DC.RC_Type = Configdata["Type_RC"].get<int>();
 	APMConfigTMP.DC.MPU9250_Type = Configdata["Type_MPU9250"].get<int>();
 	APMConfigTMP.DC.IMUFilter_Type = Configdata["Type_IMUFilter"].get<int>();
@@ -66,16 +67,16 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 	APMConfigTMP.DC.IMU_Freqeuncy = Configdata["IMU_Freqeucy"].get<int>();
 	APMConfigTMP.DC.RXT_Freqeuncy = Configdata["RXT_Freqeucy"].get<int>();
 	APMConfigTMP.DC.ESC_Freqeuncy = Configdata["ESC_Freqeucy"].get<int>();
-	//==========================================================Controller cofig==/
+
 	APMConfigTMP.RC._flag_RC_Min_PWM_Value = Configdata["_flag_RC_Min_PWM_Value"].get<int>();
 	APMConfigTMP.RC._flag_RC_Mid_PWM_Value = Configdata["_flag_RC_Mid_PWM_Value"].get<int>();
 	APMConfigTMP.RC._flag_RC_Max_PWM_Value = Configdata["_flag_RC_Max_PWM_Value"].get<int>();
-	//===========================
+
 	APMConfigTMP.RC._flag_RC_ARM_PWM_Value = Configdata["_flag_RC_ARM_PWM_Value"].get<int>();
 	APMConfigTMP.RC._flag_RC_ARM_PWM_Channel = Configdata["_flag_RC_ARM_PWM_Channel"].get<int>();
 
-	APMConfigTMP.RC._flag_RC_AP_ManualHold_PWM_Value = Configdata["_flag_RC_AP_ManualHold_PWM_Value"].get<int>();
-	APMConfigTMP.RC._flag_RC_AP_ManualHold_PWM_Channel = Configdata["_flag_RC_AP_ManualHold_PWM_Channel"].get<int>();
+	APMConfigTMP.RC._flag_RC_AP_RateHold_PWM_Value = Configdata["_flag_RC_AP_RateHold_PWM_Value"].get<int>();
+	APMConfigTMP.RC._flag_RC_AP_RateHold_PWM_Channel = Configdata["_flag_RC_AP_RateHold_PWM_Channel"].get<int>();
 
 	APMConfigTMP.RC._flag_RC_AP_AutoStable_PWM_Value = Configdata["_flag_RC_AP_AutoStable_PWM_Value"].get<int>();
 	APMConfigTMP.RC._flag_RC_AP_AutoStable_PWM_Channel = Configdata["_flag_RC_AP_AutoStable_PWM_Channel"].get<int>();
@@ -91,17 +92,20 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 
 	APMConfigTMP.RC._flag_RC_AP_UserAuto_PWM_Value = Configdata["_flag_RC_AP_UserAuto_PWM_Value"].get<int>();
 	APMConfigTMP.RC._flag_RC_AP_UserAuto_PWM_Channel = Configdata["_flag_RC_AP_UserAuto_PWM_Channel"].get<int>();
-	//===========================
+
 	APMConfigTMP.RC._flag_RCIsReserv__Roll = Configdata["_flag_RCIsReserv__Roll"].get<int>();
 	APMConfigTMP.RC._flag_RCIsReserv_Pitch = Configdata["_flag_RCIsReserv_Pitch"].get<int>();
 	APMConfigTMP.RC._flag_RCIsReserv___Yaw = Configdata["_flag_RCIsReserv___Yaw"].get<int>();
-	//==========================================================ESC cofig=========/
+
 	APMConfigTMP.OC._flag_A1_Pin = Configdata["_flag_A1_Pin"].get<int>();
 	APMConfigTMP.OC._flag_A2_Pin = Configdata["_flag_A2_Pin"].get<int>();
 	APMConfigTMP.OC._flag_B1_Pin = Configdata["_flag_B1_Pin"].get<int>();
 	APMConfigTMP.OC._flag_B2_Pin = Configdata["_flag_B2_Pin"].get<int>();
 	APMConfigTMP.OC._flag_YAWOut_Reverse = Configdata["_flag_YAWOut_Reverse"].get<float>();
-	//==================================================================PID cofig==/
+	APMConfigTMP.OC._flag_ESC_Lazy_Per = Configdata["_flag_ESC_Lazy_Per"].get<float>();
+	APMConfigTMP.OC.ESCPLFrequency = Configdata["ESCPLFrequency"].get<int>();
+	APMConfigTMP.OC.ESCControllerType = Configdata["ESCControllerType"].get<int>();
+
 	APMConfigTMP.PC._flag_PID_P__Roll_Gain = Configdata["_flag_PID_P__Roll_Gain"].get<float>();
 	APMConfigTMP.PC._flag_PID_P_Pitch_Gain = Configdata["_flag_PID_P_Pitch_Gain"].get<float>();
 	APMConfigTMP.PC._flag_PID_P___Yaw_Gain = Configdata["_flag_PID_P___Yaw_Gain"].get<float>();
@@ -134,6 +138,7 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 
 	APMConfigTMP.PC._flag_PID_Hover_Throttle = Configdata["_flag_PID_Hover_Throttle"].get<float>();
 	APMConfigTMP.PC._flag_PID_Level_Max = Configdata["_flag_PID_Level_Max"].get<float>();
+	APMConfigTMP.PC._flag_PID_Rate_Limit = Configdata["_flag_PID_Rate_Limit"].get<float>();
 	APMConfigTMP.PC._flag_PID_Alt_Level_Max = Configdata["_flag_PID_Alt_Level_Max"].get<float>();
 	APMConfigTMP.PC._flag_PID_Pos_Level_Max = Configdata["_flag_PID_Pos_Level_Max"].get<float>();
 
@@ -143,24 +148,40 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 	APMConfigTMP.PC._flag_PID_PosMan_Speed_Max = Configdata["_flag_PID_PosMan_Speed_Max"].get<float>();
 	APMConfigTMP.PC._flag_PID_Pos_Accel_Max = Configdata["_flag_PID_Pos_Accel_Max"].get<float>();
 	APMConfigTMP.PC._flag_PID_Pos_Speed_Max = Configdata["_flag_PID_Pos_Speed_Max"].get<float>();
-	APMConfigTMP.PC._flag_PID_AngleRate_Gain = Configdata["_flag_PID_AngleRate_Gain"].get<float>();
-	//==============================================================Sensors cofig==/
+
+	APMConfigTMP.PC._flag_PID_AngleRate__Roll_Gain = Configdata["_flag_PID_AngleRate__Roll_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_AngleRate_Pitch_Gain = Configdata["_flag_PID_AngleRate_Pitch_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_AngleRate___Yaw_Gain = Configdata["_flag_PID_AngleRate___Yaw_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCRate__Roll_Gain = Configdata["_flag_PID_RCRate__Roll_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCRate_Pitch_Gain = Configdata["_flag_PID_RCRate_Pitch_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCRate___Yaw_Gain = Configdata["_flag_PID_RCRate___Yaw_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCAngle__Roll_Gain = Configdata["_flag_PID_RCAngle__Roll_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCAngle_Pitch_Gain = Configdata["_flag_PID_RCAngle_Pitch_Gain"].get<float>();
+	APMConfigTMP.PC._flag_PID_RCAngle___Yaw_Gain = Configdata["_flag_PID_RCAngle___Yaw_Gain"].get<float>();
+
+	APMConfigTMP.PC._flag_PID_TPA_Trust = Configdata["_flag_PID_TPA_Trust"].get<float>();
+	APMConfigTMP.PC._flag_PID_TPA_BreakPoint = Configdata["_flag_PID_TPA_BreakPoint"].get<float>();
+
 	APMConfigTMP.SC._flag_MPU9250_A_X_Cali = Configdata["_flag_MPU9250_A_X_Cali"].get<double>();
 	APMConfigTMP.SC._flag_MPU9250_A_Y_Cali = Configdata["_flag_MPU9250_A_Y_Cali"].get<double>();
 	APMConfigTMP.SC._flag_MPU9250_A_Z_Cali = Configdata["_flag_MPU9250_A_Z_Cali"].get<double>();
 	APMConfigTMP.SC._flag_MPU9250_A_X_Scal = Configdata["_flag_MPU9250_A_X_Scal"].get<double>();
 	APMConfigTMP.SC._flag_MPU9250_A_Y_Scal = Configdata["_flag_MPU9250_A_Y_Scal"].get<double>();
 	APMConfigTMP.SC._flag_MPU9250_A_Z_Scal = Configdata["_flag_MPU9250_A_Z_Scal"].get<double>();
+	APMConfigTMP.SC._flag_Accel__Roll_Cali = Configdata["_flag_Accel__Roll_Cali"].get<double>();
+	APMConfigTMP.SC._flag_Accel_Pitch_Cali = Configdata["_flag_Accel_Pitch_Cali"].get<double>();
 
 	APMConfigTMP.SC._flag_COMPASS_Y_Scaler = Configdata["_flag_COMPASS_Y_Scaler"].get<double>();
 	APMConfigTMP.SC._flag_COMPASS_Z_Scaler = Configdata["_flag_COMPASS_Z_Scaler"].get<double>();
 	APMConfigTMP.SC._flag_COMPASS_X_Offset = Configdata["_flag_COMPASS_X_Offset"].get<double>();
 	APMConfigTMP.SC._flag_COMPASS_Y_Offset = Configdata["_flag_COMPASS_Y_Offset"].get<double>();
 	APMConfigTMP.SC._flag_COMPASS_Z_Offset = Configdata["_flag_COMPASS_Z_Offset"].get<double>();
-	//==============================================================Filter config==/
+
 	APMConfigTMP.FC._flag_Filter_Gryo_Type = Configdata["_flag_Filter_Gryo_Type"].get<double>();
+	APMConfigTMP.FC._flag_Filter_GryoST2_Type = Configdata["_flag_Filter_GryoST2_Type"].get<double>();
 	APMConfigTMP.FC._flag_Filter_GYaw_CutOff = Configdata["_flag_Filter_GYaw_CutOff"].get<double>();
 	APMConfigTMP.FC._flag_Filter_Gryo_CutOff = Configdata["_flag_Filter_Gryo_CutOff"].get<double>();
+	APMConfigTMP.FC._flag_Filter_GryoST2_CutOff = Configdata["_flag_Filter_GryoST2_CutOff"].get<double>();
 	APMConfigTMP.FC._flag_Filter_Gryo_NotchFreq = Configdata["_flag_Filter_Gryo_NotchFreq"].get<double>();
 	APMConfigTMP.FC._flag_Filter_Gryo_NotchCutOff = Configdata["_flag_Filter_Gryo_NotchCutOff"].get<double>();
 	APMConfigTMP.FC._flag_Filter_Gryo_DynamicNotchRange = Configdata["_flag_Filter_Gryo_DynamicNotchRange"].get<double>();
@@ -187,7 +208,6 @@ void CFG::ParseConfigFromJSON(std::string JSON)
 	APMConfigTMP.FC._flag_Flow_Config_Beta = Configdata["_flag_Flow_Config_Beta"].get<double>();
 	APMConfigTMP.FC._flag_Braking_Speed_Gain = Configdata["_flag_Braking_Speed_Gain"].get<double>();
 	APMConfigTMP.FC._flag_Braking_AccelMax_Gain = Configdata["_flag_Braking_AccelMax_Gain"].get<double>();
-	//=============================================================================//
 	APSConfig.APMConfigSet(APMConfigTMP);
 };
 

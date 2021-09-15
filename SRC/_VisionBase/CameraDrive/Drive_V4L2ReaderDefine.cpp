@@ -14,6 +14,36 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
               << "  Version    :" << v4l2.CameraInfo.version << "\n"
               << "  Capbilities:" << v4l2.CameraInfo.capabilities << "\n";
 #endif
+    if (v4l2d.Is_AutoSize)
+    {
+        int MaxWidth = 0;
+        int MaxHeight = 0;
+        v4l2.CameraFMTInfo.index = 0;
+        v4l2.CameraFMTInfo.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        while (ioctl(_flag_CameraFD, VIDIOC_ENUM_FMT, &v4l2.CameraFMTInfo) >= 0)
+        {
+            v4l2.CameraFMTInfo.index++;
+            v4l2.CameraFMTInfo.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            if (v4l2.CameraFMTInfo.pixelformat == v4l2d.PixFormat)
+            {
+
+                v4l2_frmsizeenum _FrameSize;
+                _FrameSize.index = 0;
+                _FrameSize.pixel_format = v4l2.CameraFMTInfo.pixelformat;
+                while (ioctl(_flag_CameraFD, VIDIOC_ENUM_FRAMESIZES, &_FrameSize) >= 0)
+                {
+                    _FrameSize.index++;
+                    MaxHeight = MaxHeight < _FrameSize.discrete.height ? _FrameSize.discrete.height : MaxHeight;
+                    MaxWidth = MaxWidth < _FrameSize.discrete.width ? _FrameSize.discrete.width : MaxWidth;
+                }
+            }
+        };
+        v4l2d.ImgWidth = MaxWidth;
+        v4l2d.ImgHeight = MaxHeight;
+#ifdef DEBUG
+        std::cout << "AutoSet is Comfirm:" << MaxWidth << "," << MaxHeight << "\n";
+#endif
+    }
     v4l2.CameraFormat.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     v4l2.CameraFormat.fmt.pix.width = v4l2d.ImgWidth;
     v4l2.CameraFormat.fmt.pix.height = v4l2d.ImgHeight;
@@ -155,6 +185,7 @@ void V4L2Tools::V4L2Drive::V4L2Log(int signal, int error)
     {
 #ifdef DEBUG
         std::cout << "\033[31m[V4L2Expection]V4L2 Error with: \033[0m" << error << "\n";
+        std::cout << "\033[31m[V4L2Expection]Error Codes    : \033[0m" << errno << "\n";
 #endif
         throw error;
     }
