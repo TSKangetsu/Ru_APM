@@ -10,6 +10,12 @@
 #include <functional>
 #include <thread>
 #include <sys/stat.h>
+#include <linux/if.h>
+#include <linux/if_ether.h>
+#include <netpacket/packet.h>
+#include <sys/ioctl.h>
+#include <linux/filter.h>
+// #include
 #ifdef NETDEBUG
 #include <iostream>
 #endif
@@ -155,7 +161,7 @@ public:
         int status = send(m_sock, data, sendSize, 0);
         if (status == -1)
         {
-#if NETDEBUG
+#ifdef NETDEBUG
             std::cout << "\033[31m[SocketInfo]Send data failed ! status code -1\033[0m\n";
 #endif
             return false;
@@ -201,10 +207,115 @@ public:
         }
     }
 
+    //===============================================//
+
+    int CreateIllegal(const char *interface)
+    {
+        struct packet_mreq mr;
+        struct sockaddr_ll sll;
+        struct ifreq ifr;
+
+        if ((m_sock = socket(PF_PACKET, SOCK_RAW, ETH_P_ALL)) == -1)
+        {
+            return -1;
+        }
+        //
+        memset(&sll, 0, sizeof(sll));
+        memset(&ifr, 0, sizeof(ifr));
+        strncpy((char *)ifr.ifr_name, interface, IFNAMSIZ);
+        if ((ioctl(m_sock, SIOCGIFINDEX, &ifr)) == -1)
+        {
+            return -2;
+        }
+        //
+        sll.sll_family = AF_PACKET;
+        sll.sll_ifindex = ifr.ifr_ifindex;
+        sll.sll_protocol = htons(ETH_P_ALL);
+        if ((bind(m_sock, (struct sockaddr *)&sll, sizeof(sll))) == -1)
+        {
+            return -4;
+        }
+        //
+        memset(&mr, 0, sizeof(mr));
+        mr.mr_ifindex = sll.sll_ifindex;
+        mr.mr_type = PACKET_MR_PROMISC;
+
+        if (setsockopt(m_sock, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(mr)) < 0)
+        {
+#ifdef NETDEBUG
+            perror("setsockopt(PACKET_MR_PROMISC) failed");
+#endif
+            return -3;
+        }
+#ifdef NETDEBUG
+        perror("\033[32m[SocketInfo]IllegalSocket Init with\033[0m");
+#endif
+        return 0;
+    }
+
+    int SocketFilterApply(sock_filter *Filter, short unsigned int size)
+    {
+        struct sock_fprog FilterApply = {
+            .len = size,
+            .filter = Filter,
+        };
+        if (setsockopt(m_sock, SOL_SOCKET, SO_ATTACH_FILTER, &FilterApply, sizeof(FilterApply)) < 0)
+        {
+#ifdef NETDEBUG
+            perror("setsockopt(SO_ATTACH_FILTER) failed");
+#endif
+            return -1;
+        }
+#ifdef NETDEBUG
+        perror("\033[32m[SocketInfo]IllegalSocket SO_ATTACH_FILTER with\033[0m");
+#endif
+        return 0;
+    };
+
+    template <typename _Tp>
+    int Inject(_Tp *data, int dataSize) //data size >= 15 char
+    {
+        if (write(m_sock, data, dataSize) < 0)
+        {
+#ifdef NETDEBUG
+            perror("\033[31m[SocketInfo]IllegalSocket write error with\033[0m");
+#endif
+        }
+        else
+        {
+#ifdef NETDEBUG
+            perror("\033[32m[SocketInfo]IllegalSocket write with\033[0m");
+#endif
+        }
+        return 0;
+    }
+
+    template <typename _Tp>
+    int Sniff(_Tp *&data, int recvSize)
+    {
+        struct sockaddr_ll packet_info;
+        socklen_t packet_info_size;
+        ssize_t len;
+        if ((len = recvfrom(m_sock, data, recvSize, 0, (struct sockaddr *)&packet_info, &packet_info_size)) == -1)
+        {
+#ifdef NETDEBUG
+            perror("\033[32m[SocketInfo]IllegalSocket Recv with\033[0m");
+#endif
+            return -1;
+        }
+        else
+        {
+#ifdef NETDEBUG
+            printf("\033[31m[SocketInfo]IllegalSocket Recv with\033[0m\n");
+#endif
+            return 0;
+        }
+    }
+
 private:
     int m_sock;
     sockaddr_in m_addr;
-    struct sockaddr_in RemoteSockInfo;
+    sockaddr_in RemoteSockInfo;
     bool Is_valid() const { return m_sock != -1; }
     int GetSockFD() { return m_sock; }
     void release()
