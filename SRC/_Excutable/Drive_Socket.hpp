@@ -250,6 +250,28 @@ public:
 #ifdef NETDEBUG
         perror("\033[32m[SocketInfo]IllegalSocket Init with\033[0m");
 #endif
+        //
+        strncpy((char *)ifr.ifr_name, interface, IFNAMSIZ);
+        if ((ioctl(m_sock, SIOCGIFHWADDR, &ifr)) == -1)
+        {
+            return -4;
+        }
+        InterfaceMAC[0] = (unsigned char)ifr.ifr_hwaddr.sa_data[0];
+        InterfaceMAC[1] = (unsigned char)ifr.ifr_hwaddr.sa_data[1];
+        InterfaceMAC[2] = (unsigned char)ifr.ifr_hwaddr.sa_data[2];
+        InterfaceMAC[3] = (unsigned char)ifr.ifr_hwaddr.sa_data[3];
+        InterfaceMAC[4] = (unsigned char)ifr.ifr_hwaddr.sa_data[4];
+        InterfaceMAC[5] = (unsigned char)ifr.ifr_hwaddr.sa_data[5];
+#ifdef NETDEBUG
+        printf("\033[32m[SocketInfo]Successfully received Local MAC Address : %02x:%02x:%02x:%02x:%02x:%02x\n",
+               (unsigned char)ifr.ifr_hwaddr.sa_data[0],
+               (unsigned char)ifr.ifr_hwaddr.sa_data[1],
+               (unsigned char)ifr.ifr_hwaddr.sa_data[2],
+               (unsigned char)ifr.ifr_hwaddr.sa_data[3],
+               (unsigned char)ifr.ifr_hwaddr.sa_data[4],
+               (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
+        printf("\033[0m\n");
+#endif
         return 0;
     }
 
@@ -296,26 +318,32 @@ public:
         struct sockaddr_ll packet_info;
         socklen_t packet_info_size;
         ssize_t len;
-        if ((len = recvfrom(m_sock, data, recvSize, 0, (struct sockaddr *)&packet_info, &packet_info_size)) == -1)
+        if ((len = recvfrom(m_sock, data, recvSize, 0, (struct sockaddr *)&packet_info, &packet_info_size)) < 0)
         {
 #ifdef NETDEBUG
-            perror("\033[32m[SocketInfo]IllegalSocket Recv with\033[0m");
+            perror("\033[31m[SocketInfo]IllegalSocket Recv with\033[0m");
 #endif
             return -1;
         }
         else
         {
 #ifdef NETDEBUG
-            printf("\033[31m[SocketInfo]IllegalSocket Recv with\033[0m\n");
+            printf("\033[32m[SocketInfo]IllegalSocket Recv\033[0m\n");
 #endif
             return 0;
         }
+    }
+
+    unsigned char *InterfaceMACGet()
+    {
+        return InterfaceMAC;
     }
 
 private:
     int m_sock;
     sockaddr_in m_addr;
     sockaddr_in RemoteSockInfo;
+    unsigned char InterfaceMAC[6] = {0x00};
     bool Is_valid() const { return m_sock != -1; }
     int GetSockFD() { return m_sock; }
     void release()
