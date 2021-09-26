@@ -1,4 +1,5 @@
 #pragma once
+#include <csignal>
 #include "UORBMessage.hpp"
 #include "APMController.hpp"
 #include "PLGController.hpp"
@@ -11,8 +12,12 @@
 #define FlowExchangeHZ 250.f
 #define FlowSytemMonHZ 50.f
 
+using UORB = RuAPSSys::UORBMessage;
+
 namespace RuAPSSys
 {
+	inline volatile std::sig_atomic_t APSSystemSignal;
+
 	class SchedulerController
 	{
 	public:
@@ -41,10 +46,16 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 		new FlowThread(
 			[&]()
 			{
-				//
+				// Stop Signal Handle Check.
+				if (APSSystemSignal == SIGTERM || APSSystemSignal == SIGINT)
+				{
+					// Call APMControll Stop all threads.
+					APMController.reset(); // This Will Block untill APM complete Stop.
+					if (UORB::ControllerStatus._SYS_APMStatus == -2)
+						exit(0);
+				}
 			},
 			FlowSytemMonHZ));
-
 	usleep(-1);
 	return std::move(*this);
 };

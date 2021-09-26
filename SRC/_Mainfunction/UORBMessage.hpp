@@ -36,7 +36,36 @@ namespace RuAPSSys
 	public:
 		inline static struct ControllerStatus_t
 		{
+			int _Accel_ClippedTimes;
+			float _Accel_Accelration[3];
+			float _Accel_VIBE[3];
+			float _Accel_RawG[3];
+			float _Accel_GForce;
 
+			float _ATT_Quaterion[4];
+			float _ATT_EulerAngle[3];
+			float _Gyro_AngleRate[3];
+
+			float _Baro_Temp;
+			float _Baro_PressureHPA;
+			float _Baro_AGLAltitudeCM;
+			float _RangeFinder_AGLAltCM;
+
+			int _SYS_TimeInfo[10];
+			int _SYS_PreARMFlag;
+			int _SYS_FailSafeFlag;
+			int _SYS_APMStatus;
+
+			float _NAV_Speed[3];
+			float _NAV_Global_Speed[2];
+			float _NAV_Relative_Pos[3];
+			float _NAV_Relative_Head;
+			float _NAV_Global_Pos[3];
+			float _NAV_Global_HOME[2];
+			float _NAV_Global_SATCount;
+			float _NAV_Global_Head;
+
+			bool IsControllerStatusUpdated;
 		} ControllerStatus;
 
 		inline static struct SystemStatus_t
@@ -68,7 +97,7 @@ namespace SingleAPMAPI
 			{"_IsGPSEnable", p.DC._IsGPSEnable},
 			{"_IsFlowEnable", p.DC._IsFlowEnable},
 			{"_IsRCSafeEnable", p.DC._IsRCSafeEnable},
-			{"_IsMS5611Enable", p.DC._IsMS5611Enable},
+			{"_IsBAROEnable", p.DC._IsBAROEnable},
 			{"_flag_PID_P__Roll_Gain", p.PC._flag_PID_P__Roll_Gain},
 			{"_flag_PID_P_Pitch_Gain", p.PC._flag_PID_P_Pitch_Gain},
 			{"_flag_PID_P___Yaw_Gain", p.PC._flag_PID_P___Yaw_Gain},
@@ -202,7 +231,7 @@ namespace SingleAPMAPI
 		j.at("_IsGPSEnable").get_to(p.DC._IsGPSEnable);
 		j.at("_IsFlowEnable").get_to(p.DC._IsFlowEnable);
 		j.at("_IsRCSafeEnable").get_to(p.DC._IsRCSafeEnable);
-		j.at("_IsMS5611Enable").get_to(p.DC._IsMS5611Enable);
+		j.at("_IsBAROEnable").get_to(p.DC._IsBAROEnable);
 		j.at("_flag_PID_P__Roll_Gain").get_to(p.PC._flag_PID_P__Roll_Gain);
 		j.at("_flag_PID_P_Pitch_Gain").get_to(p.PC._flag_PID_P_Pitch_Gain);
 		j.at("_flag_PID_P___Yaw_Gain").get_to(p.PC._flag_PID_P___Yaw_Gain);
