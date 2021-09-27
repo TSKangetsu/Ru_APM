@@ -41,19 +41,21 @@ private:
 	float ThreadSpendAVT[5] = {0};
 	int FlowLoopError = 0;
 	bool IsThreadRunning = false;
+	std::function<void()> func;
 };
 
 FlowThread::FlowThread(std::function<void()> thread)
 	: std::thread(
 		  [&]
 		  {
+			  func = thread;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
 			  {
 				  TimeStart = GetTimeStamp();
 				  Time_Next = TimeStart - Time__End;
 				  //
-				  thread();
+				  func();
 				  //
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;
@@ -68,13 +70,14 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 	: std::thread(
 		  [&]
 		  {
+			  func = thread;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
 			  {
 				  TimeStart = GetTimeStamp();
 				  Time_Next = TimeStart - Time__End;
 				  //
-				  thread();
+				  func();
 				  //
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;
@@ -96,6 +99,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 	: std::thread(
 		  [&]
 		  {
+			  func = thread;
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -103,7 +107,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 				  TimeStart = GetTimeStamp();
 				  Time_Next = TimeStart - Time__End;
 				  //
-				  thread();
+				  func();
 				  //
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;
@@ -138,6 +142,7 @@ FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 	: std::thread(
 		  [&]
 		  {
+			  func = thread;
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -145,7 +150,7 @@ FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 				  TimeStart = GetTimeStamp();
 				  Time_Next = TimeStart - Time__End;
 				  //
-				  thread();
+				  func();
 				  //
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;

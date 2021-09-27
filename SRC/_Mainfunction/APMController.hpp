@@ -33,11 +33,10 @@ APMController_t::APMController_t()
 	IsControllerRunning = false;
 	RPiSingleAPMInit(RuAPSSys::ConfigCLA::APMConfig);
 	RPiSingleAPMStartUp();
-	IsControllerRunning = true;
 	APMTaskThread = std::thread([&]
 								{ TaskThreadBlock(); });
-	sleep(2); // Wait For All Sensor Data Stable
 	APMMessageUpdate();
+	IsControllerRunning = true;
 }
 
 void APMController_t::APMControllerConfigUpdate()
@@ -58,9 +57,16 @@ void APMController_t::APMControllerRequireReboot()
 				[&]
 				{
 					IsControllerRunning = false;
+					UpdateThreading->FlowStopAndWait();
+					//
 					RPiSingleAPMDeInit();
 					APMTaskThread.join();
+					//
 					RPiSingleAPMInit(RuAPSSys::ConfigCLA::APMConfig);
+					RPiSingleAPMStartUp();
+					APMTaskThread = std::thread([&]
+												{ TaskThreadBlock(); });
+					//
 					APMMessageUpdate();
 					IsControllerRunning = true;
 				});
@@ -126,7 +132,13 @@ void APMController_t::APMMessageUpdate()
 
 APMController_t::~APMController_t()
 {
+	UpdateThreading->FlowStopAndWait();
+	// Call APM Deinit And Set Status by Manual to Noficate the System Monitor
 	RPiSingleAPMDeInit();
+
 	APMTaskThread.join();
+
+	UORB::ControllerStatus._SYS_APMStatus = -2;
+	// System Controller is exit , In fact, this flag meanless
 	IsControllerRunning = false;
 }
