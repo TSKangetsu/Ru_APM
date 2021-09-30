@@ -1,4 +1,6 @@
 #pragma once
+#include <map>
+#include <tuple>
 #include <queue>
 #include <vector>
 #include <string>
@@ -7,6 +9,7 @@
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
 
 using json = nlohmann::json;
+#define EMAP(Variable) (#Variable)
 
 namespace RuAPSSys
 {
@@ -15,10 +18,19 @@ namespace RuAPSSys
 	public:
 		inline static struct SingleAPMAPI::APMSettinngs APMConfig;
 
-		inline static struct VideoSettings
+		struct VideoSettings
 		{
-			std::vector<std::string> Device;
-		} VideoConfig;
+			std::string DevicePATH;
+			std::string DeviceDriver;
+			std::string DeviceIFormat;
+			std::string DeviceOFormat;
+
+			int DeviceWidth;
+			int DeviceHeight;
+			int DeviceFPS;
+			bool enable;
+		};
+		inline static std::vector<VideoSettings> VideoConfig;
 
 		inline static struct CommonSettings
 		{
@@ -68,9 +80,14 @@ namespace RuAPSSys
 			bool IsControllerStatusUpdated;
 		} ControllerStatus;
 
-		inline static struct SystemStatus_t
+		inline static struct StreamStatus_t
 		{
 
+		} StreamStatus;
+
+		inline static struct SystemStatus_t
+		{
+			std::queue<std::string> SystemMessage;
 		} SystemStatus;
 
 		inline static struct PluginStatus_t
@@ -358,12 +375,26 @@ namespace RuAPSSys
 	void to_json(json &j, const ConfigCLA::VideoSettings &p)
 	{
 		j = json{
-			{"Device", p.Device},
+			{"DevicePATH", p.DevicePATH},
+			{"DeviceDriver", p.DeviceDriver},
+			{"DeviceIFormat", p.DeviceIFormat},
+			{"DeviceOFormat", p.DeviceOFormat},
+			{"DeviceWidth", p.DeviceWidth},
+			{"DeviceHeight", p.DeviceHeight},
+			{"DeviceFPS", p.DeviceFPS},
+			{"enable", p.enable},
 		};
 	}
 	void from_json(const json &j, ConfigCLA::VideoSettings &p)
 	{
-		j.at("Device").get_to(p.Device);
+		j.at("DevicePATH").get_to(p.DevicePATH);
+		j.at("DeviceDriver").get_to(p.DeviceDriver);
+		j.at("DeviceIFormat").get_to(p.DeviceIFormat);
+		j.at("DeviceOFormat").get_to(p.DeviceOFormat);
+		j.at("DeviceWidth").get_to(p.DeviceWidth);
+		j.at("DeviceHeight").get_to(p.DeviceHeight);
+		j.at("DeviceFPS").get_to(p.DeviceFPS);
+		j.at("enable").get_to(p.enable);
 	}
 	//===========================================================//
 	void to_json(json &j, const RuAPSSys::ConfigCLA::CommonSettings &p)
@@ -407,6 +438,7 @@ namespace RuAPSSys
 //Operator
 namespace RuAPSSys
 {
+
 	inline void ConfigFileSync(std::string path)
 	{
 		std::ifstream config(path);
@@ -415,7 +447,7 @@ namespace RuAPSSys
 
 		json Container = json::parse(content);
 		ConfigCLA::APMConfig = Container["APMConfig"].get<SingleAPMAPI::APMSettinngs>();
-		ConfigCLA::VideoConfig = Container["VideoConfig"].get<ConfigCLA::VideoSettings>();
+		ConfigCLA::VideoConfig = Container["VideoConfig"]["Device"].get<std::vector<ConfigCLA::VideoSettings>>();
 		return; // just for breakpoint
 	};
 }

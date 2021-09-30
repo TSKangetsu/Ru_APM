@@ -21,6 +21,7 @@ namespace V4L2Tools
     {
         int ImgWidth = 640;
         int ImgHeight = 380;
+        int FrameRate = 30;
         int FrameBuffer = 4;
         /* 
         FastMode:You must set FrameBuffer to 1 to enable , 
@@ -37,6 +38,7 @@ namespace V4L2Tools
         _v4l2_query_error,
         _v4l2_vidioc_s_error,
         _v4l2_vidioc_g_error,
+        _v4l2_vipram_s_error,
         _v4l2_reqbuff_error,
         _v4l2_querybuff_error,
         _v4l2_qbuf_error,

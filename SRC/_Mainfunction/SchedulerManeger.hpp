@@ -7,7 +7,7 @@
 #include "UORBMessage.hpp"
 #include "APMController.hpp"
 #include "PLGController.hpp"
-#include "VideoController.hpp"
+#include "VIDController.hpp"
 #include "../_Excutable/FlowController.hpp"
 #include "../_Excutable/LogPublicator.hpp"
 
@@ -32,13 +32,15 @@ namespace RuAPSSys
 	public:
 		SchedulerController()
 		{
-			// Step 1. Read Config from /boot/APSconfig.json
+			// Step 1. Read Config from /boot/APSconfig.json.
 			RuAPSSys::ConfigFileSync(FileConfigTarget);
-			// Step 2. Load up SingleController
+			// Step 2. Load up SingleController.
 			APMController.reset(new APMController_t());
-			LOG::LogPrintSTDIO(
-				StringBuilder()
-				<< "[RuAPS-SYS] ALL Start Process complete\n");
+			// Step 3. Load up Camera System.
+			VIDController.reset(new VIDController_t());
+			// ...
+			// Step N. Start up all process complete.
+			LOG::LogPrintSTDIO(_SYS << STARTUPCOMPLETE);
 		};
 
 		void SystemReboot();
@@ -49,6 +51,7 @@ namespace RuAPSSys
 		std::unique_ptr<FlowThread> SystemMonitoThread;
 		std::unique_ptr<APMController_t> APMController;
 		std::unique_ptr<PLGController_t> PLGController;
+		std::unique_ptr<VIDController_t> VIDController;
 	};
 }
 
@@ -58,25 +61,27 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 		new FlowThread(
 			[&]()
 			{
+				// Check message queue from other thread and print
+				if (UORB::SystemStatus.SystemMessage.size() > 0)
+				{
+					LOG::LogPrintSTDIO(UORB::SystemStatus.SystemMessage.front());
+					UORB::SystemStatus.SystemMessage.pop();
+				}
+
 				// Stop Signal Handle Check.
 				if (APSSystemSignal == SIGTERM || APSSystemSignal == SIGINT)
 				{
 					// Call APMControll Stop all threads.
-					LOG::LogPrintSTDIO(
-						StringBuilder()
-						<< "[RuAPS-SYS] Terminal request revice, Exiting Procession is Active....\n");
+					LOG::LogPrintSTDIO(_SYS << EXITPROCESSACTD);
 					//
 					APMController.reset(); // This Will Block untill APM complete Stop.
-
-					LOG::LogPrintSTDIO(
-						StringBuilder()
-						<< "[RuAPS-APM] APMContoroller Exited.\n");
+					LOG::LogPrintSTDIO(_APM << APMEXITPROCESSD);
+					VIDController.reset();
+					LOG::LogPrintSTDIO(_VID << VIDEXITPROCESSD);
 					//
 					if (UORB::ControllerStatus._SYS_APMStatus == -2)
 					{
-						LOG::LogPrintSTDIO(
-							StringBuilder()
-							<< "[RuAPS-SYS] System Exiting Procession Complete.\n");
+						LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
 						exit(0);
 					}
 				}
@@ -97,5 +102,5 @@ void RuAPSSys::SchedulerController::SystemReboot(){
 void RuAPSSys::SignalCatcher(int Signal)
 {
 	RuAPSSys::APSSystemSignal = Signal;
-	std::cout << "[RuAPS-SYS] System interrupt with:" << Signal << "\n";
+	LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
 }

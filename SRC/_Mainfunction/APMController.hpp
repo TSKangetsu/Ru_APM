@@ -1,6 +1,7 @@
 #pragma once
 #include <thread>
 #include "UORBMessage.hpp"
+#include "../_Excutable/LogPublicator.hpp"
 #include "../_Excutable/FlowController.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
 #define APMPublicFreq 1000.f
@@ -31,11 +32,22 @@ private:
 APMController_t::APMController_t()
 {
 	IsControllerRunning = false;
-	RPiSingleAPMInit(RuAPSSys::ConfigCLA::APMConfig);
-	RPiSingleAPMStartUp();
-	APMTaskThread = std::thread([&]
-								{ TaskThreadBlock(); });
-	APMMessageUpdate();
+
+	try
+	{
+		if (RPiSingleAPMInit(RuAPSSys::ConfigCLA::APMConfig) != 0)
+			throw -1;
+		RPiSingleAPMStartUp();
+		APMTaskThread = std::thread([&]
+									{ TaskThreadBlock(); });
+		APMMessageUpdate();
+	}
+	catch (int &e)
+	{
+		UORB::SystemStatus.SystemMessage.push(
+			_APM << "APM Init Failed: " << e << "\n");
+	}
+
 	IsControllerRunning = true;
 }
 
@@ -132,11 +144,13 @@ void APMController_t::APMMessageUpdate()
 
 APMController_t::~APMController_t()
 {
-	UpdateThreading->FlowStopAndWait();
+	if (UpdateThreading != nullptr)
+		UpdateThreading->FlowStopAndWait();
 	// Call APM Deinit And Set Status by Manual to Noficate the System Monitor
 	RPiSingleAPMDeInit();
 
-	APMTaskThread.join();
+	if (APMTaskThread.joinable())
+		APMTaskThread.join();
 
 	UORB::ControllerStatus._SYS_APMStatus = -2;
 	// System Controller is exit , In fact, this flag meanless

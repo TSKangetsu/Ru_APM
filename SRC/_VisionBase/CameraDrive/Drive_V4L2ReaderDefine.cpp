@@ -57,6 +57,11 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
               << "  Height: " << v4l2.CameraFormat.fmt.pix.height << "\n"
               << "  PixFmt: " << v4l2.CameraFormat.fmt.pix.pixelformat << "\n";
 #endif
+    struct v4l2_streamparm parm;
+    parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    parm.parm.capture.timeperframe.numerator = 1;
+    parm.parm.capture.timeperframe.denominator = v4l2d.FrameRate;
+    V4L2Log(ioctl(_flag_CameraFD, VIDIOC_S_PARM, &parm), _v4l2_vipram_s_error);
     //
     v4l2.CameraReqBuffer.count = v4l2d.FrameBuffer;
     v4l2.CameraReqBuffer.memory = V4L2_MEMORY_MMAP;
