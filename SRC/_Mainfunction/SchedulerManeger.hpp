@@ -73,17 +73,14 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 				{
 					// Call APMControll Stop all threads.
 					LOG::LogPrintSTDIO(_SYS << EXITPROCESSACTD);
-					//
+					// Shut off all Controller
 					APMController.reset(); // This Will Block untill APM complete Stop.
 					LOG::LogPrintSTDIO(_APM << APMEXITPROCESSD);
 					VIDController.reset();
 					LOG::LogPrintSTDIO(_VID << VIDEXITPROCESSD);
-					//
-					if (UORB::ControllerStatus._SYS_APMStatus == -2)
-					{
-						LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
-						exit(0);
-					}
+					// Exiting whole progress
+					LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
+					exit(0);
 				}
 			},
 			FlowSytemMonHZ));

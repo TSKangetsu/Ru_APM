@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <opencv2/opencv.hpp>
 #include "../_Excutable/Drive_Json.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
 
@@ -82,7 +83,9 @@ namespace RuAPSSys
 
 		inline static struct StreamStatus_t
 		{
-
+			std::vector<cv::Mat> VideoICVRaw;
+			// V4L2Raw tuple: RawData, Width, height
+			std::vector<std::tuple<unsigned char *, int, int>> VideoIFlowRaw;
 		} StreamStatus;
 
 		inline static struct SystemStatus_t

@@ -55,7 +55,6 @@ namespace V4L2Tools
         bool V4L2Control(unsigned int id, int value);
         V4l2Info V4L2InfoGet() { return v4l2d; };
         unsigned char *V4L2Read();
-        unsigned char *RGB24DataInit() { return (unsigned char *)malloc(v4l2d.ImgWidth * v4l2d.ImgHeight * 3 * sizeof(char)); };
         void yuyv2rgb24(const unsigned char *src, unsigned char *dest, int width, int height);
         ~V4L2Drive();
 

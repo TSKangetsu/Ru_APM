@@ -57,6 +57,10 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
               << "  Height: " << v4l2.CameraFormat.fmt.pix.height << "\n"
               << "  PixFmt: " << v4l2.CameraFormat.fmt.pix.pixelformat << "\n";
 #endif
+    v4l2d.ImgWidth = v4l2.CameraFormat.fmt.pix.width;
+    v4l2d.ImgHeight = v4l2.CameraFormat.fmt.pix.height;
+    v4l2d.PixFormat = v4l2.CameraFormat.fmt.pix.pixelformat;
+
     struct v4l2_streamparm parm;
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     parm.parm.capture.timeperframe.numerator = 1;

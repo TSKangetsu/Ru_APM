@@ -64,7 +64,10 @@ FlowThread::FlowThread(std::function<void()> thread)
 				  //
 				  Time__End = GetTimeStamp();
 			  }
-		  }){};
+		  })
+{
+	usleep(50000);
+};
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 	: std::thread(
@@ -88,11 +91,12 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 			  }
 		  })
 {
-
+	usleep(50000);
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(CPUID, &cpuset);
 	int rc = pthread_setaffinity_np(this->native_handle(), sizeof(cpu_set_t), &cpuset);
+	usleep(50000);
 };
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ)
@@ -132,10 +136,12 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 		  })
 {
 	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
+	usleep(50000);
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(CPUID, &cpuset);
 	int rc = pthread_setaffinity_np(this->native_handle(), sizeof(cpu_set_t), &cpuset);
+	usleep(50000);
 };
 
 FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
@@ -175,6 +181,7 @@ FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 		  })
 {
 	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
+	usleep(50000);
 };
 
 void FlowThread::FlowTerminal(){
