@@ -79,6 +79,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         v4l2.CameraQBuffer.memory = V4L2_MEMORY_MMAP;
         v4l2.CameraQBuffer.index = Index;
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QUERYBUF, &v4l2.CameraQBuffer), _v4l2_querybuff_error);
+        v4l2d.ImgDataSize = v4l2.CameraQBuffer.length;
         v4l2Buffers[Index] = mmap(NULL, v4l2.CameraQBuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _flag_CameraFD, v4l2.CameraQBuffer.m.offset);
         if (MAP_FAILED == v4l2Buffers[Index])
         {

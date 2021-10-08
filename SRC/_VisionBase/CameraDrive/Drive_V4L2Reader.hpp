@@ -31,6 +31,7 @@ namespace V4L2Tools
         bool Is_fastMode = false;
         bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
+        int ImgDataSize = -1;
     };
 
     enum V4L2Error

@@ -4,12 +4,13 @@
 #include <csignal>
 #include <sstream>
 #include <iostream>
-#include "UORBMessage.hpp"
-#include "APMController.hpp"
-#include "PLGController.hpp"
-#include "VIDController.hpp"
-#include "../_Excutable/FlowController.hpp"
-#include "../_Excutable/LogPublicator.hpp"
+#include "_Mainfunction/UORBMessage.hpp"
+#include "_Mainfunction/APMController.hpp"
+#include "_Mainfunction/PLGController.hpp"
+#include "_Mainfunction/VIDController.hpp"
+#include "_Mainfunction/COMController.hpp"
+#include "_Excutable/FlowController.hpp"
+#include "_Excutable/LogPublicator.hpp"
 
 #define FileConfigTarget "/boot/APSconfig.json"
 #define IsServerSiteEnable true
@@ -38,6 +39,8 @@ namespace RuAPSSys
 			APMController.reset(new APMController_t());
 			// Step 3. Load up Camera System.
 			VIDController.reset(new VIDController_t());
+			// Step 4. Load up Message and VideoStream BoradCast;
+			COMController.reset(new COMController_t());
 			// ...
 			// Step N. Start up all process complete.
 			LOG::LogPrintSTDIO(_SYS << STARTUPCOMPLETE);
@@ -52,6 +55,7 @@ namespace RuAPSSys
 		std::unique_ptr<APMController_t> APMController;
 		std::unique_ptr<PLGController_t> PLGController;
 		std::unique_ptr<VIDController_t> VIDController;
+		std::unique_ptr<COMController_t> COMController;
 	};
 }
 

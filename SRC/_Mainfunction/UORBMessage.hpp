@@ -35,7 +35,13 @@ namespace RuAPSSys
 
 		inline static struct CommonSettings
 		{
+			int COM_CastFrameIndex;
+			std::string COM_CastFrameType;
 
+			bool COM_BroadCastEnable;
+			bool COM_NormalCastEnable;
+
+			std::vector<std::string> BroadcastInterfaces;
 		} CommonConfig;
 
 		inline static struct PluginSettings
@@ -77,15 +83,12 @@ namespace RuAPSSys
 			double *_NAV_Relative_Pos[3];
 			int *_NAV_Global_SATCount;
 			float *_NAV_Global_Head;
-
-			bool IsControllerStatusUpdated;
 		} ControllerStatus;
 
 		inline static struct StreamStatus_t
 		{
-			std::vector<cv::Mat> VideoICVRaw;
-			// V4L2Raw tuple: RawData, Width, height
-			std::vector<std::tuple<unsigned char *, int, int>> VideoIFlowRaw;
+			std::vector<std::tuple<cv::Mat, ConfigCLA::VideoSettings>> VideoICVRaw;
+			std::vector<std::tuple<unsigned char *, ConfigCLA::VideoSettings, int>> VideoIFlowRaw;
 		} StreamStatus;
 
 		inline static struct SystemStatus_t
@@ -402,9 +405,21 @@ namespace RuAPSSys
 	//===========================================================//
 	void to_json(json &j, const RuAPSSys::ConfigCLA::CommonSettings &p)
 	{
+		j = json{
+			{"COM_CastFrameIndex", p.COM_CastFrameIndex},
+			{"COM_CastFrameType", p.COM_CastFrameType},
+			{"COM_BroadCastEnable", p.COM_BroadCastEnable},
+			{"COM_NormalCastEnable", p.COM_NormalCastEnable},
+			{"BroadcastInterfaces", p.BroadcastInterfaces},
+		};
 	}
 	void from_json(const json &j, RuAPSSys::ConfigCLA::CommonSettings &p)
 	{
+		j.at("COM_CastFrameIndex").get_to(p.COM_CastFrameIndex);
+		j.at("COM_CastFrameType").get_to(p.COM_CastFrameType);
+		j.at("COM_BroadCastEnable").get_to(p.COM_BroadCastEnable);
+		j.at("COM_NormalCastEnable").get_to(p.COM_NormalCastEnable);
+		j.at("BroadcastInterfaces").get_to(p.BroadcastInterfaces);
 	}
 	//===========================================================//
 	void to_json(json &j, const ConfigCLA::PluginSettings &p)
@@ -451,6 +466,7 @@ namespace RuAPSSys
 		json Container = json::parse(content);
 		ConfigCLA::APMConfig = Container["APMConfig"].get<SingleAPMAPI::APMSettinngs>();
 		ConfigCLA::VideoConfig = Container["VideoConfig"]["Device"].get<std::vector<ConfigCLA::VideoSettings>>();
+		ConfigCLA::CommonConfig = Container["CommonConfig"].get<ConfigCLA::CommonSettings>();
 		return; // just for breakpoint
 	};
 }

@@ -89,7 +89,6 @@ void APMController_t::APMControllerRequireReboot()
 
 void APMController_t::APMMessageREG()
 {
-	UORB::ControllerStatus.IsControllerStatusUpdated = false;
 	UORB::ControllerStatus._Accel_ClippedTimes = &SF._uORB_Accel_Clipped_Count;
 	UORB::ControllerStatus._Accel_Accelration[0] = &SF._uORB_MPU_Data._uORB_Acceleration_X;
 	UORB::ControllerStatus._Accel_Accelration[1] = &SF._uORB_MPU_Data._uORB_Acceleration_Y;
@@ -132,8 +131,7 @@ void APMController_t::APMMessageREG()
 	UORB::ControllerStatus._NAV_Global_HOME[0] = nullptr;
 	UORB::ControllerStatus._NAV_Global_HOME[1] = nullptr;
 	UORB::ControllerStatus._NAV_Global_SATCount = &SF._uORB_GPS_Data.satillitesCount;
-	UORB::ControllerStatus._NAV_Global_Head = 0;
-	UORB::ControllerStatus.IsControllerStatusUpdated = true;
+	UORB::ControllerStatus._NAV_Global_Head = nullptr;
 };
 
 APMController_t::~APMController_t()
