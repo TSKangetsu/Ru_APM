@@ -40,6 +40,7 @@ namespace V4L2Tools
         _v4l2_vidioc_s_error,
         _v4l2_vidioc_g_error,
         _v4l2_vipram_s_error,
+        _v4l2_vipram_g_error,
         _v4l2_reqbuff_error,
         _v4l2_querybuff_error,
         _v4l2_qbuf_error,
