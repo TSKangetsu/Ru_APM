@@ -1,5 +1,6 @@
+#include <string>
+#include <fstream>
 #include <functional>
-#include <initializer_list>
 extern "C"
 {
 #include <lua.h>
@@ -47,7 +48,8 @@ public:
         lua_setglobal(LuaMainLocation, FunctionName);
         //
         lua_pushstring(LuaMainLocation, FunctionName);
-        auto Pusher = [](lua_State *L) -> int {
+        auto Pusher = [](lua_State *L) -> int
+        {
             const char *FUNCGName = lua_tostring(L, lua_upvalueindex(1));
             lua_getglobal(L, FUNCGName);
             std::function<int(lua_State *)> CAPSTDFUNC = *static_cast<std::function<int(lua_State *)> *>(lua_touserdata(L, -1));

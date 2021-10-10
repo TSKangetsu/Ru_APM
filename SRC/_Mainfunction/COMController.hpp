@@ -1,4 +1,5 @@
 #pragma once
+#include <string.h>
 #include <opencv2/opencv.hpp>
 
 #include "VIDController.hpp"
@@ -30,41 +31,51 @@ COMController_t::COMController_t()
     {
         Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 
-        switch (VideoDriver_s.at(SYSC::CommonConfig.COM_CastFrameType))
+        if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0 || SYSU::StreamStatus.VideoICVRaw.size() > 0)
         {
-        case VideoDriver::V4L2:
-            BoradcastThread.reset(new FlowThread(
-                [&]() {
-                    // If Input stream is the same as output stream, do nothing and inject to air
-                    if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat ==
-                        std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceOFormat)
-                    {
-                        if (std::get<unsigned char *>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]) != nullptr)
-                            Injector->WIFICastInject(std::get<unsigned char *>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]),
-                                                     std::get<2>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]), 0, BroadCastType::VideoStream, 0);
-                    };
-                    COMBoradCastDataInject();
-                },
-                (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
-            break;
+            switch (VideoDriver_s.at(SYSC::CommonConfig.COM_CastFrameType))
+            {
+            case VideoDriver::V4L2:
+                BoradcastThread.reset(new FlowThread(
+                    [&]() {
+                        // If Input stream is the same as output stream, do nothing and inject to air
+                        if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat ==
+                            std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceOFormat)
+                        {
+                            if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).frameCount > 2)
+                            {
+                                V4L2Tools::V4l2Data data = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).getFrame();
 
-        case VideoDriver::OPENCV:
-            BoradcastThread.reset(new FlowThread(
-                [&]() {
-                    if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat ==
-                        std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceOFormat)
-                    {
-                    };
-                    COMBoradCastDataInject();
-                },
-                (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
+                                Injector->WIFICastInject(data.data, data.size, 0, BroadCastType::VideoStream, 0);
+                            }
+                        };
+
+                        COMBoradCastDataInject();
+                    },
+                    (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
+                break;
+
+            case VideoDriver::OPENCV:
+                BoradcastThread.reset(new FlowThread(
+                    [&]() {
+                        if (std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).frameCount > 2)
+                        {
+                            cv::Mat data = std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).getFrame();
+
+                            Injector->WIFICastInject(data.data, (data.total() * data.elemSize()), 0, BroadCastType::VideoStream, 0);
+                        }
+
+                        COMBoradCastDataInject();
+                    },
+                    (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
+            }
         }
     }
 }
 
-void COMController_t::COMBoradCastDataInject(){
-
-};
+void COMController_t::COMBoradCastDataInject()
+{
+}
 
 COMController_t::~COMController_t()
 {

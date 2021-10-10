@@ -63,8 +63,7 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 {
 	SystemMonitoThread.reset(
 		new FlowThread(
-			[&]()
-			{
+			[&]() {
 				// Check message queue from other thread and print
 				if (UORB::SystemStatus.SystemMessage.size() > 0)
 				{
@@ -80,6 +79,8 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 					// Shut off all Controller
 					APMController.reset(); // This Will Block untill APM complete Stop.
 					LOG::LogPrintSTDIO(_APM << APMEXITPROCESSD);
+					COMController.reset();
+					LOG::LogPrintSTDIO(_VID << COMEXITPROCESSD);
 					VIDController.reset();
 					LOG::LogPrintSTDIO(_VID << VIDEXITPROCESSD);
 					// Exiting whole progress

@@ -3,14 +3,17 @@
 #include <opencv2/opencv.hpp>
 
 #include "UORBMessage.hpp"
+#include "../_Excutable/ThreadBuffer.hpp"
 #include "../_Excutable/LogPublicator.hpp"
 #include "../_Excutable/FlowController.hpp"
 #include "../_WIFIBroadcast/WIFICastDriver.hpp"
 #include "../_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
 
-using VIDS = RuAPSSys::ConfigCLA;
+using SYSC = RuAPSSys::ConfigCLA;
+using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
+#define MAXBUFFER 5
 
 enum VideoFormat
 {
@@ -72,11 +75,11 @@ VIDController_t::VIDController_t()
 {
     // Step 1. Sync and Setup config
 
-    for (size_t i = 0; i < VIDS::VideoConfig.size(); i++)
+    for (size_t i = 0; i < SYSC::VideoConfig.size(); i++)
     {
-        if (VIDS::VideoConfig[i].enable)
+        if (SYSC::VideoConfig[i].enable)
         {
-            switch (VideoDriver_s.at(VIDS::VideoConfig[i].DeviceDriver))
+            switch (VideoDriver_s.at(SYSC::VideoConfig[i].DeviceDriver))
             {
 
             case VideoDriver::V4L2:
@@ -84,18 +87,20 @@ VIDController_t::VIDController_t()
                 std::unique_ptr<V4L2Tools::V4L2Drive> V4L2P;
                 try
                 {
-                    RuAPSSys::UORBMessage::StreamStatus.VideoIFlowRaw.push_back(std::make_tuple(nullptr, VIDS::VideoConfig[i], -1));
                     V4L2P.reset(
                         new V4L2Tools::V4L2Drive(
-                            VIDS::VideoConfig[i].DevicePATH,
-                            {.ImgWidth = VIDS::VideoConfig[i].DeviceWidth,
-                             .ImgHeight = VIDS::VideoConfig[i].DeviceHeight,
-                             .FrameRate = VIDS::VideoConfig[i].DeviceFPS,
-                             .FrameBuffer = 2,
-                             .Is_fastMode = false,
-                             .Is_AutoSize = (VIDS::VideoConfig[i].DeviceWidth < 0),
-                             .PixFormat = V4L2Format_s.at(VIDS::VideoConfig[i].DeviceIFormat)}));
-                    std::get<2>(RuAPSSys::UORBMessage::StreamStatus.VideoIFlowRaw[i]) = V4L2P->V4L2InfoGet().ImgDataSize;
+                            SYSC::VideoConfig[i].DevicePATH,
+                            {.ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
+                             .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
+                             .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
+                             .FrameBuffer = 1,
+                             .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
+                             .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
+
+                    FrameBuffer<V4L2Tools::V4l2Data> Data;
+                    SYSU::StreamStatus.VideoIFlowRaw.push_back(
+                        std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
+
                     V4L2Driver.push_back(std::move(V4L2P));
                 }
                 catch (int &e)
@@ -111,14 +116,18 @@ VIDController_t::VIDController_t()
                 try
                 {
                     cv::Mat Tmp;
-                    RuAPSSys::UORBMessage::StreamStatus.VideoICVRaw.push_back(std::make_tuple(Tmp, VIDS::VideoConfig[i]));
                     CVP.reset(new cv::VideoCapture());
-                    if (!CVP->open(VIDS::VideoConfig[i].DevicePATH))
+                    if (!CVP->open(SYSC::VideoConfig[i].DevicePATH))
                         throw - 1;
-                    CVP->set(cv::CAP_PROP_FRAME_WIDTH, VIDS::VideoConfig[i].DeviceWidth);
-                    CVP->set(cv::CAP_PROP_FRAME_HEIGHT, VIDS::VideoConfig[i].DeviceWidth);
-                    CVP->set(cv::CAP_PROP_FPS, VIDS::VideoConfig[i].DeviceFPS);
-                    CVP->set(cv::CAP_PROP_FOURCC, V4L2Format_s.at(VIDS::VideoConfig[i].DeviceIFormat));
+                    CVP->set(cv::CAP_PROP_FRAME_WIDTH, SYSC::VideoConfig[i].DeviceWidth);
+                    CVP->set(cv::CAP_PROP_FRAME_HEIGHT, SYSC::VideoConfig[i].DeviceWidth);
+                    CVP->set(cv::CAP_PROP_FPS, SYSC::VideoConfig[i].DeviceFPS);
+                    CVP->set(cv::CAP_PROP_FOURCC, V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat));
+
+                    FrameBuffer<cv::Mat> Data;
+                    SYSU::StreamStatus.VideoICVRaw.push_back(
+                        std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
+
                     CVCAMDriver.push_back(std::move(CVP));
                 }
                 catch (int &e)
@@ -145,10 +154,18 @@ void VIDController_t::VideoISLoader()
         std::unique_ptr<FlowThread> VideoIThread;
         VideoIThread.reset(new FlowThread(
             [&, s = i]() {
-                std::get<0>(RuAPSSys::UORBMessage::StreamStatus.VideoIFlowRaw[s]) =
-                    V4L2Driver[s]->V4L2Read();
+                {
+                    if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount > MAXBUFFER)
+                        std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).getFrame();
+
+                    // V4L2Tools::V4l2Data data;
+                    // // V4L2Driver[s]->V4L2Read(data);
+                    // std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).pushFrame(data);
+
+                    // std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount << "\n";
+                }
             },
-            VIDS::VideoConfig[i].DeviceFPS));
+            (float)SYSC::VideoConfig[i].DeviceFPS));
 
         VideoISThread.push_back(std::move(VideoIThread));
     }
@@ -158,9 +175,14 @@ void VIDController_t::VideoISLoader()
         std::unique_ptr<FlowThread> VideoIThread;
         VideoIThread.reset(new FlowThread(
             [&, s = i]() {
-                CVCAMDriver[s]->read(std::get<0>(RuAPSSys::UORBMessage::StreamStatus.VideoICVRaw[s]));
+                if (std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).frameCount > MAXBUFFER)
+                    std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).getFrame();
+
+                cv::Mat data;
+                CVCAMDriver[s]->read(data);
+                std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).pushFrame(data);
             },
-            VIDS::VideoConfig[i].DeviceFPS));
+            (float)SYSC::VideoConfig[i].DeviceFPS));
 
         VideoISThread.push_back(std::move(VideoIThread));
     }

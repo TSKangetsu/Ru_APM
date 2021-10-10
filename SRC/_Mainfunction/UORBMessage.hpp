@@ -7,7 +7,9 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include "../_Excutable/Drive_Json.hpp"
+#include "../_Excutable/ThreadBuffer.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
+#include "../_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
 
 using json = nlohmann::json;
 #define EMAP(Variable) (#Variable)
@@ -87,8 +89,8 @@ namespace RuAPSSys
 
 		inline static struct StreamStatus_t
 		{
-			std::vector<std::tuple<cv::Mat, ConfigCLA::VideoSettings>> VideoICVRaw;
-			std::vector<std::tuple<unsigned char *, ConfigCLA::VideoSettings, int>> VideoIFlowRaw;
+			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::VideoSettings>> VideoIFlowRaw;
+			std::vector<std::tuple<FrameBuffer<cv::Mat>, ConfigCLA::VideoSettings>> VideoICVRaw;
 		} StreamStatus;
 
 		inline static struct SystemStatus_t

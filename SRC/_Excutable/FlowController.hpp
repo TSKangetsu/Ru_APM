@@ -46,8 +46,7 @@ private:
 
 FlowThread::FlowThread(std::function<void()> thread)
 	: std::thread(
-		  [&]
-		  {
+		  [&] {
 			  func = thread;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -71,8 +70,7 @@ FlowThread::FlowThread(std::function<void()> thread)
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 	: std::thread(
-		  [&]
-		  {
+		  [&] {
 			  func = thread;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -101,8 +99,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ)
 	: std::thread(
-		  [&]
-		  {
+		  [&] {
 			  func = thread;
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
@@ -146,8 +143,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 
 FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 	: std::thread(
-		  [&]
-		  {
+		  [&] {
 			  func = thread;
 			  int AvaCount = 0;
 			  IsThreadRunning = true;

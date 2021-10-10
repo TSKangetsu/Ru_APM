@@ -14,6 +14,7 @@
 #define SYSTEMEXITEDCAL "System Exiting Procession Complete.\n"
 #define APMEXITPROCESSD "APMController Exited.\n"
 #define VIDEXITPROCESSD "VIDController Exited.\n"
+#define COMEXITPROCESSD "COMController Exited.\n"
 
 //TODO: May we should add some system nofity?
 class StringBuilder
