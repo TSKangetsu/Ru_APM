@@ -128,22 +128,24 @@ void WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int I
         {
             uint8_t tmpData[SocketMTU] = {0x00};
             if (type == BroadCastType::VideoStream)
-                memcpy(tmpData, PacketVideo[InterfaceID], HeaderSize);
+                std::copy(PacketVideo[InterfaceID], PacketVideo[InterfaceID] + HeaderSize, tmpData);
             if (type == BroadCastType::DataStream)
-                memcpy(tmpData, PacketDatae[InterfaceID], HeaderSize);
+                std::copy(PacketDatae[InterfaceID], PacketDatae[InterfaceID] + HeaderSize, tmpData);
 
             if (!(((float)len / (float)(SocketMTU - HeaderSize)) == ((int)(len / (SocketMTU - HeaderSize)))) && i == (PacketSize - 1))
             {
                 int size = ((SocketMTU - HeaderSize) - (PacketSize * (SocketMTU - HeaderSize) - len));
 
                 tmpData[((size + HeaderSize))] = FrameCounter;
-                memcpy(tmpData + HeaderSize, (data + (i * (SocketMTU - HeaderSize))), (size + HeaderSize));
+                int dataStart = (i * (SocketMTU - HeaderSize));
+                int dataEnd = (i * (SocketMTU - HeaderSize)) + size;
+                std::copy(data + dataStart, data + dataEnd, tmpData + HeaderSize);
                 SocketInjectors[InterfaceID]->Inject(tmpData, (size + HeaderSize + 1));
             }
             else
             {
                 tmpData[(SocketMTU)] = FrameCounter;
-                memcpy(tmpData + HeaderSize, (data + (i * (SocketMTU - HeaderSize))), (SocketMTU - HeaderSize));
+                std::copy((data + (i * (SocketMTU - HeaderSize))), (data + (i * (SocketMTU - HeaderSize))) + (SocketMTU - HeaderSize), tmpData + HeaderSize);
                 SocketInjectors[InterfaceID]->Inject(tmpData, SocketMTU + 1);
             }
             if (delayUS)
