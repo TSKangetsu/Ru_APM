@@ -5,6 +5,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
     v4l2d = Info;
     _flag_TargetDevice = Device;
     _flag_CameraFD = open(_flag_TargetDevice.c_str(), O_RDWR | O_NONBLOCK, 0);
+    memset(&v4l2.CameraInfo, 0, sizeof(v4l2.CameraInfo));
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QUERYCAP, &v4l2.CameraInfo), _v4l2_query_error);
 #ifdef DEBUG
     std::cout << "DriveInfo: \n"
@@ -18,6 +19,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
     {
         int MaxWidth = 0;
         int MaxHeight = 0;
+        memset(&v4l2.CameraFMTInfo, 0, sizeof(v4l2.CameraFMTInfo));
         v4l2.CameraFMTInfo.index = 0;
         v4l2.CameraFMTInfo.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         while (ioctl(_flag_CameraFD, VIDIOC_ENUM_FMT, &v4l2.CameraFMTInfo) >= 0)
@@ -26,8 +28,8 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
             v4l2.CameraFMTInfo.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if (v4l2.CameraFMTInfo.pixelformat == v4l2d.PixFormat)
             {
-
                 v4l2_frmsizeenum _FrameSize;
+                memset(&_FrameSize, 0, sizeof(_FrameSize));
                 _FrameSize.index = 0;
                 _FrameSize.pixel_format = v4l2.CameraFMTInfo.pixelformat;
                 while (ioctl(_flag_CameraFD, VIDIOC_ENUM_FRAMESIZES, &_FrameSize) >= 0)
@@ -44,6 +46,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         std::cout << "AutoSet is Comfirm:" << MaxWidth << "," << MaxHeight << "\n";
 #endif
     }
+    memset(&v4l2.CameraFormat, 0, sizeof(v4l2.CameraFormat));
     v4l2.CameraFormat.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     v4l2.CameraFormat.fmt.pix.width = v4l2d.ImgWidth;
     v4l2.CameraFormat.fmt.pix.height = v4l2d.ImgHeight;
@@ -62,6 +65,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
     v4l2d.PixFormat = v4l2.CameraFormat.fmt.pix.pixelformat;
 
     struct v4l2_streamparm parm;
+    memset(&parm, 0, sizeof(parm));
     parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_G_PARM, &parm), _v4l2_vipram_g_error);
     parm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
@@ -69,6 +73,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
     parm.parm.capture.timeperframe.denominator = v4l2d.FrameRate;
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_S_PARM, &parm), _v4l2_vipram_s_error);
     //
+    memset(&v4l2.CameraReqBuffer, 0, sizeof(v4l2.CameraReqBuffer));
     v4l2.CameraReqBuffer.count = v4l2d.FrameBuffer;
     v4l2.CameraReqBuffer.memory = V4L2_MEMORY_MMAP;
     v4l2.CameraReqBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -81,8 +86,6 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         v4l2.CameraQBuffer.memory = V4L2_MEMORY_MMAP;
         v4l2.CameraQBuffer.index = Index;
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QUERYBUF, &v4l2.CameraQBuffer), _v4l2_querybuff_error);
-        v4l2d.ImgDataSize = v4l2.CameraQBuffer.length;
-        //
         v4l2Buffers[Index] = mmap(NULL, v4l2.CameraQBuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _flag_CameraFD, v4l2.CameraQBuffer.m.offset);
         if (MAP_FAILED == v4l2Buffers[Index])
         {
@@ -101,6 +104,7 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         v4l2.CameraBuffer.index = i;
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);
     }
+
     memset(&v4l2.CameraBuffer, 0, sizeof(v4l2.CameraBuffer));
     v4l2.CameraBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     v4l2.CameraBuffer.memory = V4L2_MEMORY_MMAP;
@@ -119,36 +123,36 @@ bool V4L2Tools::V4L2Drive::V4L2Control(unsigned int id, int value)
     return true;
 }
 
-unsigned char *V4L2Tools::V4L2Drive::V4L2Read()
+void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
 {
-    if (v4l2d.Is_fastMode & v4l2d.FrameBuffer == 1)
+    unsigned int size = 0;
+    if (Vdata.size <= 0)
+        Vdata = V4L2Tools::V4l2Data(
+            v4l2d.ImgWidth,
+            v4l2d.ImgHeight,
+            v4l2.CameraQBuffer.length,
+            v4l2d.PixFormat);
+
+    for (;;)
     {
+        fd_set fds;
+        struct timeval tv;
+        int r;
+        FD_ZERO(&fds);
+        FD_SET(_flag_CameraFD, &fds);
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+        r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
         if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) != -1)
         {
-            ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer);
+            Vdata.size = v4l2.CameraBuffer.bytesused;
+            std::copy((unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index],
+                      (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
+                      Vdata.data);
+            V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_camread_error);
+            break;
         }
     }
-    else
-    {
-        for (;;)
-        {
-            fd_set fds;
-            struct timeval tv;
-            int r;
-            FD_ZERO(&fds);
-            FD_SET(_flag_CameraFD, &fds);
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
-            r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
-            if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) != -1)
-            {
-                v4l2d.ImgDataSize = v4l2.CameraBuffer.bytesused;
-                V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_camread_error);
-                break;
-            }
-        }
-    }
-    return (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index];
 }
 
 V4L2Tools::V4L2Drive::~V4L2Drive()
@@ -162,35 +166,6 @@ V4L2Tools::V4L2Drive::~V4L2Drive()
     }
     free(v4l2Buffers);
     close(_flag_CameraFD);
-}
-
-void V4L2Tools::V4L2Drive::yuyv2rgb24(const unsigned char *src, unsigned char *dest, int width, int height)
-{
-    int j;
-
-    while (--height >= 0)
-    {
-        for (j = 0; j + 1 < width; j += 2)
-        {
-            int u = src[1];
-            int v = src[3];
-            int u1 = (((u - 128) << 7) + (u - 128)) >> 6;
-            int rg = (((u - 128) << 1) + (u - 128) +
-                      ((v - 128) << 2) + ((v - 128) << 1)) >>
-                     3;
-            int v1 = (((v - 128) << 1) + (v - 128)) >> 1;
-
-            *dest++ = CLIP(src[0] + v1);
-            *dest++ = CLIP(src[0] - rg);
-            *dest++ = CLIP(src[0] + u1);
-
-            *dest++ = CLIP(src[2] + v1);
-            *dest++ = CLIP(src[2] - rg);
-            *dest++ = CLIP(src[2] + u1);
-            src += 4;
-        }
-        src += v4l2.CameraFormat.fmt.pix.bytesperline - (width * 2);
-    }
 }
 
 void V4L2Tools::V4L2Drive::V4L2Log(int signal, int error)

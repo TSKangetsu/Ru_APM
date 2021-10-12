@@ -10,10 +10,12 @@
 #include <cstring>
 #include <sys/mman.h>
 #include <errno.h>
+#include <queue>
+#include <mutex>
+#include <memory>
 #ifdef DEBUG
 #include <iostream>
 #endif
-#define CLIP(color) (unsigned char)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 namespace V4L2Tools
 {
@@ -23,15 +25,54 @@ namespace V4L2Tools
         int ImgHeight = 380;
         int FrameRate = 30;
         int FrameBuffer = 4;
-        /* 
-        FastMode:You must set FrameBuffer to 1 to enable , 
-        fastmode is not thread block mode,fast speed loop will cost lot of cpu usage ,controll you self;
-        if it set to false or framebuffer > 1 , thread will block untill v4l2buffer is updated; 
-        */
-        bool Is_fastMode = false;
         bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
-        int ImgDataSize = -1;
+    };
+
+    struct V4l2Data
+    {
+        int width;
+        int height;
+        unsigned int size;
+        unsigned int pixfmt;
+        unsigned char *data;
+        //
+        V4l2Data() : width(0), height(0), size(0), pixfmt(0), data(nullptr){};
+        V4l2Data(int width,
+                 int height,
+                 unsigned int size,
+                 unsigned int pixfmt)
+        {
+            this->width = width;
+            this->height = height;
+            this->size = size;
+            this->pixfmt = pixfmt;
+            this->data = new unsigned char[this->size];
+        };
+        V4l2Data &operator=(const V4l2Data &DataCpy)
+        {
+            width = DataCpy.width;
+            height = DataCpy.height;
+            size = DataCpy.size;
+            pixfmt = DataCpy.pixfmt;
+            data = new unsigned char[size];
+            std::copy(DataCpy.data, DataCpy.data + size, this->data);
+            return *this;
+        };
+        V4l2Data(const V4l2Data &DataCpy)
+        {
+            width = DataCpy.width;
+            height = DataCpy.height;
+            size = DataCpy.size;
+            pixfmt = DataCpy.pixfmt;
+            data = new unsigned char[size];
+            std::copy(DataCpy.data, DataCpy.data + size, this->data);
+        };
+        ~V4l2Data()
+        {
+            if (data != nullptr)
+                delete[] data;
+        };
     };
 
     enum V4L2Error
@@ -53,11 +94,11 @@ namespace V4L2Tools
     {
     public:
         V4L2Drive(std::string Device, V4l2Info Info);
+        void V4L2Read(V4L2Tools::V4l2Data &Vdata);
+
         int V4L2FDGetter() { return _flag_CameraFD; };
         bool V4L2Control(unsigned int id, int value);
-        V4l2Info V4L2InfoGet() { return v4l2d; };
-        unsigned char *V4L2Read();
-        void yuyv2rgb24(const unsigned char *src, unsigned char *dest, int width, int height);
+
         ~V4L2Drive();
 
     private:
@@ -68,6 +109,7 @@ namespace V4L2Tools
         int _flag_CameraFD;
         std::string _flag_TargetDevice;
         V4l2Info v4l2d;
+
         struct V4l2Dep
         {
             v4l2_control CameraContorl;
