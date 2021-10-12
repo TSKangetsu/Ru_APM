@@ -13,7 +13,7 @@ using SYSC = RuAPSSys::ConfigCLA;
 using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
-#define MAXBUFFER 5
+#define MAXBUFFER 3
 
 enum VideoFormat
 {
@@ -154,18 +154,13 @@ void VIDController_t::VideoISLoader()
         std::unique_ptr<FlowThread> VideoIThread;
         VideoIThread.reset(new FlowThread(
             [&, s = i]() {
-                {
-                    if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount > MAXBUFFER)
-                        std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).getFrame();
+                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount > MAXBUFFER)
+                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).getFrame();
 
-                    // V4L2Tools::V4l2Data data;
-                    // // V4L2Driver[s]->V4L2Read(data);
-                    // std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).pushFrame(data);
-
-                    // std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount << "\n";
-                }
-            },
-            (float)SYSC::VideoConfig[i].DeviceFPS));
+                V4L2Tools::V4l2Data data;
+                V4L2Driver[s]->V4L2Read(data);
+                std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).pushFrame(data);
+            }));
 
         VideoISThread.push_back(std::move(VideoIThread));
     }
@@ -181,8 +176,7 @@ void VIDController_t::VideoISLoader()
                 cv::Mat data;
                 CVCAMDriver[s]->read(data);
                 std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).pushFrame(data);
-            },
-            (float)SYSC::VideoConfig[i].DeviceFPS));
+            }));
 
         VideoISThread.push_back(std::move(VideoIThread));
     }

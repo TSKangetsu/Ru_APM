@@ -45,14 +45,13 @@ COMController_t::COMController_t()
                             if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).frameCount > 2)
                             {
                                 V4L2Tools::V4l2Data data = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).getFrame();
-
                                 Injector->WIFICastInject(data.data, data.size, 0, BroadCastType::VideoStream, 0);
                             }
                         };
 
                         COMBoradCastDataInject();
                     },
-                    (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
+                    (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
                 break;
 
             case VideoDriver::OPENCV:
@@ -67,7 +66,7 @@ COMController_t::COMController_t()
 
                         COMBoradCastDataInject();
                     },
-                    (float)std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoICVRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceFPS));
+                    (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
             }
         }
     }
