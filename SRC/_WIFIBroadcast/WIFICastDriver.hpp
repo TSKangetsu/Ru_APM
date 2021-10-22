@@ -1,9 +1,12 @@
 #pragma once
 #include "../_Excutable/Drive_Socket.hpp"
+#include "../_Excutable/FlowController.hpp"
+#define FrameTypeL 58
 #define VideoTrans 0x68
 #define DataETrans 0x69
 #define SocketMTU 1490 - 5 //FCS auto add by driver or kerenl
 #define HeaderSize 61
+#define SocketMTUMAX 1500
 
 namespace WIFIBroadCast
 {
@@ -19,10 +22,12 @@ namespace WIFIBroadCast
         WIFICastDriver(std::vector<std::string> Interfaces);
         ~WIFICastDriver();
 
-        void WIFICastInject(uint8_t *data, int size, int InterfaceID, BroadCastType type, int delayUS);
+        void WIFICastInject(uint8_t *data, int size, int InterfaceID, BroadCastType type, int delayUS, uint8_t FrameQueueID);
 
         void WIFICastInjectMulti(uint8_t *data, int size, int delayUS){};
         void WIFICastInjectMultiBL(uint8_t *data, int size, int delayUS){};
+
+        void WIFIRecvSinff(int InterfaceID);
 
     private:
         struct InjectPacketLLCInfo
@@ -53,14 +58,17 @@ namespace WIFIBroadCast
         } InjectPacketLLC;
 
         int InterfaceCount = 0;
-        uint8_t FrameCounter = 0;
+        uint8_t FrameCounter68 = 0;
+        uint8_t FrameCounter69 = 0;
         uint8_t **PacketVideo;
         uint8_t **PacketDatae;
+        std::vector<sock_filter> RecvFilter;
         std::vector<std::unique_ptr<Socket>> SocketInjectors;
-    };
 
-    class WIFIRecvDriver
-    {
+        bool Frame69Located = false;
+        //int[4] is streamID, size, width, height, bool is frame locate signal
+        std::vector<std::tuple<unsigned char *, int *, bool>> VideoFullPackets;
+        std::unique_ptr<FlowThread> RecvThread;
     };
 }
 
@@ -70,6 +78,14 @@ WIFIBroadCast::WIFICastDriver::WIFICastDriver(std::vector<std::string> Interface
     InterfaceCount = Interfaces.size();
     PacketVideo = new uint8_t *[Interfaces.size()];
     PacketDatae = new uint8_t *[Interfaces.size()];
+
+    RecvFilter = {
+        {(BPF_LD | BPF_H | BPF_ABS), 0, 0, 59},
+        {(BPF_JMP | BPF_JEQ | BPF_K), 0, 1, 0xffff},
+        {(BPF_RET | BPF_K), 0, 0, 0x00040000},
+        {(BPF_RET | BPF_K), 0, 0, 0x00000000},
+    };
+
     for (size_t i = 0; i < Interfaces.size(); i++)
     {
         std::unique_ptr<Socket> Injector;
@@ -97,12 +113,20 @@ WIFIBroadCast::WIFICastDriver::WIFICastDriver(std::vector<std::string> Interface
         memcpy(PacketDatae[i] + offset, InjectPacketLLC.SquenceAndLLCDataE, sizeof(InjectPacketLLC.SquenceAndLLCDataE));
         memcpy(PacketVideo[i] + offset, InjectPacketLLC.SquenceAndLLCVideo, sizeof(InjectPacketLLC.SquenceAndLLCVideo));
 
+        Injector->SocketFilterApply(&RecvFilter[0], RecvFilter.size());
+
         SocketInjectors.push_back(std::move(Injector));
     }
 }
 
 WIFIBroadCast::WIFICastDriver::~WIFICastDriver()
 {
+    if (RecvThread)
+    {
+        RecvThread->FlowStopAndWait();
+        RecvThread.reset();
+    }
+
     for (int i = 0; i < InterfaceCount; ++i)
     {
         delete[] PacketVideo[i];
@@ -117,47 +141,139 @@ WIFIBroadCast::WIFICastDriver::~WIFICastDriver()
     }
 }
 
-void WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int InterfaceID, BroadCastType type, int delayUS)
+void WIFIBroadCast::WIFICastDriver::IFICastInject(uint8_t *data, int len, int InterfaceID, BroadCastType type, int delayUS, uint8_t FrameQueueID)
 {
-    if (len > (SocketMTU - HeaderSize))
+    float PacketSize = (((float)len / (float)(SocketMTU - HeaderSize)) == ((int)(len / (SocketMTU - HeaderSize))))
+                           ? ((int)(len / (SocketMTU - HeaderSize)))
+                           : ((int)(len / (SocketMTU - HeaderSize))) + 1;
+    for (size_t i = 0; i < PacketSize; i++)
     {
-        float PacketSize = (((float)len / (float)(SocketMTU - HeaderSize)) == ((int)(len / (SocketMTU - HeaderSize))))
-                               ? ((int)(len / (SocketMTU - HeaderSize)))
-                               : ((int)(len / (SocketMTU - HeaderSize))) + 1;
-        for (size_t i = 0; i < PacketSize; i++)
+        uint8_t tmpData[SocketMTU + 1] = {0x00};
+        if (type == BroadCastType::VideoStream)
+            std::copy(PacketVideo[InterfaceID], PacketVideo[InterfaceID] + HeaderSize, tmpData);
+        if (type == BroadCastType::DataStream)
+            std::copy(PacketDatae[InterfaceID], PacketDatae[InterfaceID] + HeaderSize, tmpData);
+
+        if (!(((float)len / (float)(SocketMTU - HeaderSize)) == ((int)(len / (SocketMTU - HeaderSize)))) && i == (PacketSize - 1))
         {
-            uint8_t tmpData[SocketMTU] = {0x00};
+            int size = ((SocketMTU - HeaderSize) - (PacketSize * (SocketMTU - HeaderSize) - len));
+            //
             if (type == BroadCastType::VideoStream)
-                std::copy(PacketVideo[InterfaceID], PacketVideo[InterfaceID] + HeaderSize, tmpData);
+                tmpData[((size + HeaderSize))] = FrameQueueID << 4 | 0xf;
             if (type == BroadCastType::DataStream)
-                std::copy(PacketDatae[InterfaceID], PacketDatae[InterfaceID] + HeaderSize, tmpData);
+                tmpData[((size + HeaderSize))] = FrameQueueID << 4 | 0xf;
+            //
+            tmpData[FrameTypeL - 1] = (size + HeaderSize + 1);
+            tmpData[FrameTypeL - 2] = (size + HeaderSize + 1) >> 8;
+            //
+            int dataStart = (i * (SocketMTU - HeaderSize));
+            int dataEnd = (i * (SocketMTU - HeaderSize)) + size;
+            std::copy(data + dataStart, data + dataEnd, tmpData + HeaderSize);
+            SocketInjectors[InterfaceID]->Inject(tmpData, (size + HeaderSize + 1));
+        }
+        else
+        {
+            //
+            if (type == BroadCastType::VideoStream)
+                tmpData[(SocketMTU)] = FrameQueueID << 4 | FrameCounter68;
+            if (type == BroadCastType::DataStream)
+                tmpData[(SocketMTU)] = FrameQueueID << 4 | FrameCounter69;
+            //
+            tmpData[(FrameTypeL - 1)] = (uint8_t)(SocketMTU + 1);
+            tmpData[(FrameTypeL - 2)] = (uint8_t)((SocketMTU + 1) >> 8);
+            std::copy((data + (i * (SocketMTU - HeaderSize))), (data + (i * (SocketMTU - HeaderSize))) + (SocketMTU - HeaderSize), tmpData + HeaderSize);
+            SocketInjectors[InterfaceID]->Inject(tmpData, SocketMTU + 1);
+        }
+        if (delayUS)
+            usleep(delayUS);
 
-            if (!(((float)len / (float)(SocketMTU - HeaderSize)) == ((int)(len / (SocketMTU - HeaderSize)))) && i == (PacketSize - 1))
-            {
-                int size = ((SocketMTU - HeaderSize) - (PacketSize * (SocketMTU - HeaderSize) - len));
-
-                tmpData[((size + HeaderSize))] = FrameCounter;
-                int dataStart = (i * (SocketMTU - HeaderSize));
-                int dataEnd = (i * (SocketMTU - HeaderSize)) + size;
-                std::copy(data + dataStart, data + dataEnd, tmpData + HeaderSize);
-                SocketInjectors[InterfaceID]->Inject(tmpData, (size + HeaderSize + 1));
-            }
-            else
-            {
-                tmpData[(SocketMTU)] = FrameCounter;
-                std::copy((data + (i * (SocketMTU - HeaderSize))), (data + (i * (SocketMTU - HeaderSize))) + (SocketMTU - HeaderSize), tmpData + HeaderSize);
-                SocketInjectors[InterfaceID]->Inject(tmpData, SocketMTU + 1);
-            }
-            if (delayUS)
-                usleep(delayUS);
-
-            FrameCounter++;
-            if (FrameCounter >= 0xff)
-                FrameCounter = 0;
+        if (type == BroadCastType::VideoStream)
+        {
+            FrameCounter68++;
+            if (FrameCounter68 >= 0xf)
+                FrameCounter68 = 0x0;
+        }
+        else if (type == BroadCastType::DataStream)
+        {
+            FrameCounter69++;
+            if (FrameCounter69 >= 0xf)
+                FrameCounter69 = 0x0;
         }
     }
-    else
-    {
-        SocketInjectors[InterfaceID]->Inject(data, len);
-    }
+}
+
+void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff(int InterfaceID)
+{
+    RecvThread.reset(new FlowThread([&]() {
+        uint8_t dataTmp[SocketMTUMAX];
+        SocketInjectors[InterfaceID]->Sniff(dataTmp, SocketMTUMAX);
+        // From data HeaderSize:
+        int size = dataTmp[FrameTypeL - 1];
+        size |= dataTmp[FrameTypeL - 2] << 8;
+
+        int FramestreamID = (dataTmp[size - 1] >> 4);
+        int Framesequeue = (dataTmp[size - 1] - (FramestreamID << 4));
+        //
+        int LocateID = -1;
+        bool PacketNotReg = true;
+        for (size_t i = 0; i < VideoFullPackets.size(); i++)
+            if (std::get<int *>(VideoFullPackets[i])[0] == FramestreamID || std::get<int *>(VideoFullPackets[i])[0] == dataTmp[HeaderSize])
+            {
+                LocateID = i;
+                PacketNotReg = false;
+            }
+        //
+        if (dataTmp[FrameTypeL] == VideoTrans && !PacketNotReg)
+        {
+            //FIXME: Should I Support Multiple Video?
+            //TODO: a video stream is provide by a mac or multiple mac, filter by ebpf filter.This Function is only support single videostream now.
+            if (Framesequeue == 0xf)
+            {
+                if (!std::get<bool>(VideoFullPackets[LocateID]))
+                {
+                    std::get<bool>(VideoFullPackets[LocateID]) = true;
+                    std::get<int *>(VideoFullPackets[LocateID])[1] = 0;
+                }
+                else
+                {
+                    std::get<bool>(VideoFullPackets[LocateID]) = false;
+                    std::copy(dataTmp + HeaderSize, dataTmp + size - 1, std::get<unsigned char *>(VideoFullPackets[LocateID]) + std::get<int *>(VideoFullPackets[LocateID])[1]);
+                    std::get<int *>(VideoFullPackets[LocateID])[1] += (size - HeaderSize - 1);
+
+                    // cv::Mat dataMat = cv::Mat(1, std::get<int *>(VideoFullPackets[LocateID])[1], CV_8UC1, std::get<unsigned char *>(VideoFullPackets[LocateID]));
+                    // cv::Mat decodedMat = cv::imdecode(dataMat, cv::IMREAD_COLOR);
+                    // cv::imshow("test", decodedMat);
+                    // cv::waitKey(10);
+                }
+            }
+            else if (std::get<bool>(VideoFullPackets[LocateID]))
+            {
+                //TODO: net frame lose throw
+                std::copy(dataTmp + HeaderSize, dataTmp + size - 1, std::get<unsigned char *>(VideoFullPackets[LocateID]) + std::get<int *>(VideoFullPackets[LocateID])[1]);
+                std::get<int *>(VideoFullPackets[LocateID])[1] += (size - HeaderSize - 1);
+            }
+        }
+        else if (dataTmp[FrameTypeL] == DataETrans)
+        {
+            //TODO: Get max video size , width and height from DataEFrame. also reattch ebpf with mac bind.
+            // 1 btye: FrameID, 4 byte: Max size, 2 btye: width, 2 byte: height
+            if (dataTmp[size - 1] == 0xff)
+            {
+                if (PacketNotReg)
+                {
+                    int FrameID = dataTmp[HeaderSize];
+                    int ssize = dataTmp[HeaderSize + 1] << 24 | dataTmp[HeaderSize + 2] << 16 | dataTmp[HeaderSize + 3] << 8 | dataTmp[HeaderSize + 4];
+                    int width = dataTmp[HeaderSize + 5] << 8 | dataTmp[HeaderSize + 6];
+                    int height = dataTmp[HeaderSize + 7] << 8 | dataTmp[HeaderSize + 8];
+                    int FrameInfo[] = {FrameID, ssize, width, height};
+                    VideoFullPackets.push_back(std::make_tuple(new unsigned char[ssize], FrameInfo, false));
+                }
+            }
+            //
+        }
+        else
+        {
+            // Not the Target Frame, throw.
+        }
+    }));
 }

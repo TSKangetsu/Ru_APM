@@ -131,6 +131,7 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
             v4l2d.ImgWidth,
             v4l2d.ImgHeight,
             v4l2.CameraQBuffer.length,
+            v4l2.CameraQBuffer.length,
             v4l2d.PixFormat);
 
     for (;;)

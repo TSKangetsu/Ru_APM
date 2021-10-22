@@ -33,19 +33,22 @@ namespace V4L2Tools
     {
         int width;
         int height;
+        int maxsize;
         unsigned int size;
         unsigned int pixfmt;
         unsigned char *data;
         //
-        V4l2Data() : width(0), height(0), size(0), pixfmt(0), data(nullptr){};
+        V4l2Data() : width(0), height(0), maxsize(0), size(0), pixfmt(0), data(nullptr){};
         V4l2Data(int width,
                  int height,
+                 int maxsize,
                  unsigned int size,
                  unsigned int pixfmt)
         {
             this->width = width;
             this->height = height;
             this->size = size;
+            this->maxsize = maxsize;
             this->pixfmt = pixfmt;
             this->data = new unsigned char[this->size];
         };
@@ -54,6 +57,7 @@ namespace V4L2Tools
             width = DataCpy.width;
             height = DataCpy.height;
             size = DataCpy.size;
+            maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
             data = new unsigned char[size];
             std::copy(DataCpy.data, DataCpy.data + size, this->data);
@@ -64,6 +68,7 @@ namespace V4L2Tools
             width = DataCpy.width;
             height = DataCpy.height;
             size = DataCpy.size;
+            maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
             data = new unsigned char[size];
             std::copy(DataCpy.data, DataCpy.data + size, this->data);

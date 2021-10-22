@@ -13,6 +13,7 @@ using SYSC = RuAPSSys::ConfigCLA;
 using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
+#define MAXV4LBUF 1
 #define MAXBUFFER 3
 
 enum VideoFormat
@@ -93,7 +94,7 @@ VIDController_t::VIDController_t()
                             {.ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
                              .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
                              .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
-                             .FrameBuffer = 1,
+                             .FrameBuffer = MAXV4LBUF,
                              .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
                              .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
 

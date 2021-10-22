@@ -109,6 +109,7 @@ void MessageController::ClientNetController::dataSender(std::string data)
 //===================//
 std::string MessageController::WebSocketCreator(char *data)
 {
+	return "";
 }
 
 std::string MessageController::base64_encode(unsigned char const *bytes_to_encode, unsigned int in_len)
@@ -438,9 +439,10 @@ std::string MessageController::WebSocketHeaderCreator(std::string base64)
 
 void MessageController::WebSocketServer::dataSender(sSocket *Target, std::string SendData, w_com_type optype)
 {
-	uint8_t SendingData[SendData.size() + 256] = {0};
+	uint8_t *SendingData = new uint8_t[SendData.size() + 256];
 	int len = WebSocketDataFrameCreator((uint8_t *)SendData.c_str(), SendData.size(), SendingData, SendData.size() + 256, false, optype);
 	Target->Send(SendingData, len);
+	delete[] SendingData;
 }
 
 MessageController::WebSocketServer &&MessageController::WebSocketServer::WebSocketServerInit()

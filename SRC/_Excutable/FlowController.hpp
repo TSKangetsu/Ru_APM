@@ -48,6 +48,7 @@ FlowThread::FlowThread(std::function<void()> thread)
 	: std::thread(
 		  [&] {
 			  func = thread;
+			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
 			  {
@@ -59,6 +60,15 @@ FlowThread::FlowThread(std::function<void()> thread)
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;
 				  //
+				  ThreadSpendAvaTotal -= ThreadSpendAVT[AvaCount];
+				  ThreadSpendAVT[AvaCount] = ThreadSpend;
+				  ThreadSpendAvaTotal += ThreadSpendAVT[AvaCount];
+				  AvaCount++;
+				  if (AvaCount >= 5)
+				  {
+					  ThreadSpendAva = ThreadSpendAvaTotal / 5.f;
+					  AvaCount = 0;
+				  }
 				  // ...
 				  //
 				  Time__End = GetTimeStamp();
@@ -72,6 +82,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 	: std::thread(
 		  [&] {
 			  func = thread;
+			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
 			  {
@@ -83,6 +94,15 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 				  Time__End = GetTimeStamp();
 				  ThreadSpend = Time__End - TimeStart;
 				  //
+				  ThreadSpendAvaTotal -= ThreadSpendAVT[AvaCount];
+				  ThreadSpendAVT[AvaCount] = ThreadSpend;
+				  ThreadSpendAvaTotal += ThreadSpendAVT[AvaCount];
+				  AvaCount++;
+				  if (AvaCount >= 5)
+				  {
+					  ThreadSpendAva = ThreadSpendAvaTotal / 5.f;
+					  AvaCount = 0;
+				  }
 				  // ...
 				  //
 				  Time__End = GetTimeStamp();
@@ -192,5 +212,6 @@ void FlowThread::FlowTryStop()
 void FlowThread::FlowStopAndWait()
 {
 	IsThreadRunning = false;
-	this->join();
+	if (this->joinable())
+		this->join();
 };

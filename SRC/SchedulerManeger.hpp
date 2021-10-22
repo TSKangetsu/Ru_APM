@@ -23,8 +23,6 @@ namespace LOG = LOGPublicator;
 
 namespace RuAPSSys
 {
-	void SignalCatcher(int Signal);
-	//
 	inline static int APSSystemSignal;
 	inline std::queue<std::string> SystemMessage;
 	//
@@ -79,10 +77,10 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 					// Shut off all Controller
 					APMController.reset(); // This Will Block untill APM complete Stop.
 					LOG::LogPrintSTDIO(_APM << APMEXITPROCESSD);
-					COMController.reset();
-					LOG::LogPrintSTDIO(_VID << COMEXITPROCESSD);
 					VIDController.reset();
 					LOG::LogPrintSTDIO(_VID << VIDEXITPROCESSD);
+					COMController.reset();
+					LOG::LogPrintSTDIO(_VID << COMEXITPROCESSD);
 					// Exiting whole progress
 					LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
 					exit(0);
@@ -90,8 +88,18 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 			},
 			FlowSytemMonHZ));
 	// Call Signal Handler
-	std::signal(SIGINT, SignalCatcher);
-	std::signal(SIGTERM, SignalCatcher);
+	std::signal(SIGINT, [](int Signal) -> void {
+		RuAPSSys::APSSystemSignal = Signal;
+		LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
+	});
+	std::signal(SIGTERM, [](int Signal) -> void {
+		RuAPSSys::APSSystemSignal = Signal;
+		LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
+	});
+	std::signal(SIGPIPE, [](int Signal) -> void {
+		//
+		//
+	});
 	// Block Runner life
 	SystemMonitoThread->FlowWait();
 	return std::move(*this);
@@ -100,9 +108,3 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 void RuAPSSys::SchedulerController::SystemReboot(){
 
 };
-
-void RuAPSSys::SignalCatcher(int Signal)
-{
-	RuAPSSys::APSSystemSignal = Signal;
-	LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
-}

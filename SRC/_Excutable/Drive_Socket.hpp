@@ -313,23 +313,17 @@ public:
     }
 
     template <typename _Tp>
-    int Sniff(_Tp *&data, int recvSize)
+    int Sniff(_Tp *data, int recvSize)
     {
         struct sockaddr_ll packet_info;
         socklen_t packet_info_size;
         ssize_t len;
         if ((len = recvfrom(m_sock, data, recvSize, 0, (struct sockaddr *)&packet_info, &packet_info_size)) < 0)
         {
-#ifdef NETDEBUG
-            perror("\033[31m[SocketInfo]IllegalSocket Recv with\033[0m");
-#endif
             return -1;
         }
         else
         {
-#ifdef NETDEBUG
-            printf("\033[32m[SocketInfo]IllegalSocket Recv\033[0m\n");
-#endif
             return 0;
         }
     }
@@ -403,71 +397,70 @@ public:
         MaxConnection = maxConnection;
         MainSocks = new sSocket();
 
-        AcceptThread = std::thread([&]
-                                   {
-                                       do
-                                       {
-                                           usleep(200000);
-                                       } while (!IsRun);
+        AcceptThread = std::thread([&] {
+            do
+            {
+                usleep(200000);
+            } while (!IsRun);
 
-                                       sSocket SubSocks[MaxConnection];
-                                       MainSocks->Create();
-                                       MainSocks->Bind(IPAddr, LocalPort);
-                                       MainSocks->Listen(MaxConnection);
+            sSocket SubSocks[MaxConnection];
+            MainSocks->Create();
+            MainSocks->Bind(IPAddr, LocalPort);
+            MainSocks->Listen(MaxConnection);
 
-                                       while (true)
-                                       {
-                                           FD_ZERO(&ServerFD);
-                                           FD_SET(MainSocks->GetSockFD(), &ServerFD);
-                                           Max_SD = MainSocks->GetSockFD();
-                                           for (size_t i = 0; i < MaxConnection; i++)
-                                           {
-                                               if (SubSocks[i].GetSockFD() > 0)
-                                                   FD_SET(SubSocks[i].GetSockFD(), &ServerFD);
-                                               if (SubSocks[i].GetSockFD() > Max_SD)
-                                                   Max_SD = SubSocks[i].GetSockFD();
-                                           }
-                                           int activity = select(Max_SD + 1, &ServerFD, NULL, NULL, NULL);
-                                           for (size_t i = 0; i <= Max_SD && activity > 0; i++)
-                                           {
-                                               if (FD_ISSET(i, &ServerFD))
-                                               {
-                                                   activity--;
-                                                   if (i == MainSocks->GetSockFD())
-                                                   {
-                                                       for (size_t i = 0; i < MaxConnection; i++)
-                                                       {
-                                                           if (!(SubSocks[i].GetSockFD() > 0))
-                                                           {
-                                                               bool AcceptSuccess = MainSocks->Accept(SubSocks[i]);
-                                                               OnConnectionFunction(&SubSocks[i]);
-                                                               break;
-                                                           }
-                                                       }
-                                                   }
-                                                   else
-                                                   {
-                                                       for (size_t s = 0; s < MaxConnection; s++)
-                                                       {
-                                                           if (SubSocks[s].GetSockFD() == i)
-                                                           {
-                                                               struct stat buf;
-                                                               if (!SubSocks[s].Recv(RecvDataBuff, RecvMaxSize))
-                                                               {
-                                                                   OnDisConnectFunction(&SubSocks[s]);
-                                                                   SubSocks[s].~sSocket();
-                                                               }
-                                                               else
-                                                               {
-                                                                   OnMessageFunction(&SubSocks[s], RecvDataBuff);
-                                                               }
-                                                           }
-                                                       }
-                                                   }
-                                               }
-                                           }
-                                       }
-                                   });
+            while (true)
+            {
+                FD_ZERO(&ServerFD);
+                FD_SET(MainSocks->GetSockFD(), &ServerFD);
+                Max_SD = MainSocks->GetSockFD();
+                for (size_t i = 0; i < MaxConnection; i++)
+                {
+                    if (SubSocks[i].GetSockFD() > 0)
+                        FD_SET(SubSocks[i].GetSockFD(), &ServerFD);
+                    if (SubSocks[i].GetSockFD() > Max_SD)
+                        Max_SD = SubSocks[i].GetSockFD();
+                }
+                int activity = select(Max_SD + 1, &ServerFD, NULL, NULL, NULL);
+                for (size_t i = 0; i <= Max_SD && activity > 0; i++)
+                {
+                    if (FD_ISSET(i, &ServerFD))
+                    {
+                        activity--;
+                        if (i == MainSocks->GetSockFD())
+                        {
+                            for (size_t i = 0; i < MaxConnection; i++)
+                            {
+                                if (!(SubSocks[i].GetSockFD() > 0))
+                                {
+                                    bool AcceptSuccess = MainSocks->Accept(SubSocks[i]);
+                                    OnConnectionFunction(&SubSocks[i]);
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (size_t s = 0; s < MaxConnection; s++)
+                            {
+                                if (SubSocks[s].GetSockFD() == i)
+                                {
+                                    struct stat buf;
+                                    if (!SubSocks[s].Recv(RecvDataBuff, RecvMaxSize))
+                                    {
+                                        OnDisConnectFunction(&SubSocks[s]);
+                                        SubSocks[s].~sSocket();
+                                    }
+                                    else
+                                    {
+                                        OnMessageFunction(&SubSocks[s], RecvDataBuff);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
         return std::move(*this);
     };
 

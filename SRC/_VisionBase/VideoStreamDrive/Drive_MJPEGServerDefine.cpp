@@ -25,6 +25,8 @@ int MJPEGServer::MJPEGWaitIncome()
             _VideoNetStreamSub.~Socket();
         }
     }
+
+    return 0;
 }
 
 bool MJPEGServer::MJPEGContentSender(std::string content)
