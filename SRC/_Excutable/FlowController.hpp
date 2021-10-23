@@ -41,13 +41,13 @@ private:
 	float ThreadSpendAVT[5] = {0};
 	int FlowLoopError = 0;
 	bool IsThreadRunning = false;
-	std::function<void()> func;
+	std::function<void()> func = [] {};
 };
 
 FlowThread::FlowThread(std::function<void()> thread)
 	: std::thread(
 		  [&] {
-			  func = thread;
+			  usleep(50000);
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -75,13 +75,14 @@ FlowThread::FlowThread(std::function<void()> thread)
 			  }
 		  })
 {
+	func = thread;
 	usleep(50000);
 };
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 	: std::thread(
 		  [&] {
-			  func = thread;
+			  usleep(50000);
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -109,6 +110,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 			  }
 		  })
 {
+	func = thread;
 	usleep(50000);
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
@@ -120,7 +122,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ)
 	: std::thread(
 		  [&] {
-			  func = thread;
+			  usleep(50000);
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -152,6 +154,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 			  }
 		  })
 {
+	func = thread;
 	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
 	usleep(50000);
 	cpu_set_t cpuset;
@@ -164,7 +167,7 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 	: std::thread(
 		  [&] {
-			  func = thread;
+			  usleep(50000);
 			  int AvaCount = 0;
 			  IsThreadRunning = true;
 			  while (IsThreadRunning)
@@ -196,8 +199,9 @@ FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 			  }
 		  })
 {
-	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
+	func = thread;
 	usleep(50000);
+	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
 };
 
 void FlowThread::FlowTerminal(){
