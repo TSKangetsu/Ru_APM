@@ -1,7 +1,10 @@
 #include <vector>
 #include <thread>
+#include <iostream>
 #include <functional>
+#ifdef MODULE_CV
 #include <opencv2/opencv.hpp>
+#endif
 
 #define RTStatus_Real_Pitch 0
 #define RTStatus_Real__Roll 1
@@ -22,7 +25,9 @@
 int IsARM = 1;
 float RTStatus[14];
 int ChannelARMData = 1000;
+#ifdef MODULE_CV
 cv::VideoCapture MainCap;
+#endif
 std::thread IOStream;
 //=================================//
 
@@ -33,7 +38,9 @@ namespace UserAPICPP
     std::function<void(float *)> GetRCValues;
     std::function<void(int, int, int)> SetServo;
     std::function<void(int, int, int)> SetUserSpeed;
+#ifdef MODULE_CV
     std::function<void(cv::Mat &, int)> RequestFrame;
+#endif
     std::function<void(int *, bool)> FakeRCImplment;
     std::function<void(int, int, int, bool)> SetUserPosition;
 

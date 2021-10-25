@@ -1,6 +1,8 @@
 #pragma once
 #include <string.h>
+#ifdef MODULE_CV
 #include <opencv2/opencv.hpp>
+#endif
 
 #include "VIDController.hpp"
 #include "../_Excutable/FlowController.hpp"
@@ -31,7 +33,11 @@ COMController_t::COMController_t()
     {
         Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 
-        if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0 || SYSU::StreamStatus.VideoICVRaw.size() > 0)
+        if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0
+#ifdef MODULE_CV
+            || SYSU::StreamStatus.VideoICVRaw.size() > 0
+#endif
+        )
         {
             switch (VideoDriver_s.at(SYSC::CommonConfig.COM_CastFrameType))
             {
@@ -77,6 +83,7 @@ COMController_t::COMController_t()
                 break;
 
             case VideoDriver::OPENCV:
+#ifdef MODULE_CV
                 BoradcastThread.reset(new FlowThread(
                     [&]() {
                         // Step 0. Target Video data
@@ -102,7 +109,7 @@ COMController_t::COMController_t()
                         COMBoradCastDataInject();
                     },
                     (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
-
+#endif
             default:
                 break;
             }

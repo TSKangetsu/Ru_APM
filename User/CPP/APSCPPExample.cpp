@@ -2,16 +2,17 @@
 
 void UserAPICPP::UserSetup()
 {
+#ifdef MODULE_CV
     MainCap.open(0);
     IOStream = std::thread(
-        [&]
-        {
+        [&] {
             while (true)
             {
                 std::cout << "ARM:" << IsARM << "\n";
                 std::cin >> ChannelARMData;
             }
         });
+#endif
 };
 
 void UserAPICPP::UserLoop()

@@ -1,6 +1,8 @@
 #pragma once
 #include <map>
+#ifdef MODULE_CV
 #include <opencv2/opencv.hpp>
+#endif
 
 #include "UORBMessage.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
@@ -68,7 +70,9 @@ public:
 private:
     void VideoISLoader();
     std::vector<std::unique_ptr<FlowThread>> VideoISThread;
+#ifdef MODULE_CV
     std::vector<std::unique_ptr<cv::VideoCapture>> CVCAMDriver;
+#endif
     std::vector<std::unique_ptr<V4L2Tools::V4L2Drive>> V4L2Driver;
 };
 
@@ -82,7 +86,6 @@ VIDController_t::VIDController_t()
         {
             switch (VideoDriver_s.at(SYSC::VideoConfig[i].DeviceDriver))
             {
-
             case VideoDriver::V4L2:
             {
                 std::unique_ptr<V4L2Tools::V4L2Drive> V4L2P;
@@ -113,6 +116,7 @@ VIDController_t::VIDController_t()
             break;
             case VideoDriver::OPENCV:
             {
+#ifdef MODULE_CV
                 std::unique_ptr<cv::VideoCapture> CVP;
                 try
                 {
@@ -136,6 +140,7 @@ VIDController_t::VIDController_t()
                     RuAPSSys::UORBMessage::SystemStatus.SystemMessage.push(
                         _VID << "cvVID Init Error Skip:" << i << " error:" << e << "\n");
                 }
+#endif
             }
             break;
 
@@ -166,6 +171,7 @@ void VIDController_t::VideoISLoader()
         VideoISThread.push_back(std::move(VideoIThread));
     }
 
+#ifdef MODULE_CV
     for (size_t i = 0; i < CVCAMDriver.size(); i++)
     {
         std::unique_ptr<FlowThread> VideoIThread;
@@ -181,6 +187,7 @@ void VIDController_t::VideoISLoader()
 
         VideoISThread.push_back(std::move(VideoIThread));
     }
+#endif
 };
 
 VIDController_t::~VIDController_t()
@@ -195,8 +202,10 @@ VIDController_t::~VIDController_t()
         V4L2Driver[i].reset();
     }
 
+#ifdef MODULE_CV
     for (size_t i = 0; i < CVCAMDriver.size(); i++)
     {
         CVCAMDriver[i].reset();
     }
+#endif
 };

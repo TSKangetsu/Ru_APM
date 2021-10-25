@@ -5,7 +5,9 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#ifdef MODULE_CV
 #include <opencv2/opencv.hpp>
+#endif
 #include "../_Excutable/Drive_Json.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
@@ -90,7 +92,9 @@ namespace RuAPSSys
 		inline static struct StreamStatus_t
 		{
 			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::VideoSettings>> VideoIFlowRaw;
+#ifdef MODULE_CV
 			std::vector<std::tuple<FrameBuffer<cv::Mat>, ConfigCLA::VideoSettings>> VideoICVRaw;
+#endif
 		} StreamStatus;
 
 		inline static struct SystemStatus_t
