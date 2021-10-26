@@ -26,6 +26,13 @@ public:
         return lastestFrame;
     }
 
+    T peekFrame()
+    {
+        std::lock_guard<std::mutex> lock(*mutex);
+        T lastestFrame = this->front();
+        return lastestFrame;
+    }
+
     void clearBuffer()
     {
         std::lock_guard<std::mutex> lock(*mutex);

@@ -6,55 +6,14 @@ cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-if(${MODULE_CV})
-    set(OpenCV_DIR "/opt/intel/openvino/opencv/cmake")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lz -Wl,-rpath -Wl,/opt/intel/openvino_2021/inference_engine/lib/armv7l")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7-a")
-endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+
 project(Ru_APM)
-
-add_definitions(-DSELF_SIG_MANAGE)
-#====================================================================================================#
-if(${MODULE_CV})
-    add_definitions(-DMODULE_CV)
-    find_package(OpenCV REQUIRED)
-    include_directories(${OpenCV_INCLUDE_DIRS})
-    add_subdirectory(SRC/_VisionBase)
-elseif(NOT ${MODULE_CV})
-    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/SRC/_VisionBase/CameraDrive/ v4l2)
-endif()
-
-if(${MODULE_LUA})
-    add_definitions(-DMODULE_LUA)
-    find_package(Lua REQUIRED)
-    include_directories(${LUA_INCLUDE_DIR})
-endif()
-
-if(${MODULE_OPENSSL})
-    add_definitions(-DMODULE_OPENSSL)
-    add_subdirectory(SRC/_MessageController)
-endif()
-#====================================================================================================#
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/User/CPP/)
 
 find_package(Threads REQUIRED)
 add_subdirectory(SRC/RPiSingleAPM/src)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/SRC/_Excutable/CameraDrive/ v4l2)
 
 add_executable(RuAPM_Cli SRC/Launch.cpp ${v4l2})
 target_link_libraries(RuAPM_Cli PRIVATE RPiSingleAPI)
 target_link_libraries(RuAPM_Cli PRIVATE Threads::Threads)
-target_link_libraries(RuAPM_Cli PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/User/CPP/build/libAPSCPPExample.so)
-#====================================================================================================#
-if(${MODULE_CV})
-    target_link_libraries(RuAPM_Cli PRIVATE VisionBase)
-    target_link_libraries(RuAPM_Cli PRIVATE ${OpenCV_LIBS})   
-endif()
-
-if(${MODULE_LUA})
-    target_link_libraries(RuAPM_Cli PRIVATE ${LUA_LIBRARIES})
-endif()
-
-if(${MODULE_OPENSSL})
-    target_link_libraries(RuAPM_Cli PRIVATE MessageController)
-endif()

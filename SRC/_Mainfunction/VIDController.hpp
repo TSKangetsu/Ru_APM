@@ -1,22 +1,18 @@
 #pragma once
 #include <map>
-#ifdef MODULE_CV
-#include <opencv2/opencv.hpp>
-#endif
-
 #include "UORBMessage.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
 #include "../_Excutable/LogPublicator.hpp"
 #include "../_Excutable/FlowController.hpp"
 #include "../_WIFIBroadcast/WIFICastDriver.hpp"
-#include "../_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
+#include "../_Excutable/CameraDrive/Drive_V4L2Reader.hpp"
 
 using SYSC = RuAPSSys::ConfigCLA;
 using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
 #define MAXV4LBUF 1
-#define MAXBUFFER 3
+#define MAXBUFFER 2
 
 enum VideoFormat
 {
@@ -45,22 +41,6 @@ inline static const std::map<std::string, unsigned int> V4L2Format_s =
         {EMAP(MJPEG), V4L2_PIX_FMT_MJPEG},
 };
 
-enum VideoDriver
-{
-    V4L2,
-    OPENCV,
-    FFMPEG,
-    GSTREAM,
-};
-
-inline static const std::map<std::string, VideoDriver> VideoDriver_s =
-    {
-        {EMAP(V4L2), V4L2},
-        {EMAP(OPENCV), OPENCV},
-        {EMAP(FFMPEG), FFMPEG},
-        {EMAP(GSTREAM), GSTREAM},
-};
-
 class VIDController_t
 {
 public:
@@ -70,83 +50,40 @@ public:
 private:
     void VideoISLoader();
     std::vector<std::unique_ptr<FlowThread>> VideoISThread;
-#ifdef MODULE_CV
-    std::vector<std::unique_ptr<cv::VideoCapture>> CVCAMDriver;
-#endif
     std::vector<std::unique_ptr<V4L2Tools::V4L2Drive>> V4L2Driver;
 };
 
 VIDController_t::VIDController_t()
 {
     // Step 1. Sync and Setup config
-
     for (size_t i = 0; i < SYSC::VideoConfig.size(); i++)
     {
         if (SYSC::VideoConfig[i].enable)
         {
-            switch (VideoDriver_s.at(SYSC::VideoConfig[i].DeviceDriver))
+            std::unique_ptr<V4L2Tools::V4L2Drive> V4L2P;
+            try
             {
-            case VideoDriver::V4L2:
-            {
-                std::unique_ptr<V4L2Tools::V4L2Drive> V4L2P;
-                try
-                {
-                    V4L2P.reset(
-                        new V4L2Tools::V4L2Drive(
-                            SYSC::VideoConfig[i].DevicePATH,
-                            {.ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
-                             .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
-                             .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
-                             .FrameBuffer = MAXV4LBUF,
-                             .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
-                             .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
+                V4L2P.reset(
+                    new V4L2Tools::V4L2Drive(
+                        SYSC::VideoConfig[i].DevicePATH,
+                        {.ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
+                         .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
+                         .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
+                         .FrameBuffer = MAXV4LBUF,
+                         .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
+                         .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
 
-                    FrameBuffer<V4L2Tools::V4l2Data> Data;
-                    SYSU::StreamStatus.VideoIFlowRaw.push_back(
-                        std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
+                FrameBuffer<V4L2Tools::V4l2Data> Data;
+                SYSU::StreamStatus.VideoIFlowRaw.push_back(
+                    std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
 
-                    V4L2Driver.push_back(std::move(V4L2P));
-                }
-                catch (int &e)
-                {
-                    RuAPSSys::UORBMessage::SystemStatus.SystemMessage.push(
-                        _VID << "V4L2 Init Error Skip:" << i << " error:" << e << "\n");
-                }
+                V4L2Driver.push_back(std::move(V4L2P));
             }
-            break;
-            case VideoDriver::OPENCV:
+            catch (int &e)
             {
-#ifdef MODULE_CV
-                std::unique_ptr<cv::VideoCapture> CVP;
-                try
-                {
-                    cv::Mat Tmp;
-                    CVP.reset(new cv::VideoCapture());
-                    if (!CVP->open(SYSC::VideoConfig[i].DevicePATH))
-                        throw - 1;
-                    CVP->set(cv::CAP_PROP_FRAME_WIDTH, SYSC::VideoConfig[i].DeviceWidth);
-                    CVP->set(cv::CAP_PROP_FRAME_HEIGHT, SYSC::VideoConfig[i].DeviceWidth);
-                    CVP->set(cv::CAP_PROP_FPS, SYSC::VideoConfig[i].DeviceFPS);
-                    CVP->set(cv::CAP_PROP_FOURCC, V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat));
-
-                    FrameBuffer<cv::Mat> Data;
-                    SYSU::StreamStatus.VideoICVRaw.push_back(
-                        std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
-
-                    CVCAMDriver.push_back(std::move(CVP));
-                }
-                catch (int &e)
-                {
-                    RuAPSSys::UORBMessage::SystemStatus.SystemMessage.push(
-                        _VID << "cvVID Init Error Skip:" << i << " error:" << e << "\n");
-                }
-#endif
+                RuAPSSys::UORBMessage::SystemStatus.SystemMessage.push(
+                    _VID << "V4L2 Init Error Skip:" << i << " error:" << e << "\n");
             }
-            break;
-
-            default:
-                break;
-            };
         }
     }
 
@@ -170,24 +107,6 @@ void VIDController_t::VideoISLoader()
 
         VideoISThread.push_back(std::move(VideoIThread));
     }
-
-#ifdef MODULE_CV
-    for (size_t i = 0; i < CVCAMDriver.size(); i++)
-    {
-        std::unique_ptr<FlowThread> VideoIThread;
-        VideoIThread.reset(new FlowThread(
-            [&, s = i]() {
-                if (std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).frameCount > MAXBUFFER)
-                    std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).getFrame();
-
-                cv::Mat data;
-                CVCAMDriver[s]->read(data);
-                std::get<FrameBuffer<cv::Mat>>(SYSU::StreamStatus.VideoICVRaw[s]).pushFrame(data);
-            }));
-
-        VideoISThread.push_back(std::move(VideoIThread));
-    }
-#endif
 };
 
 VIDController_t::~VIDController_t()
@@ -201,11 +120,4 @@ VIDController_t::~VIDController_t()
     {
         V4L2Driver[i].reset();
     }
-
-#ifdef MODULE_CV
-    for (size_t i = 0; i < CVCAMDriver.size(); i++)
-    {
-        CVCAMDriver[i].reset();
-    }
-#endif
 };

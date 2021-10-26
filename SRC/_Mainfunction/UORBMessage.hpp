@@ -5,13 +5,10 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#ifdef MODULE_CV
-#include <opencv2/opencv.hpp>
-#endif
 #include "../_Excutable/Drive_Json.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
-#include "../_VisionBase/CameraDrive/Drive_V4L2Reader.hpp"
+#include "../_Excutable/CameraDrive/Drive_V4L2Reader.hpp"
 
 using json = nlohmann::json;
 #define EMAP(Variable) (#Variable)
@@ -40,11 +37,8 @@ namespace RuAPSSys
 		inline static struct CommonSettings
 		{
 			int COM_CastFrameIndex;
-			std::string COM_CastFrameType;
-
 			bool COM_BroadCastEnable;
 			bool COM_NormalCastEnable;
-
 			std::vector<std::string> BroadcastInterfaces;
 		} CommonConfig;
 
@@ -92,9 +86,6 @@ namespace RuAPSSys
 		inline static struct StreamStatus_t
 		{
 			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::VideoSettings>> VideoIFlowRaw;
-#ifdef MODULE_CV
-			std::vector<std::tuple<FrameBuffer<cv::Mat>, ConfigCLA::VideoSettings>> VideoICVRaw;
-#endif
 		} StreamStatus;
 
 		inline static struct SystemStatus_t
@@ -413,7 +404,6 @@ namespace RuAPSSys
 	{
 		j = json{
 			{"COM_CastFrameIndex", p.COM_CastFrameIndex},
-			{"COM_CastFrameType", p.COM_CastFrameType},
 			{"COM_BroadCastEnable", p.COM_BroadCastEnable},
 			{"COM_NormalCastEnable", p.COM_NormalCastEnable},
 			{"BroadcastInterfaces", p.BroadcastInterfaces},
@@ -422,7 +412,6 @@ namespace RuAPSSys
 	void from_json(const json &j, RuAPSSys::ConfigCLA::CommonSettings &p)
 	{
 		j.at("COM_CastFrameIndex").get_to(p.COM_CastFrameIndex);
-		j.at("COM_CastFrameType").get_to(p.COM_CastFrameType);
 		j.at("COM_BroadCastEnable").get_to(p.COM_BroadCastEnable);
 		j.at("COM_NormalCastEnable").get_to(p.COM_NormalCastEnable);
 		j.at("BroadcastInterfaces").get_to(p.BroadcastInterfaces);
