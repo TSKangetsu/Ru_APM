@@ -1,4 +1,6 @@
 #pragma once
+#include <tuple>
+#include <vector>
 #include "../_Excutable/Drive_Socket.hpp"
 #include "../_Excutable/FlowController.hpp"
 #define FrameTypeL 58
@@ -7,6 +9,7 @@
 #define SocketMTU 1490 - 5 //FCS auto add by driver or kerenl
 #define HeaderSize 61
 #define SocketMTUMAX 1500
+#define LOSEMAXPRE 100
 
 #define DATA_STREAMID 0
 #define DATA_TMPSIZE 1
@@ -15,6 +18,8 @@
 #define DATA_FRAMESEQ 4
 #define DATA_SIZENOW 5
 #define DATA_SIZEMAX 6
+#define DATA_LOSE 7
+#define DATA_LOSEPRE 8
 
 namespace WIFIBroadCast
 {
@@ -34,7 +39,7 @@ namespace WIFIBroadCast
 
         void WIFICastInjectMulti(uint8_t *data, int size, int delayUS){};
         void WIFICastInjectMultiBL(uint8_t *data, int size, int delayUS){};
-
+        //
         void WIFIRecvSinff();
         int WIFIRecvRegLoad() { return VideoFullPackets.size(); }
         std::tuple<unsigned char *, int *, bool> WIFIRecvDMALoad(int ID) { return VideoFullPackets[ID]; };
@@ -76,7 +81,6 @@ namespace WIFIBroadCast
         std::vector<std::unique_ptr<Socket>> SocketInjectors;
 
         std::unique_ptr<FlowThread> RecvThread;
-        //int[6] is streamID, size, width, height, byteused, Maxsize, bool is frame locate signal
         std::vector<std::tuple<unsigned char *, int *, bool>> VideoFullPackets;
     };
 }
@@ -278,7 +282,10 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                     if (Framesequeue == (std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] + 1) || (std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] == 0xe && Framesequeue == 0x0))
                         std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] = Framesequeue;
                     else
+                    {
+                        std::get<int *>(VideoFullPackets[LocateID])[DATA_LOSE]++;
                         std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] = Framesequeue;
+                    }
                 }
                 else
                 {
@@ -301,8 +308,7 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                     int height = dataTmp[HeaderSize + 7] << 8 | dataTmp[HeaderSize + 8];
                     if (ssize > 0)
                     {
-                        //int[6] is streamID, tmpsize, width, height, Frame_Seq_Tmp, byteused, Maxsize
-                        int FrameInfo[] = {FrameID, ssize, width, height, 0x0, 0x0, ssize};
+                        int FrameInfo[] = {FrameID, ssize, width, height, 0, 0, ssize, 0, 0};
                         VideoFullPackets.push_back(std::make_tuple(new unsigned char[ssize], FrameInfo, false));
                     }
                 }

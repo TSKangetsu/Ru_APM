@@ -25,7 +25,6 @@ namespace RuAPSSys
 			std::string DevicePATH;
 			std::string DeviceDriver;
 			std::string DeviceIFormat;
-			std::string DeviceOFormat;
 
 			int DeviceWidth;
 			int DeviceHeight;
@@ -381,7 +380,6 @@ namespace RuAPSSys
 			{"DevicePATH", p.DevicePATH},
 			{"DeviceDriver", p.DeviceDriver},
 			{"DeviceIFormat", p.DeviceIFormat},
-			{"DeviceOFormat", p.DeviceOFormat},
 			{"DeviceWidth", p.DeviceWidth},
 			{"DeviceHeight", p.DeviceHeight},
 			{"DeviceFPS", p.DeviceFPS},
@@ -393,7 +391,6 @@ namespace RuAPSSys
 		j.at("DevicePATH").get_to(p.DevicePATH);
 		j.at("DeviceDriver").get_to(p.DeviceDriver);
 		j.at("DeviceIFormat").get_to(p.DeviceIFormat);
-		j.at("DeviceOFormat").get_to(p.DeviceOFormat);
 		j.at("DeviceWidth").get_to(p.DeviceWidth);
 		j.at("DeviceHeight").get_to(p.DeviceHeight);
 		j.at("DeviceFPS").get_to(p.DeviceFPS);

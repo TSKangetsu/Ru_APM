@@ -132,7 +132,8 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
             v4l2d.ImgHeight,
             v4l2.CameraQBuffer.length,
             v4l2.CameraQBuffer.length,
-            v4l2d.PixFormat);
+            v4l2d.PixFormat,
+            v4l2.CameraFormat.fmt.pix.bytesperline);
 
     for (;;)
     {
@@ -146,6 +147,7 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
         r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
         if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) != -1)
         {
+            Vdata.bytesperline = v4l2.CameraFormat.fmt.pix.bytesperline;
             Vdata.size = v4l2.CameraBuffer.bytesused;
             std::copy((unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index],
                       (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
