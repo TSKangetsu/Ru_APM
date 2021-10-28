@@ -75,6 +75,7 @@ namespace FFMPEGTools
         struct AVCodecDep
         {
             AVPacket Packet;
+            AVFrame *frameInput;
             AVCodec *EncoderBase;
             AVCodecContext *Encoder;
             SwsContext *DataConvertor;
@@ -117,23 +118,20 @@ FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
                                         SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
     av_init_packet(&AVCD.Packet);
+    AVCD.frameInput = av_frame_alloc();
+    av_image_alloc(AVCD.frameInput->data, AVCD.frameInput->linesize, _FFMPEOption.IOWidth,
+                   _FFMPEOption.IOHeight, AV_PIX_FMT_YUV420P, 1);
+    AVCD.frameInput->width = _FFMPEOption.IOWidth;
+    AVCD.frameInput->height = _FFMPEOption.IOHeight;
+    AVCD.frameInput->format = static_cast<int>(AVCD.Encoder->pix_fmt);
 }
 
 void FFMPEGTools::FFMPEGCodec::pushFrame(unsigned char *imagedata, int imagesize, int linesize)
 {
-    AVFrame *frameInput;
-    frameInput = av_frame_alloc();
-    av_image_alloc(frameInput->data, frameInput->linesize, _FFMPEOption.IOWidth,
-                   _FFMPEOption.IOHeight, AV_PIX_FMT_YUV420P, 1);
-    frameInput->width = _FFMPEOption.IOWidth;
-    frameInput->height = _FFMPEOption.IOHeight;
-    frameInput->format = static_cast<int>(AVCD.Encoder->pix_fmt);
-
     sws_scale(AVCD.DataConvertor, &imagedata, &linesize, 0,
-              _FFMPEOption.IOHeight, frameInput->data, frameInput->linesize);
+              _FFMPEOption.IOHeight, AVCD.frameInput->data, AVCD.frameInput->linesize);
 
-    avcodec_send_frame(AVCD.Encoder, frameInput);
-    av_frame_free(&frameInput);
+    avcodec_send_frame(AVCD.Encoder, AVCD.frameInput);
 }
 
 int FFMPEGTools::FFMPEGCodec::getFrame(std::queue<AVData> &dataQueue)
@@ -161,7 +159,6 @@ int FFMPEGTools::FFMPEGCodec::getFrame(std::queue<AVData> &dataQueue)
             dataQueue.push(data);
         }
     }
-
     return codec_signal;
 };
 
@@ -170,4 +167,5 @@ FFMPEGTools::FFMPEGCodec::~FFMPEGCodec()
     avcodec_close(AVCD.Encoder);
     sws_freeContext(AVCD.DataConvertor);
     av_packet_unref(&AVCD.Packet);
+    av_frame_free(&AVCD.frameInput);
 }
