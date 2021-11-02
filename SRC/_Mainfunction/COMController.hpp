@@ -12,6 +12,13 @@ using namespace WIFIBroadCast;
 using SYSU = RuAPSSys::UORBMessage;
 using SYSC = RuAPSSys::ConfigCLA;
 
+uint64_t GetTimeStamp()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * (uint64_t)1000000 + tv.tv_usec;
+}
+
 class COMController_t
 {
 public:
@@ -20,11 +27,17 @@ public:
 
 private:
     void COMBoradCastDataInject();
-
+    //
+    bool IsTimedetectUpdated = false;
+    int Timedetectedstart = 0;
+    int Timedetectedstop = 0;
+    int Timedetected = 0;
     int BroadCastDataCount = 0;
+    //
     std::unique_ptr<WIFICastDriver> Injector;
     std::unique_ptr<FlowThread> NormalThread;
     std::unique_ptr<FlowThread> BroadcastThread;
+    std::unique_ptr<FlowThread> RecvcastThread;
 #ifdef MODULE_FFMPEG
     std::queue<FFMPEGTools::AVData> EncoderQueue;
     std::unique_ptr<FFMPEGTools::FFMPEGCodec> Encoder;
@@ -38,17 +51,23 @@ COMController_t::COMController_t()
         Encoder.reset(new FFMPEGTools::FFMPEGCodec({
             .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
             .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-            .OBuffer = 4,
+            .OBuffer = (SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS) / 2,
             .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
-            .OBitRate = 280000,
-            .CodecProfile = "high444",
+            .OBitRate = 300000,
+            .CodecProfile = "baseline",
             .OutputFormat = AV_CODEC_ID_H264,
             .TargetFormat = AV_PIX_FMT_YUYV422,
         }));
+    else
+    {
+    }
+
     // Step 1:
     if (SYSC::CommonConfig.COM_BroadCastEnable)
     {
         Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
+
+        Injector->WIFIRecvSinff();
 
         if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0)
         {
@@ -101,12 +120,33 @@ COMController_t::COMController_t()
                                 (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight),
                             };
                             Injector->WIFICastInject(ImgInfo, sizeof(ImgInfo), 0, BroadCastType::DataStream, 0, 0xf);
+                            if (IsTimedetectUpdated)
+                            {
+                                Timedetectedstart = GetTimeStamp();
+                                IsTimedetectUpdated = false;
+                            };
                         }
                     }
                     COMBoradCastDataInject();
                 },
                 (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
         }
+
+        RecvcastThread.reset(new FlowThread(
+            [&] {
+                if (Injector->DataEBuffer.size() > 0)
+                {
+                    std::string DataInput = Injector->DataEBuffer.front();
+                    if (DataInput.c_str()[0] == FeedBackTrans)
+                    {
+                        Timedetectedstop = GetTimeStamp();
+                        Timedetected = Timedetectedstop - Timedetectedstart;
+                        IsTimedetectUpdated = true;
+                    }
+                    Injector->DataEBuffer.pop();
+                }
+            },
+            1000.f));
     }
 }
 
@@ -121,6 +161,9 @@ COMController_t::~COMController_t()
 
     if (BroadcastThread != nullptr)
         BroadcastThread->FlowStopAndWait();
+
+    if (RecvcastThread != nullptr)
+        RecvcastThread->FlowStopAndWait();
 
     if (Injector != nullptr)
         Injector.reset();

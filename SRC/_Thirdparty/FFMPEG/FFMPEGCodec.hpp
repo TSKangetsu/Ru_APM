@@ -85,7 +85,6 @@ namespace FFMPEGTools
 
 FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
 {
-    av_log_set_level(AV_LOG_DEBUG);
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
     av_register_all();
 #endif
@@ -107,7 +106,7 @@ FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
 
     AVDictionary *TmpCodecOptions = nullptr;
     av_dict_set(&TmpCodecOptions, "profile", _FFMPEOption.CodecProfile, 0);
-    av_dict_set(&TmpCodecOptions, "preset", "superfast", 0);
+    av_dict_set(&TmpCodecOptions, "preset", "ultrafast", 0);
     av_dict_set(&TmpCodecOptions, "tune", "zerolatency", 0);
     avcodec_open2(AVCD.Encoder, AVCD.EncoderBase, &TmpCodecOptions);
 

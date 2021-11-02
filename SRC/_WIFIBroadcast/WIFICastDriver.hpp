@@ -6,6 +6,7 @@
 #define FrameTypeL 58
 #define VideoTrans 0x68
 #define DataETrans 0x69
+#define FeedBackTrans 0x77
 #define SocketMTU 1490 - 5 //FCS auto add by driver or kerenl
 #define HeaderSize 61
 #define SocketMTUMAX 1500
@@ -32,6 +33,8 @@ namespace WIFIBroadCast
     class WIFICastDriver
     {
     public:
+        std::queue<std::string> DataEBuffer;
+
         WIFICastDriver(std::vector<std::string> Interfaces);
         ~WIFICastDriver();
 
@@ -41,8 +44,8 @@ namespace WIFIBroadCast
         void WIFICastInjectMultiBL(uint8_t *data, int size, int delayUS){};
         //
         void WIFIRecvSinff();
-        int WIFIRecvRegLoad() { return VideoFullPackets.size(); }
-        std::tuple<unsigned char *, int *, bool> WIFIRecvDMALoad(int ID) { return VideoFullPackets[ID]; };
+        int WIFIRecvVideoSeq() { return VideoFullPackets.size(); }
+        std::tuple<unsigned char *, int *, bool> WIFIRecvVideoDMA(int ID) { return VideoFullPackets[ID]; };
 
     private:
         struct InjectPacketLLCInfo
@@ -92,13 +95,6 @@ WIFIBroadCast::WIFICastDriver::WIFICastDriver(std::vector<std::string> Interface
     PacketVideo = new uint8_t *[Interfaces.size()];
     PacketDatae = new uint8_t *[Interfaces.size()];
 
-    RecvFilter = {
-        {(BPF_LD | BPF_H | BPF_ABS), 0, 0, 59},
-        {(BPF_JMP | BPF_JEQ | BPF_K), 0, 1, 0xffff},
-        {(BPF_RET | BPF_K), 0, 0, 0x00040000},
-        {(BPF_RET | BPF_K), 0, 0, 0x00000000},
-    };
-
     for (size_t i = 0; i < Interfaces.size(); i++)
     {
         std::unique_ptr<Socket> Injector;
@@ -107,6 +103,16 @@ WIFIBroadCast::WIFICastDriver::WIFICastDriver(std::vector<std::string> Interface
         PacketVideo[i] = new uint8_t[HeaderSize];
         PacketDatae[i] = new uint8_t[HeaderSize];
         memcpy(InjectPacketLLC.DeviceInfo_SRC, Injector->InterfaceMACGet(), 6);
+
+        const uint32_t selfMacFliter = InjectPacketLLC.DeviceInfo_SRC[2] << 24 | InjectPacketLLC.DeviceInfo_SRC[3] << 16 | InjectPacketLLC.DeviceInfo_SRC[4] << 8 | InjectPacketLLC.DeviceInfo_SRC[5];
+        RecvFilter = {
+            {(BPF_LD | BPF_W | BPF_ABS), 0, 0, 50},
+            {(BPF_JMP | BPF_JEQ | BPF_K), 3, 0, selfMacFliter},
+            {(BPF_LD | BPF_H | BPF_ABS), 0, 0, 59},
+            {(BPF_JMP | BPF_JEQ | BPF_K), 0, 1, 0xffff},
+            {(BPF_RET | BPF_K), 0, 0, 0x00040000},
+            {(BPF_RET | BPF_K), 0, 0, 0x00000000},
+        };
 
         int offset = 0;
         memcpy(PacketVideo[i] + offset, InjectPacketLLC.RadioHeader, sizeof(InjectPacketLLC.RadioHeader));
@@ -312,6 +318,18 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                         VideoFullPackets.push_back(std::make_tuple(new unsigned char[ssize], FrameInfo, false));
                     }
                 }
+                // Send a feedBack frame for caculating latency
+                uint8_t FeedBack[] = {
+                    FeedBackTrans,
+                    (uint8_t)FramestreamID,
+                };
+                WIFICastInject(FeedBack, sizeof(FeedBack), 0, BroadCastType::DataStream, 0, 0x0);
+            }
+            else if (Framesequeue == 0xf)
+            {
+                // recv a feedBack frame for caculating latency
+                std::string dataTransfer(dataTmp + HeaderSize, dataTmp + size);
+                DataEBuffer.push(dataTransfer);
             }
             //
         }
