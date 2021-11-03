@@ -51,9 +51,9 @@ COMController_t::COMController_t()
         Encoder.reset(new FFMPEGTools::FFMPEGCodec({
             .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
             .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-            .OBuffer = (SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS) / 2,
+            .OBuffer = 15,
             .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
-            .OBitRate = 300000,
+            .OBitRate = 800000,
             .CodecProfile = "baseline",
             .OutputFormat = AV_CODEC_ID_H264,
             .TargetFormat = AV_PIX_FMT_YUYV422,
@@ -88,21 +88,20 @@ COMController_t::COMController_t()
                         {
                             InjectVSize = data.size;
                             InjectVTarget = data.data;
+                            Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
                         }
                         else
                         {
-                            if (EncoderQueue.size() >= 2)
-                                EncoderQueue.pop();
-
                             Encoder->pushFrame(data.data, data.size, data.bytesperline);
                             Encoder->getFrame(EncoderQueue);
                             //
-                            InjectVSize = EncoderQueue.front().size;
-                            InjectVTarget = EncoderQueue.front().data;
+                            for (;!EncoderQueue.empty(); EncoderQueue.pop())
+                            {
+                                InjectVSize = EncoderQueue.front().size;
+                                InjectVTarget = EncoderQueue.front().data;
+                                Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
+                            }
                         }
-                        // ...
-                        // Step N. Inject data
-                        Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
                         // Step N + 1. Inject img info.
                         BroadCastDataCount++;
                         if (BroadCastDataCount >= (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS)
