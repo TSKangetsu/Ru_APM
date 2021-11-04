@@ -8,6 +8,8 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 project(Ru_APM)
 
+add_definitions(-DSELF_SIG_MANAGE)
+
 if(${MODULE_FFMPEG})
     add_definitions(-DMODULE_FFMPEG)
     find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)

@@ -38,6 +38,9 @@ namespace RuAPSSys
 			int COM_CastFrameIndex;
 			bool COM_BroadCastEnable;
 			bool COM_NormalCastEnable;
+
+			int COM_BroadCastBitRate;
+			int COM_BroadCastPFrameSize;
 			std::vector<std::string> BroadcastInterfaces;
 		} CommonConfig;
 
@@ -403,6 +406,8 @@ namespace RuAPSSys
 			{"COM_CastFrameIndex", p.COM_CastFrameIndex},
 			{"COM_BroadCastEnable", p.COM_BroadCastEnable},
 			{"COM_NormalCastEnable", p.COM_NormalCastEnable},
+			{"COM_BroadCastBitRate", p.COM_BroadCastBitRate},
+			{"COM_BroadCastPFrameSize", p.COM_BroadCastPFrameSize},
 			{"BroadcastInterfaces", p.BroadcastInterfaces},
 		};
 	}
@@ -411,6 +416,8 @@ namespace RuAPSSys
 		j.at("COM_CastFrameIndex").get_to(p.COM_CastFrameIndex);
 		j.at("COM_BroadCastEnable").get_to(p.COM_BroadCastEnable);
 		j.at("COM_NormalCastEnable").get_to(p.COM_NormalCastEnable);
+		j.at("COM_BroadCastBitRate").get_to(p.COM_BroadCastBitRate);
+		j.at("COM_BroadCastPFrameSize").get_to(p.COM_BroadCastPFrameSize);
 		j.at("BroadcastInterfaces").get_to(p.BroadcastInterfaces);
 	}
 	//===========================================================//

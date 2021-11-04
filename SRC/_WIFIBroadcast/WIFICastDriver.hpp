@@ -139,12 +139,14 @@ WIFIBroadCast::WIFICastDriver::WIFICastDriver(std::vector<std::string> Interface
 
 WIFIBroadCast::WIFICastDriver::~WIFICastDriver()
 {
-    if (RecvThread)
+    if (RecvThread != nullptr)
     {
-        RecvThread->FlowStopAndWait();
-        RecvThread.reset();
+        RecvThread->detach(); // I can't handel this , need help, Recv is block and can't shutoff
     }
-
+    for (size_t i = 0; i < SocketInjectors.size(); i++)
+    {
+        SocketInjectors[i].reset();
+    }
     for (int i = 0; i < InterfaceCount; ++i)
     {
         delete[] PacketVideo[i];
@@ -152,11 +154,6 @@ WIFIBroadCast::WIFICastDriver::~WIFICastDriver()
     }
     delete[] PacketVideo;
     delete[] PacketDatae;
-
-    for (size_t i = 0; i < SocketInjectors.size(); i++)
-    {
-        SocketInjectors[i].reset();
-    }
 }
 
 void WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int InterfaceID, BroadCastType type, int delayUS, uint8_t FrameQueueID)
@@ -223,7 +220,7 @@ void WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int I
 void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
 {
     RecvThread.reset(new FlowThread([&]() {
-        uint8_t *dataTmp = new uint8_t[SocketMTUMAX];
+        uint8_t dataTmp[SocketMTUMAX] = {0x00};
         SocketInjectors[0]->Sniff(dataTmp, SocketMTUMAX);
         // From data HeaderSize:
         int size = dataTmp[FrameTypeL - 1];
@@ -255,7 +252,7 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                 else
                 {
                     //Step 4: finsh a frame transision.
-                    if (std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] < std::get<int *>(VideoFullPackets[LocateID])[DATA_SIZEMAX])
+                    if ((std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] + (size - HeaderSize - 1)) <= std::get<int *>(VideoFullPackets[LocateID])[DATA_SIZEMAX])
                     {
                         std::get<bool>(VideoFullPackets[LocateID]) = false;
                         // copy data to buffer before add tmp size
@@ -278,7 +275,7 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
             else if (std::get<bool>(VideoFullPackets[LocateID]))
             {
                 //Step 3: check size and copy single frame data
-                if (std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] < std::get<int *>(VideoFullPackets[LocateID])[DATA_SIZEMAX])
+                if ((std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] + (size - HeaderSize - 1)) <= std::get<int *>(VideoFullPackets[LocateID])[DATA_SIZEMAX])
                 {
                     // copy data to buffer before add tmp size
                     std::copy((dataTmp + HeaderSize), (dataTmp + size - 1), (std::get<unsigned char *>(VideoFullPackets[LocateID]) + std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE]));
@@ -328,7 +325,7 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
             else if (Framesequeue == 0xf)
             {
                 // recv a feedBack frame for caculating latency
-                std::string dataTransfer(dataTmp + HeaderSize, dataTmp + size);
+                std::string dataTransfer(dataTmp + HeaderSize, dataTmp + size - 1);
                 DataEBuffer.push(dataTransfer);
             }
             //
@@ -337,7 +334,5 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
         {
             // Not the Target Frame, throw.
         }
-
-        delete[] dataTmp;
     }));
 }

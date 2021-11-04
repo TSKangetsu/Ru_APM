@@ -48,16 +48,18 @@ COMController_t::COMController_t()
 {
     if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
           std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
+    {
         Encoder.reset(new FFMPEGTools::FFMPEGCodec({
             .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
             .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-            .OBuffer = 15,
+            .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
             .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
-            .OBitRate = 800000,
+            .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
             .CodecProfile = "baseline",
             .OutputFormat = AV_CODEC_ID_H264,
             .TargetFormat = AV_PIX_FMT_YUYV422,
         }));
+    }
     else
     {
     }
@@ -95,7 +97,7 @@ COMController_t::COMController_t()
                             Encoder->pushFrame(data.data, data.size, data.bytesperline);
                             Encoder->getFrame(EncoderQueue);
                             //
-                            for (;!EncoderQueue.empty(); EncoderQueue.pop())
+                            for (; !EncoderQueue.empty(); EncoderQueue.pop())
                             {
                                 InjectVSize = EncoderQueue.front().size;
                                 InjectVTarget = EncoderQueue.front().data;
@@ -129,23 +131,23 @@ COMController_t::COMController_t()
                     COMBoradCastDataInject();
                 },
                 (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
-        }
 
-        RecvcastThread.reset(new FlowThread(
-            [&] {
-                if (Injector->DataEBuffer.size() > 0)
-                {
-                    std::string DataInput = Injector->DataEBuffer.front();
-                    if (DataInput.c_str()[0] == FeedBackTrans)
+            RecvcastThread.reset(new FlowThread(
+                [&] {
+                    if (Injector->DataEBuffer.size() > 0)
                     {
-                        Timedetectedstop = GetTimeStamp();
-                        Timedetected = Timedetectedstop - Timedetectedstart;
-                        IsTimedetectUpdated = true;
+                        std::string DataInput = Injector->DataEBuffer.front();
+                        if (DataInput.c_str()[0] == FeedBackTrans)
+                        {
+                            Timedetectedstop = GetTimeStamp();
+                            Timedetected = Timedetectedstop - Timedetectedstart;
+                            IsTimedetectUpdated = true;
+                        }
+                        Injector->DataEBuffer.pop();
                     }
-                    Injector->DataEBuffer.pop();
-                }
-            },
-            1000.f));
+                },
+                500.f));
+        }
     }
 }
 
@@ -157,13 +159,16 @@ COMController_t::~COMController_t()
 {
     if (NormalThread != nullptr)
         NormalThread->FlowStopAndWait();
-
     if (BroadcastThread != nullptr)
+    {
         BroadcastThread->FlowStopAndWait();
-
+        if (Encoder != nullptr)
+        {
+            Encoder.reset();
+        }
+    }
     if (RecvcastThread != nullptr)
         RecvcastThread->FlowStopAndWait();
-
     if (Injector != nullptr)
         Injector.reset();
 }

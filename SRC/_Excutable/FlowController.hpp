@@ -76,7 +76,6 @@ FlowThread::FlowThread(std::function<void()> thread)
 		  })
 {
 	func = thread;
-	usleep(50000);
 };
 
 FlowThread::FlowThread(std::function<void()> thread, int CPUID)
@@ -111,7 +110,6 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID)
 		  })
 {
 	func = thread;
-	usleep(50000);
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(CPUID, &cpuset);
@@ -156,7 +154,6 @@ FlowThread::FlowThread(std::function<void()> thread, int CPUID, float ClockingHZ
 {
 	func = thread;
 	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
-	usleep(50000);
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(CPUID, &cpuset);
@@ -200,7 +197,6 @@ FlowThread::FlowThread(std::function<void()> thread, float ClockingHZ)
 		  })
 {
 	func = thread;
-	usleep(50000);
 	Time__Max = (int)((1.f / ClockingHZ) * 1000000.f);
 };
 
