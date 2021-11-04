@@ -81,6 +81,24 @@ namespace FFMPEGTools
             SwsContext *DataConvertor;
         } AVCD;
     };
+
+    class FFMPEGDecodec
+    {
+    public:
+        FFMPEGDecodec();
+        AVData FFMPEGDecodecInsert(uint8_t *data, int size);
+
+    private:
+        struct AVCodecDep
+        {
+            AVPacket Packet;
+            AVFrame *frameOutput;
+            AVCodec *DecoderBase;
+            AVCodecContext *Decoder;
+            AVCodecParserContext *DecodeParser;
+            SwsContext *DataConvertor;
+        } AVCD;
+    };
 }
 
 FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
@@ -168,3 +186,18 @@ FFMPEGTools::FFMPEGCodec::~FFMPEGCodec()
     av_packet_unref(&AVCD.Packet);
     av_frame_free(&AVCD.frameInput);
 }
+
+FFMPEGTools::FFMPEGDecodec::FFMPEGDecodec()
+{
+    AVCD.DecoderBase = avcodec_find_decoder(AV_CODEC_ID_H264);
+    AVCD.Decoder = avcodec_alloc_context3(AVCD.DecoderBase);
+    AVCD.DecodeParser = av_parser_init(AV_CODEC_ID_H264);
+    if (AVCD.DecoderBase->capabilities & AV_CODEC_CAP_TRUNCATED)
+        AVCD.DecodeParser->flags |= AV_CODEC_FLAG_TRUNCATED;
+
+    avcodec_open2(AVCD.Decoder, AVCD.DecoderBase, NULL);
+};
+
+FFMPEGTools::AVData FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecInsert(uint8_t *data, int size){
+
+};

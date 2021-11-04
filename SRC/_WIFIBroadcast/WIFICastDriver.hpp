@@ -288,6 +288,9 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                     {
                         std::get<int *>(VideoFullPackets[LocateID])[DATA_LOSE]++;
                         std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] = Framesequeue;
+                        //Throw frame if lose
+                        std::get<bool>(VideoFullPackets[LocateID]) = false;
+                        std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] = 0;
                     }
                 }
                 else
