@@ -46,27 +46,27 @@ private:
 
 COMController_t::COMController_t()
 {
-    if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
-          std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
-    {
-        Encoder.reset(new FFMPEGTools::FFMPEGCodec({
-            .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
-            .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-            .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
-            .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
-            .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
-            .CodecProfile = "baseline",
-            .OutputFormat = AV_CODEC_ID_H264,
-            .TargetFormat = AV_PIX_FMT_YUYV422,
-        }));
-    }
-    else
-    {
-    }
-
     // Step 1:
     if (SYSC::CommonConfig.COM_BroadCastEnable)
     {
+        if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
+              std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
+        {
+            Encoder.reset(new FFMPEGTools::FFMPEGCodec({
+                .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
+                .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
+                .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
+                .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
+                .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
+                .CodecProfile = "baseline",
+                .OutputFormat = AV_CODEC_ID_H264,
+                .TargetFormat = AV_PIX_FMT_YUYV422,
+            }));
+        }
+        else
+        {
+        }
+
         Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 
         Injector->WIFIRecvSinff();

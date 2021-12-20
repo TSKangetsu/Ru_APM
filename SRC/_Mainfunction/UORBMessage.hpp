@@ -113,13 +113,18 @@ namespace SingleAPMAPI
 			{"IMU_Freqeuncy", p.DC.IMU_Freqeuncy},
 			{"RXT_Freqeuncy", p.DC.RXT_Freqeuncy},
 			{"ESC_Freqeuncy", p.DC.ESC_Freqeuncy},
+			{"BBC_Freqeuncy", p.DC.BBC_Freqeuncy},
+			{"BBC_PInterval", p.DC.BBC_PInterval},
 			{"__RCDevice", p.DC.__RCDevice},
 			{"__GPSDevice", p.DC.__GPSDevice},
 			{"__FlowDevice", p.DC.__FlowDevice},
+			{"__MPUDeviceSPI", p.DC.__MPUDeviceSPI},
+			{"__I2CDevice", p.DC.__I2CDevice},
 			{"_IsGPSEnable", p.DC._IsGPSEnable},
 			{"_IsFlowEnable", p.DC._IsFlowEnable},
 			{"_IsRCSafeEnable", p.DC._IsRCSafeEnable},
 			{"_IsBAROEnable", p.DC._IsBAROEnable},
+			{"_IsBlackBoxEnable", p.DC._IsBlackBoxEnable},
 			{"_flag_PID_P__Roll_Gain", p.PC._flag_PID_P__Roll_Gain},
 			{"_flag_PID_P_Pitch_Gain", p.PC._flag_PID_P_Pitch_Gain},
 			{"_flag_PID_P___Yaw_Gain", p.PC._flag_PID_P___Yaw_Gain},
@@ -169,6 +174,9 @@ namespace SingleAPMAPI
 			{"_flag_PID_Pos_Accel_Max", p.PC._flag_PID_Pos_Accel_Max},
 			{"_flag_PID_TPA_Trust", p.PC._flag_PID_TPA_Trust},
 			{"_flag_PID_TPA_BreakPoint", p.PC._flag_PID_TPA_BreakPoint},
+			{"_flag_MPU_Flip__Roll", p.SC._flag_MPU_Flip__Roll},
+			{"_flag_MPU_Flip_Pitch", p.SC._flag_MPU_Flip_Pitch},
+			{"_flag_MPU_Flip___Yaw", p.SC._flag_MPU_Flip___Yaw},
 			{"_flag_Accel__Roll_Cali", p.SC._flag_Accel__Roll_Cali},
 			{"_flag_Accel_Pitch_Cali", p.SC._flag_Accel_Pitch_Cali},
 			{"_flag_MPU9250_A_X_Cali", p.SC._flag_MPU9250_A_X_Cali},
@@ -177,12 +185,18 @@ namespace SingleAPMAPI
 			{"_flag_MPU9250_A_X_Scal", p.SC._flag_MPU9250_A_X_Scal},
 			{"_flag_MPU9250_A_Y_Scal", p.SC._flag_MPU9250_A_Y_Scal},
 			{"_flag_MPU9250_A_Z_Scal", p.SC._flag_MPU9250_A_Z_Scal},
-			{"_flag_MPU9250_Head_Asix", p.SC._flag_MPU9250_Head_Asix},
-			{"_flag_COMPASS_Y_Scaler", p.SC._flag_COMPASS_Y_Scaler},
-			{"_flag_COMPASS_Z_Scaler", p.SC._flag_COMPASS_Z_Scaler},
 			{"_flag_COMPASS_X_Offset", p.SC._flag_COMPASS_X_Offset},
+			{"_flag_COMPASS_X_Scaler", p.SC._flag_COMPASS_X_Scaler},
 			{"_flag_COMPASS_Y_Offset", p.SC._flag_COMPASS_Y_Offset},
+			{"_flag_COMPASS_Y_Scaler", p.SC._flag_COMPASS_Y_Scaler},
 			{"_flag_COMPASS_Z_Offset", p.SC._flag_COMPASS_Z_Offset},
+			{"_flag_COMPASS_Z_Scaler", p.SC._flag_COMPASS_Z_Scaler},
+			{"_flag_COMPASS_V_Offset", p.SC._flag_COMPASS_V_Offset},
+			{"_flag_COMPASS_V_Scaler", p.SC._flag_COMPASS_V_Scaler},
+			{"_flag_COMPASS_Flip__Roll", p.SC._flag_COMPASS_Flip__Roll},
+			{"_flag_COMPASS_Flip_Pitch", p.SC._flag_COMPASS_Flip_Pitch},
+			{"_flag_COMPASS_Flip___Yaw", p.SC._flag_COMPASS_Flip___Yaw},
+			{"_flag_COMPASS_YAW_Offset", p.SC._flag_COMPASS_YAW_Offset},
 			{"_flag_A1_Pin", p.OC._flag_A1_Pin},
 			{"_flag_A2_Pin", p.OC._flag_A2_Pin},
 			{"_flag_B1_Pin", p.OC._flag_B1_Pin},
@@ -247,13 +261,18 @@ namespace SingleAPMAPI
 		j.at("IMU_Freqeuncy").get_to(p.DC.IMU_Freqeuncy);
 		j.at("RXT_Freqeuncy").get_to(p.DC.RXT_Freqeuncy);
 		j.at("ESC_Freqeuncy").get_to(p.DC.ESC_Freqeuncy);
+		j.at("BBC_Freqeuncy").get_to(p.DC.BBC_Freqeuncy);
+		j.at("BBC_PInterval").get_to(p.DC.BBC_PInterval);
 		j.at("__RCDevice").get_to(p.DC.__RCDevice);
 		j.at("__GPSDevice").get_to(p.DC.__GPSDevice);
 		j.at("__FlowDevice").get_to(p.DC.__FlowDevice);
+		j.at("__MPUDeviceSPI").get_to(p.DC.__MPUDeviceSPI);
+		j.at("__I2CDevice").get_to(p.DC.__I2CDevice);
 		j.at("_IsGPSEnable").get_to(p.DC._IsGPSEnable);
 		j.at("_IsFlowEnable").get_to(p.DC._IsFlowEnable);
 		j.at("_IsRCSafeEnable").get_to(p.DC._IsRCSafeEnable);
 		j.at("_IsBAROEnable").get_to(p.DC._IsBAROEnable);
+		j.at("_IsBlackBoxEnable").get_to(p.DC._IsBlackBoxEnable);
 		j.at("_flag_PID_P__Roll_Gain").get_to(p.PC._flag_PID_P__Roll_Gain);
 		j.at("_flag_PID_P_Pitch_Gain").get_to(p.PC._flag_PID_P_Pitch_Gain);
 		j.at("_flag_PID_P___Yaw_Gain").get_to(p.PC._flag_PID_P___Yaw_Gain);
@@ -303,6 +322,9 @@ namespace SingleAPMAPI
 		j.at("_flag_PID_Pos_Accel_Max").get_to(p.PC._flag_PID_Pos_Accel_Max);
 		j.at("_flag_PID_TPA_Trust").get_to(p.PC._flag_PID_TPA_Trust);
 		j.at("_flag_PID_TPA_BreakPoint").get_to(p.PC._flag_PID_TPA_BreakPoint);
+		j.at("_flag_MPU_Flip__Roll").get_to(p.SC._flag_MPU_Flip__Roll);
+		j.at("_flag_MPU_Flip_Pitch").get_to(p.SC._flag_MPU_Flip_Pitch);
+		j.at("_flag_MPU_Flip___Yaw").get_to(p.SC._flag_MPU_Flip___Yaw);
 		j.at("_flag_Accel__Roll_Cali").get_to(p.SC._flag_Accel__Roll_Cali);
 		j.at("_flag_Accel_Pitch_Cali").get_to(p.SC._flag_Accel_Pitch_Cali);
 		j.at("_flag_MPU9250_A_X_Cali").get_to(p.SC._flag_MPU9250_A_X_Cali);
@@ -311,12 +333,18 @@ namespace SingleAPMAPI
 		j.at("_flag_MPU9250_A_X_Scal").get_to(p.SC._flag_MPU9250_A_X_Scal);
 		j.at("_flag_MPU9250_A_Y_Scal").get_to(p.SC._flag_MPU9250_A_Y_Scal);
 		j.at("_flag_MPU9250_A_Z_Scal").get_to(p.SC._flag_MPU9250_A_Z_Scal);
-		j.at("_flag_MPU9250_Head_Asix").get_to(p.SC._flag_MPU9250_Head_Asix);
-		j.at("_flag_COMPASS_Y_Scaler").get_to(p.SC._flag_COMPASS_Y_Scaler);
-		j.at("_flag_COMPASS_Z_Scaler").get_to(p.SC._flag_COMPASS_Z_Scaler);
 		j.at("_flag_COMPASS_X_Offset").get_to(p.SC._flag_COMPASS_X_Offset);
+		j.at("_flag_COMPASS_X_Scaler").get_to(p.SC._flag_COMPASS_X_Scaler);
 		j.at("_flag_COMPASS_Y_Offset").get_to(p.SC._flag_COMPASS_Y_Offset);
+		j.at("_flag_COMPASS_Y_Scaler").get_to(p.SC._flag_COMPASS_Y_Scaler);
 		j.at("_flag_COMPASS_Z_Offset").get_to(p.SC._flag_COMPASS_Z_Offset);
+		j.at("_flag_COMPASS_Z_Scaler").get_to(p.SC._flag_COMPASS_Z_Scaler);
+		j.at("_flag_COMPASS_V_Offset").get_to(p.SC._flag_COMPASS_V_Offset);
+		j.at("_flag_COMPASS_V_Scaler").get_to(p.SC._flag_COMPASS_V_Scaler);
+		j.at("_flag_COMPASS_Flip__Roll").get_to(p.SC._flag_COMPASS_Flip__Roll);
+		j.at("_flag_COMPASS_Flip_Pitch").get_to(p.SC._flag_COMPASS_Flip_Pitch);
+		j.at("_flag_COMPASS_Flip___Yaw").get_to(p.SC._flag_COMPASS_Flip___Yaw);
+		j.at("_flag_COMPASS_YAW_Offset").get_to(p.SC._flag_COMPASS_YAW_Offset);
 		j.at("_flag_A1_Pin").get_to(p.OC._flag_A1_Pin);
 		j.at("_flag_A2_Pin").get_to(p.OC._flag_A2_Pin);
 		j.at("_flag_B1_Pin").get_to(p.OC._flag_B1_Pin);

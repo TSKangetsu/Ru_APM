@@ -1,3 +1,4 @@
+set(MPUDriver 'pigpio' CACHE  INTERNAL '') 
 set(MODULE_FFMPEG true  CACHE BOOL "enable module: H.264 or H.265 transcodec")
 
 cmake_minimum_required(VERSION 3.13)
