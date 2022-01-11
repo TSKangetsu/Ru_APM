@@ -1,0 +1,13 @@
+[Unit]
+Description=RuAutopilotSystem
+After=syslog.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/sudo /bin/bash -lc 'env LD_LIBRARY_PATH=/opt/intel/openvino_2021/inference_engine/lib/armv7l /usr/bin/RuAPS'
+Restart=always
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
