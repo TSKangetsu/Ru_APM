@@ -49,32 +49,33 @@ COMController_t::COMController_t()
     // Step 1:
     if (SYSC::CommonConfig.COM_BroadCastEnable)
     {
-        if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
-              std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
-        {
-            Encoder.reset(new FFMPEGTools::FFMPEGCodec({
-                .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
-                .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-                .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
-                .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
-                .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
-                .CodecProfile = "baseline",
-                .OutputFormat = AV_CODEC_ID_H264,
-                .TargetFormat = AV_PIX_FMT_YUYV422,
-            }));
-        }
-        else
-        {
-        }
-
-        Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
-
-        Injector->WIFIRecvSinff();
-
         if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0)
         {
+            if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
+                  std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
+            {
+                Encoder.reset(new FFMPEGTools::FFMPEGCodec({
+                    .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
+                    .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
+                    .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
+                    .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
+                    .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
+                    .CodecProfile = "baseline",
+                    .OutputFormat = AV_CODEC_ID_H264,
+                    .TargetFormat = AV_PIX_FMT_YUYV422,
+                }));
+            }
+            else
+            {
+            }
+
+            Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
+
+            Injector->WIFIRecvSinff();
+
             BroadcastThread.reset(new FlowThread(
-                [&]() {
+                [&]()
+                {
                     // Step 0. Target Video data
                     V4L2Tools::V4l2Data data;
                     size_t InjectVSize = 0;
@@ -133,7 +134,8 @@ COMController_t::COMController_t()
                 (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
 
             RecvcastThread.reset(new FlowThread(
-                [&] {
+                [&]
+                {
                     if (Injector->DataEBuffer.size() > 0)
                     {
                         std::string DataInput = Injector->DataEBuffer.front();
