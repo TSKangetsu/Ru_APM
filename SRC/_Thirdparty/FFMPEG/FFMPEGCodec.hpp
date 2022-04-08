@@ -128,11 +128,12 @@ FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
     av_dict_set(&TmpCodecOptions, "tune", "zerolatency", 0);
     avcodec_open2(AVCD.Encoder, AVCD.EncoderBase, &TmpCodecOptions);
 
-    AVCD.DataConvertor = sws_getContext(_FFMPEOption.IOWidth, _FFMPEOption.IOHeight,
-                                        _FFMPEOption.TargetFormat,
-                                        _FFMPEOption.IOWidth, _FFMPEOption.IOHeight,
-                                        AV_PIX_FMT_YUV420P,
-                                        SWS_FAST_BILINEAR, NULL, NULL, NULL);
+    if (_FFMPEOption.TargetFormat != AV_PIX_FMT_YUV420P)
+        AVCD.DataConvertor = sws_getContext(_FFMPEOption.IOWidth, _FFMPEOption.IOHeight,
+                                            _FFMPEOption.TargetFormat,
+                                            _FFMPEOption.IOWidth, _FFMPEOption.IOHeight,
+                                            AV_PIX_FMT_YUV420P,
+                                            SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
     av_init_packet(&AVCD.Packet);
     AVCD.frameInput = av_frame_alloc();
@@ -145,8 +146,16 @@ FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
 
 void FFMPEGTools::FFMPEGCodec::pushFrame(unsigned char *imagedata, int imagesize, int linesize)
 {
-    sws_scale(AVCD.DataConvertor, &imagedata, &linesize, 0,
-              _FFMPEOption.IOHeight, AVCD.frameInput->data, AVCD.frameInput->linesize);
+    if (_FFMPEOption.TargetFormat != AV_PIX_FMT_YUV420P)
+        sws_scale(AVCD.DataConvertor, &imagedata, &linesize, 0,
+                  _FFMPEOption.IOHeight, AVCD.frameInput->data, AVCD.frameInput->linesize);
+    else
+    {
+        int frame_size = _FFMPEOption.IOWidth * _FFMPEOption.IOHeight;
+        AVCD.frameInput->data[0] = imagedata;
+        AVCD.frameInput->data[1] = imagedata + frame_size;
+        AVCD.frameInput->data[2] = imagedata + frame_size * 5 / 4;
+    }
 
     avcodec_send_frame(AVCD.Encoder, AVCD.frameInput);
 }
@@ -182,7 +191,8 @@ int FFMPEGTools::FFMPEGCodec::getFrame(std::queue<AVData> &dataQueue)
 FFMPEGTools::FFMPEGCodec::~FFMPEGCodec()
 {
     avcodec_close(AVCD.Encoder);
-    sws_freeContext(AVCD.DataConvertor);
+    if (_FFMPEOption.TargetFormat != AV_PIX_FMT_YUV420P)
+        sws_freeContext(AVCD.DataConvertor);
     av_packet_unref(&AVCD.Packet);
     av_frame_free(&AVCD.frameInput);
 }

@@ -17,6 +17,7 @@ using SYSU = RuAPSSys::UORBMessage;
 enum VideoFormat
 {
     YUYV,
+    YUV420,
     BGR3,
     H264,
     H265,
@@ -26,6 +27,7 @@ enum VideoFormat
 inline static const std::map<std::string, VideoFormat> VideoFormat_s =
     {
         {EMAP(YUYV), YUYV},
+        {EMAP(YUV420), YUV420},
         {EMAP(BGR3), BGR3},
         {EMAP(H264), H264},
         {EMAP(H265), H265},
@@ -35,6 +37,7 @@ inline static const std::map<std::string, VideoFormat> VideoFormat_s =
 inline static const std::map<std::string, unsigned int> V4L2Format_s =
     {
         {EMAP(YUYV), V4L2_PIX_FMT_YUYV},
+        {EMAP(YUV420), V4L2_PIX_FMT_YUV420},
         {EMAP(BGR3), V4L2_PIX_FMT_BGR24},
         {EMAP(H264), V4L2_PIX_FMT_H264},
         {EMAP(H265), V4L2_PIX_FMT_HEVC},
@@ -73,6 +76,14 @@ VIDController_t::VIDController_t()
                          .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
                          .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
 
+                if (SYSC::VideoConfig[i].DeviceIFormat == "H264")
+                {
+                    // std::cout << V4L2P->V4L2Control(0x009909e2, 1) << "\n"; // enable sps&pps
+                    // std::cout << V4L2P->V4L2Control(0x00990a6b, 4) << "\n"; // enable Baseline
+                    // std::cout << V4L2P->V4L2Control(0x009909cf, SYSC::CommonConfig.COM_BroadCastBitRate) << "\n";
+                    // std::cout << V4L2P->V4L2Control(0x00990a66, SYSC::CommonConfig.COM_BroadCastPFrameSize) << "\n";
+                }
+
                 FrameBuffer<V4L2Tools::V4l2Data> Data;
                 SYSU::StreamStatus.VideoIFlowRaw.push_back(
                     std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
@@ -96,7 +107,8 @@ void VIDController_t::VideoISLoader()
     {
         std::unique_ptr<FlowThread> VideoIThread;
         VideoIThread.reset(new FlowThread(
-            [&, s = i]() {
+            [&, s = i]()
+            {
                 if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount > MAXBUFFER)
                     std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).getFrame();
 

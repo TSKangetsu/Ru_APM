@@ -15,6 +15,8 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
               << "  Version    :" << v4l2.CameraInfo.version << "\n"
               << "  Capbilities:" << v4l2.CameraInfo.capabilities << "\n";
 #endif
+
+    // V4L2Control(0x00990a6b, 4);
     if (v4l2d.Is_AutoSize)
     {
         int MaxWidth = 0;

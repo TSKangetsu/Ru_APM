@@ -12,6 +12,13 @@ using namespace WIFIBroadCast;
 using SYSU = RuAPSSys::UORBMessage;
 using SYSC = RuAPSSys::ConfigCLA;
 
+inline static const std::map<std::string, int> CodecFormats =
+    {
+        {"BGR3", AV_PIX_FMT_BGR24},
+        {"YUYV", AV_PIX_FMT_YUYV422},
+        {"YUV420", AV_PIX_FMT_YUV420P},
+};
+
 uint64_t GetTimeStamp()
 {
     struct timeval tv;
@@ -54,6 +61,7 @@ COMController_t::COMController_t()
             if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
                   std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
             {
+                AVPixelFormat targetOption = (AVPixelFormat)CodecFormats.at((std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat));
                 Encoder.reset(new FFMPEGTools::FFMPEGCodec({
                     .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
                     .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
@@ -62,7 +70,7 @@ COMController_t::COMController_t()
                     .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
                     .CodecProfile = "baseline",
                     .OutputFormat = AV_CODEC_ID_H264,
-                    .TargetFormat = AV_PIX_FMT_YUYV422,
+                    .TargetFormat = targetOption,
                 }));
             }
             else
