@@ -16,7 +16,15 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
               << "  Capbilities:" << v4l2.CameraInfo.capabilities << "\n";
 #endif
 
-    // V4L2Control(0x00990a6b, 4);
+    if (v4l2d.PixFormat == V4L2_PIX_FMT_H264)
+    {
+        V4L2Control(V4L2_H264_Control_h264_profile, v4l2d.H264_Profile);
+        V4L2Control(V4L2_H264_Control_h264_i_frame_period, v4l2d.H264_PSize);
+        V4L2Control(V4L2_H264_Control_video_bitrate, v4l2d.H264_Bitrate);
+        V4L2Control(V4L2_H264_Control_repeat_sequence_header, v4l2d.H264_EnablePPS);
+    }
+
+    V4L2Control(0x00990a6b, 0);
     if (v4l2d.Is_AutoSize)
     {
         int MaxWidth = 0;

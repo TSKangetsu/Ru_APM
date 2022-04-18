@@ -99,6 +99,11 @@ COMController_t::COMController_t()
                         {
                             InjectVSize = data.size;
                             InjectVTarget = data.data;
+                            // for (int i = 0; i < data.size; i++)
+                            // {
+                            //     std::cout << data.data[i];
+                            // }
+                            // std::cout.flush();
                             Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
                         }
                         else

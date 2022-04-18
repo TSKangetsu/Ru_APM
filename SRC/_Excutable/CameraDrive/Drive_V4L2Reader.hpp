@@ -17,6 +17,11 @@
 #include <iostream>
 #endif
 
+#define V4L2_H264_Control_h264_profile 0x00990a6b
+#define V4L2_H264_Control_h264_i_frame_period 0x00990a66
+#define V4L2_H264_Control_video_bitrate 0x009909cf
+#define V4L2_H264_Control_repeat_sequence_header 0x009909e2
+
 namespace V4L2Tools
 {
     struct V4l2Info
@@ -27,6 +32,11 @@ namespace V4L2Tools
         int FrameBuffer = 4;
         bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
+        // H264 camera codec control
+        int H264_PSize = 60;
+        int H264_Profile = 0;
+        int H264_Bitrate = 1500000;
+        bool H264_EnablePPS = true;
     };
 
     struct V4l2Data

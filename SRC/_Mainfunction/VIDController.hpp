@@ -69,20 +69,18 @@ VIDController_t::VIDController_t()
                 V4L2P.reset(
                     new V4L2Tools::V4L2Drive(
                         SYSC::VideoConfig[i].DevicePATH,
-                        {.ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
-                         .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
-                         .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
-                         .FrameBuffer = MAXV4LBUF,
-                         .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
-                         .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat)}));
-
-                if (SYSC::VideoConfig[i].DeviceIFormat == "H264")
-                {
-                    // std::cout << V4L2P->V4L2Control(0x009909e2, 1) << "\n"; // enable sps&pps
-                    // std::cout << V4L2P->V4L2Control(0x00990a6b, 4) << "\n"; // enable Baseline
-                    // std::cout << V4L2P->V4L2Control(0x009909cf, SYSC::CommonConfig.COM_BroadCastBitRate) << "\n";
-                    // std::cout << V4L2P->V4L2Control(0x00990a66, SYSC::CommonConfig.COM_BroadCastPFrameSize) << "\n";
-                }
+                        {
+                            .ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
+                            .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
+                            .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
+                            .FrameBuffer = MAXV4LBUF,
+                            .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
+                            .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat),
+                            .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
+                            .H264_Profile = 0,
+                            .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
+                            .H264_EnablePPS = true,
+                        }));
 
                 FrameBuffer<V4L2Tools::V4l2Data> Data;
                 SYSU::StreamStatus.VideoIFlowRaw.push_back(
