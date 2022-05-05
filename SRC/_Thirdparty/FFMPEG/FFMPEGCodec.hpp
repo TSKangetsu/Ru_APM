@@ -86,12 +86,14 @@ namespace FFMPEGTools
     {
     public:
         FFMPEGDecodec();
-        AVData FFMPEGDecodecInsert(uint8_t *data, int size);
+        int FFMPEGDecodecInsert(uint8_t *data, int size);
+        AVData FFMPEGDecodecGetFrame();
 
     private:
         struct AVCodecDep
         {
             AVPacket Packet;
+            AVPacket PacketOut;
             AVFrame *frameOutput;
             AVCodec *DecoderBase;
             AVCodecContext *Decoder;
@@ -199,15 +201,66 @@ FFMPEGTools::FFMPEGCodec::~FFMPEGCodec()
 
 FFMPEGTools::FFMPEGDecodec::FFMPEGDecodec()
 {
+    av_log_set_level(AV_LOG_SKIP_REPEATED);
     AVCD.DecoderBase = avcodec_find_decoder(AV_CODEC_ID_H264);
     AVCD.Decoder = avcodec_alloc_context3(AVCD.DecoderBase);
     AVCD.DecodeParser = av_parser_init(AV_CODEC_ID_H264);
     if (AVCD.DecoderBase->capabilities & AV_CODEC_CAP_TRUNCATED)
         AVCD.DecodeParser->flags |= AV_CODEC_FLAG_TRUNCATED;
-
+    //
     avcodec_open2(AVCD.Decoder, AVCD.DecoderBase, NULL);
+    //
+    av_init_packet(&AVCD.Packet);
+    av_init_packet(&AVCD.PacketOut);
+    AVCD.frameOutput = av_frame_alloc();
 };
 
-FFMPEGTools::AVData FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecInsert(uint8_t *data, int size){
+int FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecInsert(uint8_t *data, int size)
+{
+    uint8_t *dataParsed = NULL;
+    int sizeParsed = 0;
+    int len = av_parser_parse2(AVCD.DecodeParser, AVCD.Decoder, &dataParsed, &sizeParsed, data, size, 0, 0, AV_NOPTS_VALUE);
 
+    if (sizeParsed > 0)
+    {
+        AVCD.Packet.data = dataParsed;
+        AVCD.Packet.size = sizeParsed;
+        //
+        AVPacket flushPacket;
+        av_init_packet(&flushPacket);
+        avcodec_send_packet(AVCD.Decoder, &flushPacket);
+        //
+        return avcodec_send_packet(AVCD.Decoder, &AVCD.Packet);
+    }
+    else
+    {
+        return -1;
+    }
+};
+
+FFMPEGTools::AVData FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecGetFrame()
+{
+    AVData dataGen;
+    int err = avcodec_receive_frame(AVCD.Decoder, AVCD.frameOutput);
+
+    if (err == 0)
+    {
+        int linesize[1];
+        linesize[0] = AVCD.frameOutput->width * 3;
+        //
+        int width = AVCD.frameOutput->width;
+        int height = AVCD.frameOutput->height;
+        dataGen = AVData(width, height, width * height * 3);
+        //
+        SwsContext *conversion = sws_getContext(width, height, (AVPixelFormat)AVCD.frameOutput->format, width, height, AVPixelFormat::AV_PIX_FMT_BGR24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
+        sws_scale(conversion, AVCD.frameOutput->data, AVCD.frameOutput->linesize, 0, height, &dataGen.data, linesize);
+        sws_freeContext(conversion);
+    }
+    else
+    {
+        dataGen.width = -1;
+        dataGen.height = -1;
+    }
+    //
+    return dataGen;
 };
