@@ -24,7 +24,6 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         V4L2Control(V4L2_H264_Control_repeat_sequence_header, v4l2d.H264_EnablePPS);
     }
 
-    V4L2Control(0x00990a6b, 0);
     if (v4l2d.Is_AutoSize)
     {
         int MaxWidth = 0;

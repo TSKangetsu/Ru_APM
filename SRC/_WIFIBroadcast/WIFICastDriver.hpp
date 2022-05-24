@@ -3,8 +3,8 @@
 #include <vector>
 #include <queue>
 #include <condition_variable>
-#include "Drive_Socket.hpp"
-#include "FlowController.hpp"
+#include "../_Excutable/Drive_Socket.hpp"
+#include "../RPiSingleAPM/src/_thirdparty/FlowController.hpp"
 #define FrameTypeL 58
 #define VideoTrans 0x68
 #define DataETrans 0x69
@@ -303,8 +303,9 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                             std::get<int *>(VideoFullPackets[LocateID])[DATA_LOSE]++;
                             std::get<int *>(VideoFullPackets[LocateID])[DATA_FRAMESEQ] = Framesequeue;
                             //Throw frame if lose
-                            std::get<bool>(VideoFullPackets[LocateID]) = false;
-                            std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] = 0;
+                            //FIXME: should not throw
+                            // std::get<bool>(VideoFullPackets[LocateID]) = false;
+                            // std::get<int *>(VideoFullPackets[LocateID])[DATA_TMPSIZE] = 0;
                         }
                     }
                     else
@@ -333,11 +334,11 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff()
                         }
                     }
                     // Send a feedBack frame for caculating latency
-                    uint8_t FeedBack[] = {
-                        FeedBackTrans,
-                        (uint8_t)FramestreamID,
-                    };
-                    WIFICastInject(FeedBack, sizeof(FeedBack), 0, BroadCastType::DataStream, 0, 0x0);
+                    // uint8_t FeedBack[] = {
+                    //     FeedBackTrans,
+                    //     (uint8_t)FramestreamID,
+                    // };
+                    // WIFICastInject(FeedBack, sizeof(FeedBack), 0, BroadCastType::DataStream, 0, 0x0);
                 }
                 else if (Framesequeue == 0xf)
                 {
