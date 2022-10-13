@@ -8,6 +8,9 @@
 #include "../_Thirdparty/FFMPEG/FFMPEGCodec.hpp"
 #endif
 
+#ifdef MODULE_FECLIB
+#endif
+
 using namespace WIFIBroadCast;
 using SYSU = RuAPSSys::UORBMessage;
 using SYSC = RuAPSSys::ConfigCLA;
@@ -35,6 +38,8 @@ public:
 private:
     void COMBoradCastDataInject();
     //
+    uint16_t FrameFECSyncID = 0;
+    //
     bool IsTimedetectUpdated = false;
     int Timedetectedstart = 0;
     int Timedetectedstop = 0;
@@ -61,6 +66,7 @@ COMController_t::COMController_t()
             if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
                   std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
             {
+#ifdef MODULE_FFMPEG
                 AVPixelFormat targetOption = (AVPixelFormat)CodecFormats.at((std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat));
                 Encoder.reset(new FFMPEGTools::FFMPEGCodec({
                     .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
@@ -72,6 +78,7 @@ COMController_t::COMController_t()
                     .OutputFormat = AV_CODEC_ID_H264,
                     .TargetFormat = targetOption,
                 }));
+#endif
             }
             else
             {
@@ -87,32 +94,50 @@ COMController_t::COMController_t()
                     // Step 0. Target Video data
                     V4L2Tools::V4l2Data data;
                     size_t InjectVSize = 0;
-                    uint8_t *InjectVTarget = nullptr;
+                    std::shared_ptr<uint8_t> InjectVTarget;
                     // Step 1. Read From uorb
                     if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).frameCount > 0)
                         data = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).peekFrame();
                     // Step 2. Transcodec or not, deal with VID data
                     if (data.size > 0)
                     {
+                        // TODO: consider add a timestamp binding EFC and data
                         if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
                             std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265")
                         {
+                            FrameFECSyncID++;
+                            FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
+
                             InjectVSize = data.size;
-                            InjectVTarget = data.data;
-                            Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
+                            InjectVTarget.reset(new uint8_t[data.size + 1]);
+
+                            InjectVTarget.get()[0] = FrameFECSyncID;
+                            std::copy(data.data, data.data + data.size, InjectVTarget.get() + 1);
+                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                            // TODO: add EFC data frame on COM_CastFrameIndex + 1
                         }
                         else
                         {
+#ifdef MODULE_FFMPEG
                             Encoder->pushFrame(data.data, data.size, data.bytesperline);
                             Encoder->getFrame(EncoderQueue);
                             //
                             for (; !EncoderQueue.empty(); EncoderQueue.pop())
                             {
+                                FrameFECSyncID++;
+                                FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
+
                                 InjectVSize = EncoderQueue.front().size;
-                                InjectVTarget = EncoderQueue.front().data;
-                                Injector->WIFICastInject(InjectVTarget, InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex);
+                                InjectVTarget.reset(new uint8_t[data.size + 1]);
+
+                                InjectVTarget.get()[0] = FrameFECSyncID;
+                                std::copy(EncoderQueue.front().data, EncoderQueue.front().data + EncoderQueue.front().size, InjectVTarget.get() + 1);
+                                Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                                // TODO: add EFC data frame on COM_CastFrameIndex + 1
                             }
+#endif
                         }
+
                         // Step N + 1. Inject img info.
                         BroadCastDataCount++;
                         if (BroadCastDataCount >= (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS)
